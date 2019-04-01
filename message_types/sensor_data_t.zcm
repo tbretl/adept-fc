@@ -1,0 +1,32 @@
+struct sensor_data_t
+{
+    double x; 
+    double y; 
+    double z;
+    
+    double u; 
+    double v; 
+    double w; 
+ 
+    double a_x;
+    double a_y;
+    double a_z;
+
+    double p; 
+    double q; 
+    double r; 
+
+    double phi; 
+    double theta; 
+    double psi; 
+
+    double Vmag; 
+    double alpha; 
+    double beta; 
+
+    double lat; 
+    double lon; 
+    double alt; 
+
+    double t_sent; 
+}

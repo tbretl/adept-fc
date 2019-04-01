@@ -1,0 +1,7 @@
+struct actuators_t
+{
+    double de;
+    double da;
+    double dr;
+    double dt[8];
+}

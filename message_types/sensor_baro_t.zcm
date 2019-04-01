@@ -1,6 +1,0 @@
-struct sensor_baro_t
-{
-    double pressure;
-    double temperature;
-    double t; 
-}

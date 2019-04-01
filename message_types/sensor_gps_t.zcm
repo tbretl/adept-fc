@@ -1,7 +1,0 @@
-struct sensor_gps_t
-{
-    double lat;
-    double lon;
-    double alt;
-    double t;  
-}
