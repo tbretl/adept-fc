@@ -1,0 +1,7 @@
+struct sensor_euler_t
+{
+    double phi;
+    double theta;
+    double psi;
+    double t; 
+}

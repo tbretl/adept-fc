@@ -1,0 +1,7 @@
+struct sensor_gyro_t
+{
+    double p;
+    double q;
+    double r;
+    double t; 
+}

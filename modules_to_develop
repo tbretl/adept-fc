@@ -4,3 +4,4 @@ Modules to build:
 -ADC
 -VN200 
 -PWM_out 
+-logger 

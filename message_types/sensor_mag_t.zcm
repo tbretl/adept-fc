@@ -1,0 +1,7 @@
+struct sensor_mag_t
+{
+    double m_x;
+    double m_y;
+    double m_z;
+    double t; 
+}

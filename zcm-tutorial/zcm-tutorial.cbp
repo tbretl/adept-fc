@@ -37,6 +37,7 @@
 		<Unit filename="msg_t.h" />
 		<Unit filename="msg_t.zcm" />
 		<Unit filename="publisher.cpp" />
+		<Unit filename="subber.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

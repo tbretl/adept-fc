@@ -1,0 +1,7 @@
+struct sensor_airdata_t
+{
+    double alpha;
+    double beta;
+    double Vmag;
+    double t; 
+}
