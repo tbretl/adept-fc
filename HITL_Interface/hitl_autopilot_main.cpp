@@ -22,7 +22,7 @@ void read_messages(const zcm_recv_buf_t  *rbuf, const char *channel,const sensor
 {
     //read each channel, move value to sensor_data variable
     sensor_data_t *sen_pointer = (sensor_data_t*) usr;
-    sen_pointer->a_x = sens->a_x;
+    *sen_pointer = *sens;
 }
 
 void *zcm_threader(void *args){
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         acts.da = 0;
         acts.dr = 0;
         acts.dt[0] = 0;
-        acts.dt[1] = 0;
+        acts.dt[1] = sensors.a_x;
         acts.dt[2] = 0;
         acts.dt[3] = 0;
         acts.dt[4] = 0;
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     }
 
     //clean exit
-    pthread_exit(t1);
+    pthread_exit((void*) t1);
     zcm_destroy(zcm);
     return 0;
 }

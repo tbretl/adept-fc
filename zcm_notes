@@ -1,0 +1,43 @@
+set java path: 
+
+export JAVA_HOME=/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt
+
+install sodium: 
+
+wget https:/download.libsodium.org/libsodium/releases/LATEST.tar.gz 
+tar zxvf LATEST.tar.gz 
+cd libsodium-stable 
+./configure 
+make && make check 
+sudo make install 
+
+
+install zmq: 
+
+apt-get install make autoconf automake libtool -y 
+wget 'link to latest tar download' 
+tar zxvf zeromq-4.1.4.tar.gz
+cd zeromq-4.1.4
+./configure
+make 
+make install 
+ldconfig 
+apt-get install python-pip python-all-dev python-zmq
+
+install zcm: 
+./waf configure --use-ipc --use-zmq
+./waf build 
+sudo ./waf install 
+
+
+build command: 
+cc -o subber subber.cpp msg_t.c -lzcm
+cc -o hitl hitl_aupilot_main.cpp sensor_data_t.c actuators_t.c -lzcm
+g++ -o hitl hitl_aupilot_main.cpp sensor_data_t.c actuators_t.c -lzcm -lpthread
+
+
+generate header files for message types: 
+zcm-gen msg_t.zcm 
+
+
+
