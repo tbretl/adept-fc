@@ -31,14 +31,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../message_types/actuators_t.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../message_types/sensor_data_t.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../message_types/sensor_data_t.h" />
-		<Unit filename="hitl_aupilot_main.cpp" />
+		<Unit filename="../message_types/actuators_t.hpp" />
+		<Unit filename="../message_types/sensor_data_t.hpp" />
+		<Unit filename="hitl_autopilot_main.cpp" />
 		<Unit filename="publisher.cpp" />
 		<Extensions>
 			<code_completion />

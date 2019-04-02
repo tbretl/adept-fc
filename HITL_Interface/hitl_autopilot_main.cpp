@@ -3,56 +3,46 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <zcm/zcm.h>
-#include <pthread.h>
-
+#include <string.h>
+#include <zcm/zcm-cpp.hpp>
 //input message types:
-#include "../message_types/sensor_data_t.h"
+#include "../message_types/sensor_data_t.hpp"
 //output message types:
-#include "../message_types/actuators_t.h"
+#include "../message_types/actuators_t.hpp"
+using std::string;
 
-
-void actuate(zcm_t *zcm,actuators_t &acts)
+class Handler
 {
-    //send the values out:
-    actuators_t_publish(zcm,"ACTUATORS", &acts);
-}
+    public:
+        ~Handler() {}
 
-void read_messages(const zcm_recv_buf_t  *rbuf, const char *channel,const sensor_data_t *sens,void *usr)
-{
-    //read each channel, move value to sensor_data variable
-    sensor_data_t *sen_pointer = (sensor_data_t*) usr;
-    *sen_pointer = *sens;
-}
+        sensor_data_t sens = {};
 
-void *zcm_threader(void *args){
-    //function to thread the zcm
-    zcm_start((zcm_t*)args);
-}
+        void read_messages(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
+        {
+            sens = *msg;
+        }
+};
 
 
 int main(int argc, char *argv[])
 {
     //initialize zcm
-    zcm_t *zcm = zcm_create("ipc");
+    zcm::ZCM zcm {"ipc"};
 
     //initialize message objects
     actuators_t acts;
-    sensor_data_t sensors;
 
     //subscribe to incoming channels:
-    sensor_data_t_subscribe(zcm,"SENSOR_DATA",read_messages,&sensors);
+    Handler handlerObject;
+    zcm.subscribe("SENSOR_DATA",&Handler::read_messages,&handlerObject);
 
     //run zcm as a separate thread:
-    pthread_t zcm_thread;
-    int t1;
-    t1 = pthread_create(&zcm_thread,NULL,zcm_threader,(void*) zcm);
-    pthread_join(t1,NULL);
+    zcm.start();
 
     //control loop:
     while (1) {
 
-        printf("x accel = %.2f\n",sensors.a_x);
         usleep(1000000);
 
         //compute actuator values:
@@ -60,7 +50,7 @@ int main(int argc, char *argv[])
         acts.da = 0;
         acts.dr = 0;
         acts.dt[0] = 0;
-        acts.dt[1] = sensors.a_x;
+        acts.dt[1] = handlerObject.sens.a_x;
         acts.dt[2] = 0;
         acts.dt[3] = 0;
         acts.dt[4] = 0;
@@ -69,11 +59,10 @@ int main(int argc, char *argv[])
         acts.dt[7] = 0;
 
         //publish the actuator values:
-        actuate(zcm, acts);
+        zcm.publish("ACTUATORS", &acts);
     }
 
-    //clean exit
-    pthread_exit((void*) t1);
-    zcm_destroy(zcm);
+    zcm.stop();
+
     return 0;
 }
