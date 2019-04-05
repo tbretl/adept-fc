@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1554129702 source:/home/pi/adept-fc/zcm-tutorial/msg_t.c
+	<string.h>
+	<stdio.h>
+	"msg_t.h"
+
+1554129702 /home/pi/adept-fc/zcm-tutorial/msg_t.h
+	<stdint.h>
+	<stdlib.h>
+	<zcm/zcm_coretypes.h>
+	<zcm/zcm.h>
+

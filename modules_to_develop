@@ -1,0 +1,7 @@
+Modules to build: 
+-daemon to start all others (the one ring) 
+-autopilot/HITL 
+-ADC
+-VN200 
+-PWM_out 
+-logger 
