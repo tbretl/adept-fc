@@ -46,7 +46,7 @@ int main()
         zcm.publish("SENSOR_DATA", &msg);
         usleep(1000000);
         //print actuator dt[1] value returned from autopilot:
-        printf("dt_1 = %.2f\n",handlerObject.acts.dt[1]);
+        //printf("dt_1 = %.2f\n",handlerObject.acts.dt[1]);
     }
 
     zcm.stop();
