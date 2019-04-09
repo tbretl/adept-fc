@@ -1,5 +1,5 @@
 //This code logs all of the data it receives to the SD card.
-//copyright Aaron Perry, 4/1/2019
+//Aaron Perry, 4/1/2019
 
 #include <stdio.h>
 #include <iostream>
