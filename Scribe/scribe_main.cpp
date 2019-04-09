@@ -2,8 +2,10 @@
 //copyright Aaron Perry, 4/1/2019
 
 #include <stdio.h>
+#include <iostream>
 #include <unistd.h>
 #include <string.h>
+#include <cstring>
 #include <zcm/zcm-cpp.hpp>
 #include <fstream>
 //input message types:
@@ -15,55 +17,79 @@ using std::string;
 class Handler
 {
     public:
-        ~Handler() {}
+        ~Handler() {
+            logfile.close();
+        }
 
-        char dataline[100] = {0};
+
+        char fileName[20];
+        char dataline[50];//need to fix: If this is too small, will result in segmentation fault
+
+        Handler()
+        {
+            //sequencing file numbers:
+            std::ifstream seqFile ("sequence.dat", std::ifstream::in);
+            int fileNum;
+            seqFile >> fileNum;
+            seqFile.close();
+            fileNum++;
+            std::ofstream seqFile2 ("sequence.dat");
+            seqFile2 << fileNum;
+            seqFile2.close();
+
+            //initialize the log file:
+            //char fileHold[20];
+            sprintf(fileName,"FlightLog_%i.dat",fileNum);
+            //char* fileName = fileHold;
+            //printf("%s\n",fileName);
+        }
+
 
         void read_messages(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
         {
-            sprintf(dataline,"%.2f, %.2f, %.2f\n",msg->a_x,msg->a_y, msg->a_z);
-            //file_name->write(dataline,sizeof(dataline));
-            printf(dataline);
+//            sprintf(dataline,"%.2f, %.2f, %.2f\n",msg->a_x,msg->a_y, msg->a_z);
+            logfile.open(fileName,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
+            logfile << msg->a_x << " " << msg->a_y << " " << msg->a_z << "\n";
+//            logfile.write(dataline,sizeof(dataline));
+            logfile.close();
         }
+
+        void close_file()
+        {
+            logfile.close();
+        }
+
+    private:
+    std::ofstream logfile;
 };
+
 
 
 int main(int argc, char *argv[])
 {
-
-
-    //sequencing file numbers:
-    std::ifstream seqFile ("sequence.dat", std::ifstream::in);
-    int fileNum;
-    seqFile >> fileNum;
-    seqFile.close();
-    fileNum++;
-    std::ofstream seqFile2 ("sequence.dat");
-    seqFile2 << fileNum;
-    seqFile2.close();
-
-    //initialize the log file:
-    char fileHold[20];
-    sprintf(fileHold,"FlightLog_%i.dat",fileNum);
-    char* fileName = fileHold;
-    std::ofstream logfile (fileName,std::ofstream::binary);
-
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
 
-
     //subscribe to incoming channels:
     Handler handlerObject;
-    handlerObject.file_name = &logfile;
     zcm.subscribe("SENSOR_DATA",&Handler::read_messages,&handlerObject);
 
     //run zcm as a separate thread:
     zcm.start();
 
     //control loop:
+    int count = 0;
+
     while (1) {
+
+//        count ++;
+//        usleep(500000);
+//        if (count>10) {
+//            handlerObject.close_file(); //need to call close file for the file to write properly
+//        }
         //Possibility of adding start/stop commands here
         //use an infinite loop for now to keep logging going
+        //consider interaction with telemetry radio?
     }
 
     zcm.stop();
