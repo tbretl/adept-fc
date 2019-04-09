@@ -37,11 +37,7 @@ class Handler
             seqFile2 << fileNum;
             seqFile2.close();
 
-            //initialize the log file:
-            //char fileHold[20];
             sprintf(fileName,"FlightLog_%i.dat",fileNum);
-            //char* fileName = fileHold;
-            //printf("%s\n",fileName);
         }
 
 
@@ -51,11 +47,6 @@ class Handler
             logfile.open(fileName,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
             logfile << msg->a_x << " " << msg->a_y << " " << msg->a_z << "\n";
 //            logfile.write(dataline,sizeof(dataline));
-            logfile.close();
-        }
-
-        void close_file()
-        {
             logfile.close();
         }
 
@@ -77,16 +68,7 @@ int main(int argc, char *argv[])
     //run zcm as a separate thread:
     zcm.start();
 
-    //control loop:
-    int count = 0;
-
     while (1) {
-
-//        count ++;
-//        usleep(500000);
-//        if (count>10) {
-//            handlerObject.close_file(); //need to call close file for the file to write properly
-//        }
         //Possibility of adding start/stop commands here
         //use an infinite loop for now to keep logging going
         //consider interaction with telemetry radio?
