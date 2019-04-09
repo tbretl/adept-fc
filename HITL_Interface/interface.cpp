@@ -42,11 +42,13 @@ int main()
 
     while(1){
         //publish a random number to the a_x sensor data
-        msg.a_x = rand();
+        msg.a_x = 0;
+        msg.a_y = 1;
+        msg.a_z = 2;
         zcm.publish("SENSOR_DATA", &msg);
         usleep(1000000);
         //print actuator dt[1] value returned from autopilot:
-        printf("dt_1 = %.2f\n",handlerObject.acts.dt[1]);
+        //printf("dt_1 = %.2f\n",handlerObject.acts.dt[1]);
     }
 
     zcm.stop();

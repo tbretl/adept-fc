@@ -2,12 +2,12 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="HITL_Interface" />
+		<Option title="Adeptfc" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/HITL_Interface" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/Adeptfc" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -16,7 +16,7 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/HITL_Interface" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/Adeptfc" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -31,10 +31,8 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../message_types/actuators_t.hpp" />
-		<Unit filename="../message_types/sensor_data_t.hpp" />
-		<Unit filename="hitl_autopilot_main.cpp" />
-		<Unit filename="interface.cpp" />
+		<Unit filename="adept_fc_fork_main.cpp" />
+		<Unit filename="adeptfc_main.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />
