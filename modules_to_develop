@@ -1,7 +1,12 @@
 Modules to build: 
--daemon to start all others (the one ring) 
+-daemon App to start all others 
 -autopilot/HITL 
 -ADC
--VN200 
+-VN200
+-RC_in 
 -PWM_out 
--logger 
+-logger
+
+To be addressed: 
+-since I am launching all modules from a single app, do I need ZCM to run in each module or do I just need one instance? 
+ 
