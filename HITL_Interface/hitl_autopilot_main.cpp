@@ -1,5 +1,5 @@
 //This code is the HITL autopilot module that ESAERO will communicate with
-//copyright Aaron Perry, 4/1/2019
+//Aaron Perry, 4/1/2019
 
 #include <stdio.h>
 #include <unistd.h>

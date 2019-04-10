@@ -65,17 +65,39 @@ sudo ./waf install
 ```
 
 
-# Test (FIXME)
+# Test
 
-build command: 
+Compile and run the `publisher` and `subber` programs in the `zcm-tutorial` directory to test if ZCM is properly installed. Complete these steps in the terminal: 
+ 
+
+Generate header files for message types (start from msg_t.zcm). Note that the example uses c-code messages, for our apps use the `--cpp` flag instead of `-c`: 
+
 ```
-g++ -o interface interface.cpp ../message_types/actuators_t.hpp ../message_types/sensor_data_t.hpp -lzcm
-g++ -o hitl hitl_autopilot_main.cpp ../message_types/sensor_data_t.hpp ../message_types/actuators_t.hpp -lzcm
+zcm-gen -c msg_t.zcm 
 ```
 
-generate header files for message types in cpp: 
+Compile the publisher and subscriber programs: 
+
 ```
-zcm-gen --cpp msg_t.zcm 
+g++ -o publisher publisher.cpp msg_t.c -lzcm
+g++ -o subber subber.cpp msg_t.c -lzcm
 ```
+
+Run the programs: 
+
+```
+./publisher & 
+./subber 
+``` 
+
+You should see the following message printed once per second on the terminal: 
+
+```
+Received a message on channel 'MESSAGE'
+msg->str = 'Message 1'
+```
+
+
+
 
 
