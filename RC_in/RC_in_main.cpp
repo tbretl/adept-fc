@@ -40,18 +40,16 @@ int main()
     while (1)
     {
         //read in each of the 8 channels:
-        for (int i = 0, i<8, i++){
+        for (int i = 0; i<8; i++){
 
             rc_in.rc_chan[i]=rcin->read(i);
 
-            if (period == READ_FAILED){
+            if (rc_in.rc_chan[i] == READ_FAILED){
                 printf("Read failed on channel %i\n", i);
-            } else {}
-                printf("Channel %i period (ms): %i\n",rc_in.rc_chan[i]);
             }
-
-        }
-
+            /*else {}
+                printf("Channel %i period (ms): %i\n",rc_in.rc_chan[i]);
+            }*/
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);
     }
