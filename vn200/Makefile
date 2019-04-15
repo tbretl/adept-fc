@@ -13,7 +13,12 @@ vnins: vnins.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) vnins.cpp rs232.c -o $(BIN)/vnins
 
 subber: subber.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) subber.cpp -o $(BIN)/subber
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) subber.cpp -o $(BIN)/vnins_subber
 
 demo: demo.cpp
 	$(CXX) $(CXXFLAGS) demo.cpp rs232.c -o $(BIN)/demo
+
+clean:
+	rm -f $(BIN)/vnins
+	rm -f $(BIN)/vnins_subber
+	rm -f $(BIN)/demo
