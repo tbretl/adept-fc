@@ -57,7 +57,7 @@ int readline(unsigned char* buf, int maxlen) {
 
 bool is_valid_line(unsigned char* line) {
     // it has non-zero length
-    int len = strlen((char*) line);
+    unsigned int len = strlen((char*) line);
     if (len == 0) {
         printf("error: line has zero length\n%s\n", line);
         return false;
@@ -89,7 +89,7 @@ bool is_valid_line(unsigned char* line) {
     unsigned long a = strtoul((char*) line + i + 1, NULL, 16);
     unsigned long b = (unsigned long) cs8;
     if (a != b) {
-        printf("error: line checksum does not match (%d, %d)\n%s\n", a, b, line);
+        printf("error: line checksum does not match (%lu, %lu)\n%s\n", a, b, line);
         return false;
     }
     
@@ -137,7 +137,7 @@ void parseline(unsigned char* line) {
     printf("%s (%f)\n", field, data.time);
     field = strtok(NULL, ",");
     data.week = strtoul(field, NULL, 0);
-    printf("%s (%d)\n", field, data.week);
+    printf("%s (%lu)\n", field, data.week);
     field = strtok(NULL, ",");
     unsigned long tmp = strtoul(field, NULL, 16);
     bool bits[16];
