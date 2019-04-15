@@ -1,2 +1,2 @@
 #!/bin/bash
-zcm-gen -cpp sensor_data_t.zcm 
+zcm-gen -x sensor_data_t.zcm 
