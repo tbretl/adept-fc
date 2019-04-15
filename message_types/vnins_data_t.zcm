@@ -1,0 +1,20 @@
+struct vnins_data_t
+{
+	double time;
+    int64_t week;
+    boolean tracking;
+    boolean gpsfix;
+    boolean error;
+    float yaw;          // degrees
+    float pitch;        // degrees
+    float roll;         // degrees
+    double latitude;    // degrees
+    double longitude;   // degrees
+    double altitude;
+    float vx;
+    float vy;
+    float vz;
+    float attuncertainty;
+    float posuncertainty;
+    float veluncertainty;
+}
