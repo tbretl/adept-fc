@@ -1,5 +1,6 @@
 #include "rs232.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #define COMPORT			22 		// '/dev/ttyAMA0'
@@ -54,6 +55,129 @@ int readline(unsigned char* buf, int maxlen) {
     }
 }
 
+bool is_valid_line(unsigned char* line) {
+    // it has non-zero length
+    int len = strlen((char*) line);
+    if (len == 0) {
+        printf("error: line has zero length\n%s\n", line);
+        return false;
+    }
+    
+    // it starts with '$'
+    if (line[0] != '$') {
+        printf("error: line starts with %c and not with $\n%s\n", line[0], line);
+        return false;
+    }
+    
+    // it has an '*'
+    bool has_asterix = false;
+    unsigned int i;
+    unsigned char cs8 = 0;
+    for (i = 1; i < len; ++i) {
+        if (line[i] == '*') {
+            has_asterix = true;
+            break;
+        }
+        cs8 ^= line[i];
+    }
+    if (! has_asterix) {
+        printf("error: line contains no *\n%s\n", line);
+        return false;
+    }
+    
+    // it has the correct checksum
+    unsigned long a = strtoul((char*) line + i + 1, NULL, 16);
+    unsigned long b = (unsigned long) cs8;
+    if (a != b) {
+        printf("error: line checksum does not match (%d, %d)\n%s\n", a, b, line);
+        return false;
+    }
+    
+    return true;
+}
+
+void parseline(unsigned char* line) {
+    // Check that line has correct length for VNINS
+    const int len_expected = 142;
+    int len = strlen((char*) line);
+    if (len != len_expected) {
+        printf("error: line has length %d, should be %d\n", len, len_expected);
+        return;
+    }
+    
+    // Terminate line at *
+    line[len_expected - 5] = '\0';
+    
+    // Get each field
+    struct ins {
+        double time;
+        unsigned long week;
+        bool tracking;
+        bool gpsfix;
+        bool error;
+        float yaw;          // degrees
+        float pitch;        // degrees
+        float roll;         // degrees
+        double latitude;    // degrees
+        double longitude;   // degrees
+        double altitude;
+        float vx;
+        float vy;
+        float vz;
+        float attuncertainty;
+        float posuncertainty;
+        float veluncertainty;
+    };
+    struct ins data;
+    char* field;
+    field = strtok((char*) line + 1, ",");
+    printf("%s\n", field);
+    field = strtok(NULL, ",");
+    data.time = strtod(field, NULL);
+    printf("%s (%f)\n", field, data.time);
+    field = strtok(NULL, ",");
+    data.week = strtoul(field, NULL, 0);
+    printf("%s (%d)\n", field, data.week);
+    field = strtok(NULL, ",");
+    unsigned long tmp = strtoul(field, NULL, 16);
+    bool bits[16];
+    for (int i=0; i<16; ++i) {
+        bits[i] = (tmp & 1);
+        tmp >>= 1;
+    }
+    data.tracking = (bits[0] && (! bits[1]));
+    data.gpsfix = bits[2];
+    data.error = (bits[3] || bits[4] || bits[5] || bits[6]);
+    printf("%s (%d, %d, %d)\n", field, data.tracking, data.gpsfix, data.error);
+    field = strtok(NULL, ",");
+    data.yaw = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.pitch = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.roll = strtod(field, NULL);
+    printf("%f, %f, %f\n", data.yaw, data.pitch, data.roll);
+    field = strtok(NULL, ",");
+    data.latitude = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.longitude = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.altitude = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.vx = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.vy = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.vz = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.attuncertainty = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.posuncertainty = strtod(field, NULL);
+    field = strtok(NULL, ",");
+    data.veluncertainty = strtod(field, NULL);
+    printf("%f\n", data.veluncertainty);
+    
+}
+
 int main()
 {    
     // open serial port
@@ -72,7 +196,7 @@ int main()
     }
     
     // read lines from port
-    int iters = 400;
+    int iters = 4;
     int result = 0;
     unsigned char line[iters][255];
     clock_t tstart = clock();
@@ -87,7 +211,14 @@ int main()
     
     // print what was read to the terminal
     for (int i=0; i<iters; ++i) {
-        printf(" %4d (%d bytes) : %s", i, strlen((char*) line[i]), line[i]);
+        printf(" %4d (%d bytes : %s) : %s", i, strlen((char*) line[i]), is_valid_line(line[i]) ? "valid" : "invalid", line[i]);
+    }
+    
+    // parse each line
+    for (int i=0; i<iters; ++i) {
+        if (is_valid_line(line[i])) {
+            parseline(line[i]);
+        }
     }
     
     // find rate
