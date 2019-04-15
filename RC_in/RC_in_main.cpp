@@ -36,6 +36,7 @@ int main()
     auto rcin = get_rcin();
     rcin->initialize();
 
+    zcm.start();
     //main loop
     while (1)
     {
@@ -47,12 +48,14 @@ int main()
             if (rc_in.rc_chan[i] == READ_FAILED){
                 printf("Read failed on channel %i\n", i);
             }
-            /*else {}
-                printf("Channel %i period (ms): %i\n",rc_in.rc_chan[i]);
-            }*/
+            //else {printf("Channel %i period (ms): %i\n",rc_in.rc_chan[i]);}
+
+        }
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);
     }
+
+    zcm.stop();
 
     return 0;
 }

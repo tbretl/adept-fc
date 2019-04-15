@@ -1,0 +1,4 @@
+struct pwm_t
+{
+    int16_t pwm_out[14]; 
+}
