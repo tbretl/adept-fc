@@ -3,6 +3,7 @@
 #include <zcm/zcm-cpp.hpp>
 #include <unistd.h>
 #include <stdio.h>
+#include <iostream>
 #include "Navio2/PWM.h"
 #include "Navio2/RCOutput_Navio2.h"
 #include "Common/Util.h"
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
     }
 
     if (getuid()) {
-        printf("Not root. Please launch with Sudo.");
+        std::cout << "Not root. Please launch with Sudo." << std::endl;
     }
 
     for (int i=0;i<=num_outputs; i++){
@@ -75,7 +76,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        printf("Initialized channel %i\n",i+1);
+        //printf("Initialized channel %i\n",i+1);
         usleep(1000000); //without this, initialization of multiple channels fails
     }
 
