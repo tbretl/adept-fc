@@ -244,3 +244,6 @@ dmypy.json
 
 ### Binary folder ###
 /bin
+
+### Project file ### 
+*.cbp 
