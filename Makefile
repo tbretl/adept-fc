@@ -35,6 +35,9 @@ autopilot: $(SRC)/autopilot_main.cpp
 interface: $(SRC)/interface.cpp 
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/interface.cpp -o $(BIN)/interface 
 
+monitor: $(SRC)/monitor.cpp 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor 
+
 clean:
 	rm -f $(BIN)/vnins
 	rm -f $(BIN)/vnins_subber
@@ -45,3 +48,4 @@ clean:
 	rm -f $(BIN)/adept_fc 
 	rm -f $(BIN)/autopilot
 	rm -f $(BIN)/interface 
+	rm -f $(BIN)/monitor

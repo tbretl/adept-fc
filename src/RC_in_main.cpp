@@ -3,17 +3,37 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <iostream>
 #include <string.h>
 #include <zcm/zcm-cpp.hpp>
 #include <Navio2/RCInput_Navio2.h>
 #include <Common/Util.h>
 #include <memory>
 //message types:
-#include <../message_types/rc_t.hpp>
+#include "../message_types/rc_t.hpp"
+#include "../message_types/status_t.hpp"
 
 #define READ_FAILED -1
 
 using std::string;
+
+class Handler
+{
+    public:
+        ~Handler() = default;
+
+        status_t stat;
+
+        Handler()
+        {
+            stat.should_exit = 0;
+        }
+
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        {
+            stat = *msg;
+        }
+};
 
 std::unique_ptr <RCInput> get_rcin()
 {
@@ -25,6 +45,10 @@ int main()
 {
     //initialize ZCM
     zcm::ZCM zcm {"ipc"};
+
+    //subscribe to incoming channels:
+    Handler handlerObject;
+    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
 
     //initialize message objects
     rc_t rc_in;
@@ -38,7 +62,7 @@ int main()
 
     zcm.start();
     //main loop
-    while (1)
+    while (!handlerObject.stat.should_exit)
     {
         //read in each of the 8 channels:
         for (int i = 0; i<8; i++){
@@ -54,6 +78,9 @@ int main()
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);
     }
+
+    std::cout << "rc_in module exiting..." << std::endl;
+    //pass a message back to monitor as well (feature to add)
 
     zcm.stop();
 

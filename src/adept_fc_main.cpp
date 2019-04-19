@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     bool hitl = false;
     ifstream config_stream;
 
-    config_stream.open("adept_fc.config");
+    config_stream.open("config_files/adept_fc.config");
     config_stream >> line[0] >> line[1];
     hitl = !line[1].compare("true");
     config_stream.close();
@@ -83,7 +83,8 @@ int main(int argc, char *argv[])
     run_process(exe_path);
     std::cout<< "pwm_out started" << std::endl;
 
-    //launch system monitor
+    //launch system monitor, consume this thread:
+    execl ("bin/monitor", NULL,NULL);
 
     return 0;
 }

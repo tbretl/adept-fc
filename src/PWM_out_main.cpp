@@ -8,22 +8,36 @@
 #include "Navio2/RCOutput_Navio2.h"
 #include "Common/Util.h"
 #include <memory>
+//message types:
 #include "../message_types/pwm_t.hpp"
 #include "../message_types/rc_t.hpp"
 #include "../message_types/actuators_t.hpp"
+#include "../message_types/status_t.hpp"
 
 using std::string;
 
 class Handler
 {
     public:
-        ~Handler() {}
+        ~Handler() = default;
 
         rc_t rc_in = {};
+        status_t stat;
 
-        void read_messages(const zcm::ReceiveBuffer* rbuf,const string& chan,const rc_t *msg)
+        Handler()
+        {
+            stat.should_exit = 0;
+        }
+
+
+        void read_rc(const zcm::ReceiveBuffer* rbuf,const string& chan,const rc_t *msg)
         {
             rc_in = *msg;
+        }
+
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        {
+            stat = *msg;
         }
 };
 
@@ -49,8 +63,9 @@ int main(int argc, char *argv[])
     pwm_t pwm_comm;
 
     //subscribe to incoming channels:
-    Handler rc_handle;
-    zcm.subscribe("RC_IN",&Handler::read_messages,&rc_handle);
+    Handler handlerObject;
+    zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
+    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
 
     //initialize PWM outputs
     //************************************************************
@@ -90,11 +105,11 @@ int main(int argc, char *argv[])
 
     zcm.start();
 
-    while (1) {
+    while (!handlerObject.stat.should_exit) {
 
         //mixing logic here - manual scaling of rc_in vs. scaling of autopilot actuators depending on operating state
-        pwm_comm.pwm_out[1] = rc_handle.rc_in.rc_chan[1]; //for testing purposes
-        pwm_comm.pwm_out[0] = rc_handle.rc_in.rc_chan[0]; //for testing purposes
+        pwm_comm.pwm_out[1] = handlerObject.rc_in.rc_chan[1]; //for testing purposes
+        pwm_comm.pwm_out[0] = handlerObject.rc_in.rc_chan[0]; //for testing purposes
 
         //command pwm values
         for (int i=0; i<=num_outputs; i++){
@@ -104,6 +119,9 @@ int main(int argc, char *argv[])
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
     }
+
+    std::cout << "pwm_out module exiting..." << std::endl;
+    //pass a message back to monitor as well (feature to add)
 
     zcm.stop();
 

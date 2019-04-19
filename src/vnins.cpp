@@ -61,13 +61,13 @@ bool is_valid_line(unsigned char* line) {
         printf("error: line has zero length\n%s\n", line);
         return false;
     }
-    
+
     // it starts with '$'
     if (line[0] != '$') {
         printf("error: line starts with %c and not with $\n%s\n", line[0], line);
         return false;
     }
-    
+
     // it has an '*'
     bool has_asterix = false;
     unsigned int i;
@@ -83,7 +83,7 @@ bool is_valid_line(unsigned char* line) {
         printf("error: line contains no *\n%s\n", line);
         return false;
     }
-    
+
     // it has the correct checksum
     unsigned long a = strtoul((char*) line + i + 1, NULL, 16);
     unsigned long b = (unsigned long) cs8;
@@ -91,7 +91,7 @@ bool is_valid_line(unsigned char* line) {
         printf("error: line checksum does not match (%lu, %lu)\n%s\n", a, b, line);
         return false;
     }
-    
+
     return true;
 }
 
@@ -103,10 +103,10 @@ int parseline(unsigned char* line, vnins_data_t *msg) {
         printf("error: line has length %d, should be %d\n", len, len_expected);
         return 1;
     }
-    
+
     // Terminate line at *
     line[len_expected - 5] = '\0';
-    
+
     // Get each field
     char* field;
     field = strtok((char*) line + 1, ",");
@@ -148,7 +148,7 @@ int parseline(unsigned char* line, vnins_data_t *msg) {
     msg->posuncertainty = strtod(field, NULL);
     field = strtok(NULL, ",");
     msg->veluncertainty = strtod(field, NULL);
-    
+
     return 0;
 }
 
@@ -159,22 +159,22 @@ int main()
         printf("error while opening port\n");
         return 1;
     }
-    
+
     // flush serial port
     RS232_flushRXTX(COMPORT);
     if (flush() != 0) {
         return 1;
     }
-    
+
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
-    
+
     // create objects to publish
     vnins_data_t msg;
-    
+
     // start zcm as a separate thread
     zcm.start();
-    
+
     unsigned char line[BUFFER_LENGTH];
     int result;
     while(1) {
@@ -183,22 +183,22 @@ int main()
             printf("WARNING: error while reading from port: %d\n", result);
             continue;
         }
-        
+
         if (! is_valid_line(line)) {
             continue;
         }
-        
+
         if (parseline(line, &msg) == 0) {
             zcm.publish("VNINS_DATA", &msg);
         }
     }
-    
+
     // stop zcm
     zcm.stop();
-    
+
     // close serial port
     RS232_CloseComport(COMPORT);
-    
+
     // exit
     return 0;
 }

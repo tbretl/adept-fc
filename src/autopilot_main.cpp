@@ -2,25 +2,38 @@
 //Aaron Perry, 4/1/2019
 
 #include <stdio.h>
+#include <iostream>
 #include <unistd.h>
 #include <string.h>
 #include <zcm/zcm-cpp.hpp>
-//input message types:
+//imessage types:
 #include "../message_types/sensor_data_t.hpp"
-//output message types:
 #include "../message_types/actuators_t.hpp"
+#include "../message_types/status_t.hpp"
+
 using std::string;
 
 class Handler
 {
     public:
-        ~Handler() {}
+        ~Handler() = default;
 
         sensor_data_t sens = {};
+        status_t stat;
 
-        void read_messages(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
+        Handler()
+        {
+            stat.should_exit = 0;
+        }
+
+        void read_sens(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
         {
             sens = *msg;
+        }
+
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        {
+            stat = *msg;
         }
 };
 
@@ -35,14 +48,14 @@ int main(int argc, char *argv[])
 
     //subscribe to incoming channels:
     Handler handlerObject;
-    zcm.subscribe("SENSOR_DATA",&Handler::read_messages,&handlerObject);
+    zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&handlerObject);
+    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
 
     //run zcm as a separate thread:
     zcm.start();
 
     //control loop:
-    while (1) {
-
+    while (!handlerObject.stat.should_exit) {
         usleep(1000000);
 
         //compute actuator values:
@@ -61,6 +74,9 @@ int main(int argc, char *argv[])
         //publish the actuator values:
         zcm.publish("ACTUATORS", &acts);
     }
+
+    std::cout << "autopilot module exiting..." << std::endl;
+    //pass a message back to monitor as well (feature to add)
 
     zcm.stop();
 

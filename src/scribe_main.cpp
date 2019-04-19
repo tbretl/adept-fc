@@ -8,10 +8,11 @@
 #include <cstring>
 #include <zcm/zcm-cpp.hpp>
 #include <fstream>
-//input message types:
+//message types:
 #include "../message_types/sensor_data_t.hpp"
-//output message types:
 #include "../message_types/actuators_t.hpp"
+#include "../message_types/status_t.hpp"
+
 using std::string;
 
 class Handler
@@ -25,15 +26,18 @@ class Handler
         char fileName[20];
         char dataline[50];//need to fix: If this is too small, will result in segmentation fault
 
+        status_t stat;
+
         Handler()
         {
+            stat.should_exit = 0;
             //sequencing file numbers:
-            std::ifstream seqFile ("sequence.dat", std::ifstream::in);
+            std::ifstream seqFile ("config_files/sequence.dat", std::ifstream::in);
             int fileNum;
             seqFile >> fileNum;
             seqFile.close();
             fileNum++;
-            std::ofstream seqFile2 ("sequence.dat");
+            std::ofstream seqFile2 ("config_files/sequence.dat");
             seqFile2 << fileNum;
             seqFile2.close();
 
@@ -43,11 +47,14 @@ class Handler
 
         void read_messages(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
         {
-//            sprintf(dataline,"%.2f, %.2f, %.2f\n",msg->a_x,msg->a_y, msg->a_z);
             logfile.open(fileName,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
             logfile << msg->a_x << " " << msg->a_y << " " << msg->a_z << "\n";
-//            logfile.write(dataline,sizeof(dataline));
             logfile.close();
+        }
+
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        {
+            stat = *msg;
         }
 
     private:
@@ -64,15 +71,17 @@ int main(int argc, char *argv[])
     //subscribe to incoming channels:
     Handler handlerObject;
     zcm.subscribe("SENSOR_DATA",&Handler::read_messages,&handlerObject);
+    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
 
-    //run zcm as a separate thread:
     zcm.start();
 
-    while (1) {
-        //Possibility of adding start/stop commands here
-        //use an infinite loop for now to keep logging going
-        //consider interaction with telemetry radio?
+    while (!handlerObject.stat.should_exit)
+    {
+        //run the code
     }
+
+    std::cout << "scribe module exiting..." << std::endl;
+    //pass a message back to monitor as well (feature to add)
 
     zcm.stop();
 
