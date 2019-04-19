@@ -246,4 +246,7 @@ dmypy.json
 /bin
 
 ### Project file ### 
-*.cbp 
+*.cbp
+*.layout
+
+ 
