@@ -9,6 +9,7 @@
 #include "Navio2/RCOutput_Navio2.h"
 #include "Common/Util.h"
 #include <memory>
+#include <chrono>
 //message types:
 #include "pwm_t.hpp"
 #include "rc_t.hpp"
@@ -16,6 +17,22 @@
 #include "status_t.hpp"
 
 using std::string;
+
+struct Dep_ctrl
+{
+	float elevator;
+	float aileron;
+  float rudder;
+	float T1;
+	float T2;
+	float T3;
+	float T4;
+	float T5;
+	float T6;
+	float T7;
+	float T8;
+};
+
 
 class Handler
 {
@@ -54,6 +71,53 @@ int output_scaling(const int& in_val, const double& s_min, const double& s_max, 
     return (s_min + (s_max-s_min)/(in_max-in_min)*(in_val-in_min));
 }
 
+//lookup table function
+void get_ctrl(int T_Lim, double current_time, double *time_vect, double *ele, double *ail, double *rud, double thr[][8], double ctr_out[11])
+{
+
+  if(current_time<T_Lim)
+  { // use the multisine manuver as a delta to the manual controls
+    bool foundtime = false;
+    int i = 0;
+    do { //loop through the time vector untill we have found the matching discrete value
+
+      i++;
+
+      if (current_time<time_vect[i]) { //we have found the correct time bin
+        foundtime = true;
+        //set the outputs:
+        ctr_out[0]= ail[i-1];
+        ctr_out[1] = ele[i-1];
+        ctr_out[2] = rud[i-1];
+        ctr_out[3] = thr[i-1][0];
+        ctr_out[4] = thr[i-1][1];
+		ctr_out[5] = thr[i-1][2];
+		ctr_out[6] = thr[i-1][3];
+		ctr_out[7] = thr[i-1][4];
+		ctr_out[8] = thr[i-1][5];
+		ctr_out[9] = thr[i-1][6];
+		ctr_out[10] = thr[i-1][7];
+      }
+    } while(!foundtime);
+  }
+    else{ //if the maneuver is done, apply a delta of 0.0 to the manual controls
+        ctr_out[0]= 0.0;
+        ctr_out[1] = 0.0;
+        ctr_out[2] = 0.0;
+        ctr_out[3] = 0.0;
+        ctr_out[4] = 0.0;
+		ctr_out[5] = 0.0;
+		ctr_out[6] = 0.0;
+		ctr_out[7] = 0.0;
+		ctr_out[8] = 0.0;
+		ctr_out[9] = 0.0;
+		ctr_out[10] = 0.0;
+  }
+  return;
+}
+
+
+
 int main(int argc, char *argv[])
 {
     //load configuration variables
@@ -69,6 +133,8 @@ int main(int argc, char *argv[])
     int rc_max = 1995;
     int mode_chan = 4;
     int mode_cutoff = 1500;
+    int maneuver_chan = 5;
+    int gain_chan = 6;
     std::ifstream config_stream;
 
 
@@ -82,8 +148,67 @@ int main(int argc, char *argv[])
     config_stream >> dump >> rc_max;
     config_stream >> dump >> mode_chan;
     config_stream >> dump >> mode_cutoff;
+    config_stream >> dump >> maneuver_chan;
+    config_stream >> dump >> gain_chan;
     config_stream.close();
     mode_chan --;
+    maneuver_chan --;
+    gain_chan --;
+
+    //load flight test maneuver:
+	std::string surface;
+	//float k_ele[3] = {0}, k_ail[3] = {0}, k_rud[3] = {0},k_thr[3]={0};
+	float k[3][11] = {0};
+	int N = 501;
+	int Time_Limit = 10;
+
+    std::ifstream in_stream,gain_stream;
+    gain_stream.open("gains_multisine.dat");
+    //read elevator gains
+    gain_stream >> surface >> k[0][0] >> surface >> k[1][0] >> surface >> k[2][0];
+	//Read aileron gains
+    gain_stream >> surface >> k[0][1] >> surface >> k[1][1] >> surface >> k[2][1];
+	//Read rudder gains
+    gain_stream >> surface >> k[0][2] >> surface >> k[1][2] >> surface >> k[2][2];
+	//Read throttle gains
+	gain_stream >> surface >> k[0][3] >> surface >> k[1][3] >> surface >> k[2][3];
+    gain_stream.close();
+	gain_stream.clear();
+
+    for (int i=4; i<11; i++)
+    {
+        k[0][i] = k[0][3];
+        k[1][i] = k[1][3];
+        k[2][i] = k[2][3];
+    }
+
+  //read the number of lines from the discrete multisine file:
+	in_stream.open("multisine.dat");
+    in_stream >> N;
+	in_stream >> Time_Limit;
+	double elevator[N],aileron[N],rudder[N],time_vect[N], Delta_Throttle[N][8];
+
+    for(int i=0; i<N; i++)
+    {
+        in_stream >> time_vect[i] >> elevator[i] >> rudder[i] >> aileron[i]
+            >> Delta_Throttle[i][0] >> Delta_Throttle[i][1] >> Delta_Throttle[i][2]
+            >> Delta_Throttle[i][3] >> Delta_Throttle[i][4] >> Delta_Throttle[i][5]
+            >> Delta_Throttle[i][6] >> Delta_Throttle[i][7];
+    }
+    in_stream.close();
+	in_stream.clear();
+    //struct Dep_ctrl multisine_output = {};
+    //memset(&multisine_output, 0, sizeof(multisine_output));
+    double multisine_output[11];
+    int gainpick = 0;
+
+
+    //initialize timing variables
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> _T; //Local time since mode switch
+    int prev_status = 0;
+
+
 
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
@@ -146,6 +271,30 @@ int main(int argc, char *argv[])
 
     while (!handlerObject.stat.should_exit)
     {
+        //maneuver lookup
+        std::cout << handlerObject.rc_in.rc_chan[maneuver_chan] << std::endl;
+        if (handlerObject.rc_in.rc_chan[maneuver_chan] > 1500)
+        {
+            //if mode was just switched to DEP:
+            if(prev_status < 1500)
+            {
+                start = std::chrono::high_resolution_clock::now();
+                std::cout << "Starting maneuver" << std::endl;
+            }
+            //Compute time since mode switch:
+            _T = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start);
+
+            get_ctrl(Time_Limit, _T.count(),time_vect,elevator,aileron,rudder,Delta_Throttle,multisine_output);
+
+        }
+        else
+        {
+            //normal operation
+            memset(&multisine_output, 0, sizeof(multisine_output));
+        }
+
+
+        gainpick = 0; //fix logic for gain handlerObject.rc_in.rc_chan[gain_chan];
 
 
         if (handlerObject.stat.armed)
@@ -154,7 +303,7 @@ int main(int argc, char *argv[])
             {
                  for (int i=0; i<=num_outputs-1; i++)
                 {
-                    pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                    pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                     //superimpose maneuver:
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
@@ -163,7 +312,7 @@ int main(int argc, char *argv[])
             {
                 for (int i=0; i<=num_outputs-1; i++)
                 {
-                    pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                    pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                     //superimpose maneuver:
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
@@ -187,6 +336,7 @@ int main(int argc, char *argv[])
 
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
+        prev_status = handlerObject.rc_in.rc_chan[maneuver_chan];
     }
 
     std::cout << "pwm_out module exiting..." << std::endl;
