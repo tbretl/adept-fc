@@ -157,7 +157,6 @@ int main(int argc, char *argv[])
                     pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                     //superimpose maneuver:
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
-                    std::cout << "manual flight mode" << std::endl;
                 }
             }
             else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff) //auto flight mode:
@@ -167,7 +166,6 @@ int main(int argc, char *argv[])
                     pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                     //superimpose maneuver:
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
-                    std::cout << "auto flight mode" << std::endl;
                 }
             }
         }

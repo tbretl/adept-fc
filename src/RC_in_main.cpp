@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
 #include <string.h>
 #include <zcm/zcm-cpp.hpp>
 #include <Navio2/RCInput_Navio2.h>
@@ -43,6 +44,17 @@ std::unique_ptr <RCInput> get_rcin()
 
 int main()
 {
+    //load configuration
+    int rc_fail_servo = 1500;
+    int rc_fail_esc = 1000;
+    string dump;
+    std::ifstream config_stream;
+
+    config_stream.open("config_files/rc_in.config");
+    config_stream >> dump >> rc_fail_servo;
+    config_stream >> dump >> rc_fail_esc;
+    config_stream.close();
+
     //initialize ZCM
     zcm::ZCM zcm {"ipc"};
 
@@ -54,7 +66,8 @@ int main()
     rc_t rc_in;
 
     //initialize RC input
-    if (check_apm()) {
+    if (check_apm())
+    {
         return 1;
     }
     auto rcin = get_rcin();
@@ -65,12 +78,28 @@ int main()
     while (!handlerObject.stat.should_exit)
     {
         //read in each of the 8 channels:
-        for (int i = 0; i<8; i++){
+        for (int i = 0; i<8; i++)
+        {
 
             rc_in.rc_chan[i]=rcin->read(i);
 
-            if (rc_in.rc_chan[i] == READ_FAILED){
-                printf("Read failed on channel %i\n", i);
+            if ((rc_in.rc_chan[i] == READ_FAILED) || (rc_in.rc_chan[i]<500))
+            {
+                //failsafe logic
+                if (i<3)
+                {
+                    rc_in.rc_chan[i] = rc_fail_servo;
+                }
+                else if (i==3)
+                {
+                    rc_in.rc_chan[i] = rc_fail_esc;
+                }
+                else if (i==4)//consider removing hard code on this one
+                {
+                    rc_in.rc_chan[i] = 1000; //manual flight mode
+                }
+                //log an error message
+                std::cout << "error: RC read fail" << std::endl;
             }
 
         }
