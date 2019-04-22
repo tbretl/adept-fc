@@ -9,11 +9,11 @@
 #include <string.h>
 #include "zcm/zcm-cpp.hpp"
 //message types:
-#include "../message_types/pwm_t.hpp"
-#include "../message_types/rc_t.hpp"
-#include "../message_types/actuators_t.hpp"
-#include "../message_types/status_t.hpp"
-#include "../message_types/sensor_data_t.hpp"
+#include "pwm_t.hpp"
+#include "rc_t.hpp"
+#include "actuators_t.hpp"
+#include "status_t.hpp"
+#include "sensor_data_t.hpp"
 
 using std::string;
 
@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
     //structures to publish:
     status_t sys_status;
     sys_status.should_exit = 0;
+    sys_status.armed = 0;
 
 
     //run zcm as a separate thread:
@@ -93,9 +94,13 @@ int main(int argc, char* argv[])
             std::cout << "list of modules and commands:" << std::endl;
             std::cout << "<all> - commands sent to all modules:" << std::endl;
             std::cout << "      <exit> - shuts everything down" << std::endl;
-            std::cout << "<monitor> :" << std::endl;
+            std::cout << "<monitor>" << std::endl;
             std::cout << "      <exit> - shuts monitor down" << std::endl;
             std::cout << "      <check> - performs pre-flight check" << std::endl;
+            std::cout << "<pwm>" << std:: endl;
+            std::cout << "      <arm> - enables pwm outputs" << std::endl;
+            std::cout << "      <disarm> - sets pwm outputs to disarm value" << std::endl;
+
 
         }
         else if (!user_data[0].compare("all"))
@@ -115,6 +120,21 @@ int main(int argc, char* argv[])
             {
                 std::cout << "Exiting monitor: goodbye!." << std::endl;
                 exit_flag = 1;
+            }
+        }
+        else if (!user_data[0].compare("pwm"))
+        {
+            if (!user_data[1].compare("arm"))
+            {
+                sys_status.armed = 1;
+                std::cout << "pwm outputs armed." << std::endl;
+                zcm.publish("STATUS",&sys_status);
+            }
+            else if (!user_data[1].compare("disarm"))
+            {
+                sys_status.armed = 0;
+                std::cout << "pwm outputs disarmed." << std::endl;
+                zcm.publish("STATUS",&sys_status);
             }
         }
     }

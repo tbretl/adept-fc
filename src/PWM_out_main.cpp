@@ -4,15 +4,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include "Navio2/PWM.h"
 #include "Navio2/RCOutput_Navio2.h"
 #include "Common/Util.h"
 #include <memory>
 //message types:
-#include "../message_types/pwm_t.hpp"
-#include "../message_types/rc_t.hpp"
-#include "../message_types/actuators_t.hpp"
-#include "../message_types/status_t.hpp"
+#include "pwm_t.hpp"
+#include "rc_t.hpp"
+#include "actuators_t.hpp"
+#include "status_t.hpp"
 
 using std::string;
 
@@ -27,6 +28,7 @@ class Handler
         Handler()
         {
             stat.should_exit = 0;
+            stat.armed = 0;
         }
 
 
@@ -47,14 +49,36 @@ std::unique_ptr <RCOutput> get_rcout()
         return ptr;
 }
 
+int output_scaling(const int& in_val, const double& s_min, const double& s_max, const int& in_min, const int& in_max)
+{
+    return (s_min + (s_max-s_min)/(in_max-in_min)*(in_val-in_min));
+}
+
 int main(int argc, char *argv[])
 {
     //load configuration variables
-    int num_outputs = 11; //read in from config file
-    int pwm_freq = 50; //read in from config file -potentially different per channel
-    int disarm_pwm_all = 1500; //read from config file
-    int servo_min = 1100; //read from config file
-    int servo_max = 1900; //read from config file
+    string dump;
+    int mapping[11] = {0,1,2,3,3,3,3,3,3,3,3};
+    int num_outputs = 11;
+    int pwm_freq = 50;
+    int disarm_pwm_servo = 1500;
+    int disarm_pwm_esc   = 1100;
+    int servo_min = 1100;
+    int servo_max = 1900;
+    int rc_min = 1000;
+    int rc_max = 1995;
+    std::ifstream config_stream;
+
+
+    config_stream.open("config_files/pwm_out.config");
+    config_stream >> dump >> pwm_freq;
+    config_stream >> dump >> disarm_pwm_servo;
+    config_stream >> dump >> disarm_pwm_esc;
+    config_stream >> dump >> servo_min;
+    config_stream >> dump >> servo_max;
+    config_stream >> dump >> rc_min;
+    config_stream >> dump >> rc_max;
+    config_stream.close();
 
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
@@ -85,19 +109,25 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        pwm->set_frequency(i, pwm_freq); //want to include pwm rate as a config variable
+        pwm->set_frequency(i, pwm_freq);
 
         if ( !(pwm->enable(i)) ) {
             return 1;
         }
 
-        //printf("Initialized channel %i\n",i+1);
         usleep(1000000); //without this, initialization of multiple channels fails
     }
 
-    //set disarm pwm values - need to include disarm logic
+    //set disarm pwm values
     for (int i = 0; i<=num_outputs; i++){
-       pwm_comm.pwm_out[i] = disarm_pwm_all;
+       if (i<=2)
+       {
+            pwm_comm.pwm_out[i] = disarm_pwm_servo;
+       }
+       else
+       {
+            pwm_comm.pwm_out[i] = disarm_pwm_esc;
+       }
     }
 
 	//done initilizing PWM outputs
@@ -105,16 +135,42 @@ int main(int argc, char *argv[])
 
     zcm.start();
 
-    while (!handlerObject.stat.should_exit) {
+    while (!handlerObject.stat.should_exit)
+    {
 
-        //mixing logic here - manual scaling of rc_in vs. scaling of autopilot actuators depending on operating state
-        pwm_comm.pwm_out[1] = handlerObject.rc_in.rc_chan[1]; //for testing purposes
-        pwm_comm.pwm_out[0] = handlerObject.rc_in.rc_chan[0]; //for testing purposes
+        //add in mode logic, maneuver logic
 
-        //command pwm values
-        for (int i=0; i<=num_outputs; i++){
-            pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
-        };
+        if (handlerObject.stat.armed)
+        {
+            for (int i=0; i<=num_outputs-1; i++)
+            {
+                //manual flight mode:
+                pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+
+                //autopilot flight mode:
+
+                //superimpose maneuver:
+
+                //send commands:
+                pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+            }
+
+        }
+        else
+        {
+            for (int i = 0; i<=num_outputs; i++)
+            {
+                if (i<=2)
+                {
+                    pwm_comm.pwm_out[i] = disarm_pwm_servo;
+                }
+                else
+                {
+                    pwm_comm.pwm_out[i] = disarm_pwm_esc;
+                }
+            }
+
+        }
 
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);

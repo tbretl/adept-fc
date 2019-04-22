@@ -10,8 +10,8 @@
 #include <Common/Util.h>
 #include <memory>
 //message types:
-#include "../message_types/rc_t.hpp"
-#include "../message_types/status_t.hpp"
+#include "rc_t.hpp"
+#include "status_t.hpp"
 
 #define READ_FAILED -1
 
@@ -72,9 +72,9 @@ int main()
             if (rc_in.rc_chan[i] == READ_FAILED){
                 printf("Read failed on channel %i\n", i);
             }
-            //else {printf("Channel %i period (ms): %i\n",rc_in.rc_chan[i]);}
 
         }
+
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);
     }

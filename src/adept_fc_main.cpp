@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     run_process(exe_path);
     std::cout<< "pwm_out started" << std::endl;
 
-    //launch system monitor, consume this thread:
+    //launch system monitor, consume this thread: -only include this if software will not be auto-starting.
     execl ("bin/monitor", NULL,NULL);
 
     return 0;

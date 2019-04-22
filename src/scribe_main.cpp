@@ -9,9 +9,9 @@
 #include <zcm/zcm-cpp.hpp>
 #include <fstream>
 //message types:
-#include "../message_types/sensor_data_t.hpp"
-#include "../message_types/actuators_t.hpp"
-#include "../message_types/status_t.hpp"
+#include "sensor_data_t.hpp"
+#include "actuators_t.hpp"
+#include "status_t.hpp"
 
 using std::string;
 
