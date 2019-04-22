@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
     int servo_max = 1900;
     int rc_min = 1000;
     int rc_max = 1995;
+    int mode_chan = 4;
+    int mode_cutoff = 1500;
     std::ifstream config_stream;
 
 
@@ -78,7 +80,10 @@ int main(int argc, char *argv[])
     config_stream >> dump >> servo_max;
     config_stream >> dump >> rc_min;
     config_stream >> dump >> rc_max;
+    config_stream >> dump >> mode_chan;
+    config_stream >> dump >> mode_cutoff;
     config_stream.close();
+    mode_chan --;
 
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
@@ -103,15 +108,18 @@ int main(int argc, char *argv[])
         std::cout << "Not root. Please launch with Sudo." << std::endl;
     }
 
-    for (int i=0;i<=num_outputs; i++){
+    for (int i=0;i<=num_outputs; i++)
+    {
 
-        if( !(pwm->initialize(i)) ) {
+        if( !(pwm->initialize(i)) )
+        {
             return 1;
         }
 
         pwm->set_frequency(i, pwm_freq);
 
-        if ( !(pwm->enable(i)) ) {
+        if ( !(pwm->enable(i)) )
+        {
             return 1;
         }
 
@@ -119,7 +127,8 @@ int main(int argc, char *argv[])
     }
 
     //set disarm pwm values
-    for (int i = 0; i<=num_outputs; i++){
+    for (int i = 0; i<=num_outputs; i++)
+    {
        if (i<=2)
        {
             pwm_comm.pwm_out[i] = disarm_pwm_servo;
@@ -138,23 +147,29 @@ int main(int argc, char *argv[])
     while (!handlerObject.stat.should_exit)
     {
 
-        //add in mode logic, maneuver logic
 
         if (handlerObject.stat.armed)
         {
-            for (int i=0; i<=num_outputs-1; i++)
+            if (handlerObject.rc_in.rc_chan[mode_chan]<mode_cutoff) //manual flight mode:
             {
-                //manual flight mode:
-                pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
-
-                //autopilot flight mode:
-
-                //superimpose maneuver:
-
-                //send commands:
-                pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+                 for (int i=0; i<=num_outputs-1; i++)
+                {
+                    pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                    //superimpose maneuver:
+                    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+                    std::cout << "manual flight mode" << std::endl;
+                }
             }
-
+            else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff) //auto flight mode:
+            {
+                for (int i=0; i<=num_outputs-1; i++)
+                {
+                    pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                    //superimpose maneuver:
+                    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+                    std::cout << "auto flight mode" << std::endl;
+                }
+            }
         }
         else
         {
