@@ -41,6 +41,7 @@ class Handler
 
         rc_t rc_in = {};
         status_t stat;
+        double acts[11]={0};
 
         Handler()
         {
@@ -57,6 +58,17 @@ class Handler
         void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
         {
             stat = *msg;
+        }
+
+        void read_acts(const zcm::ReceiveBuffer* rbuf,const string& chan,const actuators_t *msg)
+        {
+            acts[0] = msg->da;
+            acts[1] = msg->de;
+            acts[2] = msg->dr;
+            for (int i=3;i<11;i++)
+            {
+                acts[i] = msg->dt[i-3];
+            }
         }
 };
 
@@ -131,11 +143,19 @@ int main(int argc, char *argv[])
     int servo_max = 1900;
     int rc_min = 1000;
     int rc_max = 1995;
+    float surface_max[11] = {0};
+    float surface_min[11] = {0};
     int mode_chan = 4;
     int mode_cutoff = 1500;
     int maneuver_chan = 5;
     int gain_chan = 6;
     std::ifstream config_stream;
+
+    for(int i=3;i<11;i++)
+    {
+        surface_min[i] = (float)rc_min;
+        surface_max[i] = (float)rc_max;
+    }
 
 
     config_stream.open("config_files/pwm_out.config");
@@ -144,6 +164,8 @@ int main(int argc, char *argv[])
     config_stream >> dump >> disarm_pwm_esc;
     config_stream >> dump >> servo_min;
     config_stream >> dump >> servo_max;
+    config_stream >> dump >> surface_min[0] >> surface_min[1] >> surface_min[2];
+    config_stream >> dump >> surface_max[0] >> surface_max[1] >> surface_max[2];
     config_stream >> dump >> rc_min;
     config_stream >> dump >> rc_max;
     config_stream >> dump >> mode_chan;
@@ -156,22 +178,16 @@ int main(int argc, char *argv[])
     gain_chan --;
 
     //load flight test maneuver:
-	std::string surface;
-	//float k_ele[3] = {0}, k_ail[3] = {0}, k_rud[3] = {0},k_thr[3]={0};
 	float k[3][11] = {0};
 	int N = 501;
 	int Time_Limit = 10;
 
     std::ifstream in_stream,gain_stream;
     gain_stream.open("gains_multisine.dat");
-    //read elevator gains
-    gain_stream >> surface >> k[0][0] >> surface >> k[1][0] >> surface >> k[2][0];
-	//Read aileron gains
-    gain_stream >> surface >> k[0][1] >> surface >> k[1][1] >> surface >> k[2][1];
-	//Read rudder gains
-    gain_stream >> surface >> k[0][2] >> surface >> k[1][2] >> surface >> k[2][2];
-	//Read throttle gains
-	gain_stream >> surface >> k[0][3] >> surface >> k[1][3] >> surface >> k[2][3];
+    gain_stream >> dump >> k[0][0] >> dump >> k[1][0] >> dump >> k[2][0];//Read aileron gains
+    gain_stream >> dump >> k[0][1] >> dump >> k[1][1] >> dump >> k[2][1];//Read elevator gains
+    gain_stream >> dump >> k[0][2] >> dump >> k[1][2] >> dump >> k[2][2];//Read rudder gains
+	gain_stream >> dump >> k[0][3] >> dump >> k[1][3] >> dump >> k[2][3];//Read throttle gains
     gain_stream.close();
 	gain_stream.clear();
 
@@ -182,7 +198,6 @@ int main(int argc, char *argv[])
         k[2][i] = k[2][3];
     }
 
-  //read the number of lines from the discrete multisine file:
 	in_stream.open("multisine.dat");
     in_stream >> N;
 	in_stream >> Time_Limit;
@@ -197,18 +212,14 @@ int main(int argc, char *argv[])
     }
     in_stream.close();
 	in_stream.clear();
-    //struct Dep_ctrl multisine_output = {};
-    //memset(&multisine_output, 0, sizeof(multisine_output));
-    double multisine_output[11];
-    int gainpick = 0;
-
 
     //initialize timing variables
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> _T; //Local time since mode switch
     int prev_status = 0;
     int man_run = 0;
-
+    double multisine_output[11];
+    int gainpick = 0;
 
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
@@ -220,7 +231,7 @@ int main(int argc, char *argv[])
     Handler handlerObject;
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
-
+    zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
     //initialize PWM outputs
     //************************************************************
     auto pwm = get_rcout();
@@ -294,9 +305,23 @@ int main(int argc, char *argv[])
         }
 
         prev_status = man_run;
-        gainpick = 0; //fix logic for gain handlerObject.rc_in.rc_chan[gain_chan];
 
 
+        //get maneuver gain:
+        if (handlerObject.rc_in.rc_chan[gain_chan] > 1750)
+        {
+            gainpick = 2;
+        }
+        else if (handlerObject.rc_in.rc_chan[gain_chan] < 1250)
+        {
+            gainpick = 0;
+        }
+        else
+        {
+            gainpick = 1;
+        }
+
+        //pwm output logic
         if (handlerObject.stat.armed)
         {
             if (handlerObject.rc_in.rc_chan[mode_chan]<mode_cutoff) //manual flight mode:
@@ -311,12 +336,12 @@ int main(int argc, char *argv[])
             {
                 for (int i=0; i<=num_outputs-1; i++)
                 {
-                    pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                    pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.acts[i],servo_min,servo_max,surface_min[i],surface_max[i]);
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
         }
-        else
+        else //disarmed
         {
             for (int i = 0; i<=num_outputs; i++)
             {
