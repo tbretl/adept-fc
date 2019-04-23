@@ -91,15 +91,16 @@ int main(int argc, char* argv[])
 
         if (!user_data[0].compare("help"))
         {
-            std::cout << "list of modules and commands:" << std::endl;
+            std::cout << "\n\n\n\n\n";
+            std::cout << "list of modules and commands: \n" << std::endl;
             std::cout << "<all> - commands sent to all modules:" << std::endl;
-            std::cout << "      <exit> - shuts everything down" << std::endl;
+            std::cout << "      <exit> - shuts everything down\n" << std::endl;
             std::cout << "<monitor>" << std::endl;
             std::cout << "      <exit> - shuts monitor down" << std::endl;
-            std::cout << "      <check> - performs pre-flight check" << std::endl;
+            std::cout << "      <check> - performs pre-flight check\n" << std::endl;
             std::cout << "<pwm>" << std:: endl;
             std::cout << "      <arm> - enables pwm outputs" << std::endl;
-            std::cout << "      <disarm> - sets pwm outputs to disarm value" << std::endl;
+            std::cout << "      <disarm> - sets pwm outputs to disarm value\n" << std::endl;
 
 
         }

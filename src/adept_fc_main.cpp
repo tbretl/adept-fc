@@ -84,6 +84,8 @@ int main(int argc, char *argv[])
     std::cout<< "pwm_out started" << std::endl << "wait for init..." << "\n.\n.\n.\n";
     usleep(15000000);
 
+
+
     //launch system monitor, consume this thread: -only include this if software will not be auto-starting.
     execl ("bin/monitor", NULL,NULL);
 

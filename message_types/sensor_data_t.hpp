@@ -14,47 +14,21 @@
 class sensor_data_t
 {
     public:
-        double     x;
-
-        double     y;
-
-        double     z;
-
-        double     u;
-
-        double     v;
-
-        double     w;
-
-        double     a_x;
-
-        double     a_y;
-
-        double     a_z;
-
-        double     p;
-
-        double     q;
-
-        double     r;
-
-        double     phi;
-
-        double     theta;
-
-        double     psi;
-
         double     Vmag;
 
         double     alpha;
 
         double     beta;
 
-        double     lat;
+        double     l_ail;
 
-        double     lon;
+        double     l_ele;
 
-        double     alt;
+        double     r_ail;
+
+        double     r_ele;
+
+        double     rud;
 
         double     t_sent;
 
@@ -162,51 +136,6 @@ int sensor_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) co
     uint32_t pos = 0;
     int thislen;
 
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->x, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->y, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->z, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->u, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->v, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->w, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->a_x, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->a_y, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->a_z, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->p, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->q, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->r, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->phi, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->theta, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->psi, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->Vmag, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
@@ -216,13 +145,19 @@ int sensor_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) co
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->beta, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->lat, 1);
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->l_ail, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->lon, 1);
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->l_ele, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->alt, 1);
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->r_ail, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->r_ele, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->rud, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->t_sent, 1);
@@ -236,51 +171,6 @@ int sensor_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxl
     uint32_t pos = 0;
     int thislen;
 
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->x, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->y, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->z, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->u, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->v, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->w, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->a_x, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->a_y, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->a_z, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->p, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->q, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->r, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->phi, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->theta, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->psi, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->Vmag, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
@@ -290,13 +180,19 @@ int sensor_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxl
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->beta, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->lat, 1);
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->l_ail, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->lon, 1);
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->l_ele, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->alt, 1);
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->r_ail, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->r_ele, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->rud, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->t_sent, 1);
@@ -317,25 +213,12 @@ uint32_t sensor_data_t::_getEncodedSizeNoHash() const
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t sensor_data_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0x794879f655918b74LL;
+    uint64_t hash = (uint64_t)0x9104086c6c059668LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

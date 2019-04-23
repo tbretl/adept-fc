@@ -55,22 +55,21 @@ int main(int argc, char *argv[])
     zcm.start();
 
     //control loop:
-    while (!handlerObject.stat.should_exit) {
-        usleep(1000000);
-
+    while (!handlerObject.stat.should_exit)
+    {
         //compute actuator values:
         acts.de = 0;
         acts.da = 0;
         acts.dr = 0;
         acts.dt[0] = 0;
-        acts.dt[1] = handlerObject.sens.a_x;
+        acts.dt[1] = 0;
         acts.dt[2] = 0;
         acts.dt[3] = 0;
         acts.dt[4] = 0;
         acts.dt[5] = 0;
         acts.dt[6] = 0;
         acts.dt[7] = 0;
-
+        usleep(100000);
         //publish the actuator values:
         zcm.publish("ACTUATORS", &acts);
     }

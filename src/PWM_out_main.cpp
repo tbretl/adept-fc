@@ -18,22 +18,6 @@
 
 using std::string;
 
-struct Dep_ctrl
-{
-	float elevator;
-	float aileron;
-  float rudder;
-	float T1;
-	float T2;
-	float T3;
-	float T4;
-	float T5;
-	float T6;
-	float T7;
-	float T8;
-};
-
-
 class Handler
 {
     public:
@@ -285,10 +269,9 @@ int main(int argc, char *argv[])
     {
         //maneuver lookup
         man_run = handlerObject.rc_in.rc_chan[maneuver_chan];
-        if ( man_run >= 1500)
-        {
-            //if mode was just switched to DEP:
 
+        if (man_run >= 1500)
+        {
             if(prev_status < 1500)
             {
                 start = std::chrono::high_resolution_clock::now();
@@ -343,7 +326,7 @@ int main(int argc, char *argv[])
         }
         else //disarmed
         {
-            for (int i = 0; i<=num_outputs; i++)
+            for (int i = 0; i<=num_outputs-1; i++)
             {
                 if (i<=2)
                 {
@@ -361,10 +344,10 @@ int main(int argc, char *argv[])
         zcm.publish("PWM_OUT", &pwm_comm);
     }
 
-    std::cout << "pwm_out module exiting..." << std::endl;
-    //pass a message back to monitor as well (feature to add)
+
 
     zcm.stop();
-
+    std::cout << "pwm_out module exiting..." << std::endl;
+    //pass a message back to monitor as well (feature to add)
     return 0;
 }

@@ -46,7 +46,7 @@ int main()
     zcm::ZCM zcm {"ipc"};
 
     //create objects to publish
-    sensor_data_t msg;
+    sensor_data_t msg = {};
 
     //subscribe to channels
     Handler handlerObject;
@@ -59,9 +59,9 @@ int main()
     while(!handlerObject.stat.should_exit)
     {
         //publish a random number to the a_x sensor data
-        msg.a_x = 0;
-        msg.a_y = 1;
-        msg.a_z = 2;
+        msg.alpha = 3.0;
+        msg.beta = 2.0;
+        msg.Vmag = 1.0;
         zcm.publish("SENSOR_DATA", &msg);
         usleep(1000000);
 
