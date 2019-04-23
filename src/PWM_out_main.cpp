@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
     std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> _T; //Local time since mode switch
     int prev_status = 0;
-
+    int man_run = 0;
 
 
     //initialize zcm
@@ -264,6 +264,7 @@ int main(int argc, char *argv[])
        }
     }
 
+    std::cout << "pwm outputs initialized." << std::endl;
 	//done initilizing PWM outputs
     //************************************************************
 
@@ -272,20 +273,19 @@ int main(int argc, char *argv[])
     while (!handlerObject.stat.should_exit)
     {
         //maneuver lookup
-        std::cout << handlerObject.rc_in.rc_chan[maneuver_chan] << std::endl;
-        if (handlerObject.rc_in.rc_chan[maneuver_chan] > 1500)
+        man_run = handlerObject.rc_in.rc_chan[maneuver_chan];
+        if ( man_run >= 1500)
         {
             //if mode was just switched to DEP:
+
             if(prev_status < 1500)
             {
                 start = std::chrono::high_resolution_clock::now();
-                std::cout << "Starting maneuver" << std::endl;
             }
             //Compute time since mode switch:
             _T = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start);
 
             get_ctrl(Time_Limit, _T.count(),time_vect,elevator,aileron,rudder,Delta_Throttle,multisine_output);
-
         }
         else
         {
@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
             memset(&multisine_output, 0, sizeof(multisine_output));
         }
 
-
+        prev_status = man_run;
         gainpick = 0; //fix logic for gain handlerObject.rc_in.rc_chan[gain_chan];
 
 
@@ -304,7 +304,6 @@ int main(int argc, char *argv[])
                  for (int i=0; i<=num_outputs-1; i++)
                 {
                     pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
-                    //superimpose maneuver:
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
@@ -313,7 +312,6 @@ int main(int argc, char *argv[])
                 for (int i=0; i<=num_outputs-1; i++)
                 {
                     pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
-                    //superimpose maneuver:
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
@@ -336,7 +334,6 @@ int main(int argc, char *argv[])
 
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
-        prev_status = handlerObject.rc_in.rc_chan[maneuver_chan];
     }
 
     std::cout << "pwm_out module exiting..." << std::endl;
