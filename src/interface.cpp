@@ -25,6 +25,8 @@ class Handler
 
         Handler()
         {
+            memset(&acts, 0, sizeof(acts));
+            memset(&stat, 0, sizeof(stat));
             stat.should_exit = 0;
         }
 
@@ -47,6 +49,7 @@ int main()
 
     //create objects to publish
     sensor_data_t msg = {};
+    memset(&msg, 0, sizeof(msg));
 
     //subscribe to channels
     Handler handlerObject;

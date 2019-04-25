@@ -29,6 +29,8 @@ class Handler
 
         Handler()
         {
+            memset(&rc_in,0,sizeof(rc_in));
+            memset(&stat,0,sizeof(stat));
             stat.should_exit = 0;
             stat.armed = 0;
         }
@@ -210,6 +212,7 @@ int main(int argc, char *argv[])
 
     //structures to publish
     pwm_t pwm_comm;
+    memset(&pwm_comm, 0 , sizeof(pwm_comm));
 
     //subscribe to incoming channels:
     Handler handlerObject;

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define COMPORT			22 		// '/dev/ttyAMA0'
+#define COMPORT			22 		// '/dev/ttyAMA0' //is this fixed?
 #define BAUDRATE		115200
 #define BUFFER_LENGTH 	255
 #define MESSAGE_LENGTH  142
@@ -171,6 +171,7 @@ int main()
 
     // create objects to publish
     vnins_data_t msg;
+    memset(&msg,0,sizeof(msg));
 
     // start zcm as a separate thread
     zcm.start();
@@ -180,6 +181,7 @@ int main()
     while(1) {
         result = readline(line, BUFFER_LENGTH);
         if (result < 0) {
+        //log an error message:
             printf("WARNING: error while reading from port: %d\n", result);
             continue;
         }

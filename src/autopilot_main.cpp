@@ -23,6 +23,8 @@ class Handler
 
         Handler()
         {
+            memset(&sens,0,sizeof(sens));
+            memset(&stat, 0, sizeof(stat));
             stat.should_exit = 0;
         }
 
@@ -45,6 +47,7 @@ int main(int argc, char *argv[])
 
     //initialize message objects
     actuators_t acts;
+    memset(&acts, 0, sizeof(acts));
 
     //subscribe to incoming channels:
     Handler handlerObject;
@@ -61,7 +64,7 @@ int main(int argc, char *argv[])
         acts.de = 0;
         acts.da = 0;
         acts.dr = 0;
-        acts.dt[0] = 0;
+        acts.dt[0] = 1;
         acts.dt[1] = 0;
         acts.dt[2] = 0;
         acts.dt[3] = 0;

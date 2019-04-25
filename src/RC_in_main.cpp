@@ -27,6 +27,7 @@ class Handler
 
         Handler()
         {
+            memset(&stat,0,sizeof(stat));
             stat.should_exit = 0;
         }
 
@@ -64,6 +65,7 @@ int main()
 
     //initialize message objects
     rc_t rc_in;
+    memset(&rc_in,0,sizeof(rc_in));
 
     //initialize RC input
     if (check_apm())
@@ -99,7 +101,7 @@ int main()
                     rc_in.rc_chan[i] = 1000; //manual flight mode
                 }
                 //log an error message
-                std::cout << "error: RC read fail" << std::endl;
+                //std::cout << "error: RC read fail" << std::endl;
             }
 
         }
