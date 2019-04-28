@@ -5,13 +5,11 @@ bus = smbus.SMBus(1)
 address = 0x53
 
 bus.write_byte_data(address,0x07,0X00)
-bus.write_byte_data(address,0x07,0X01)
-bus.write_byte_data(address,0x07,0X00)
-time.sleep(0.5)
+time.sleep(3)
 
 while True:
-	data = bus.read_i2c_block_data(address,0x00,7)
-	print("ADC data : %d" %data)
-	time.sleep(0.5)
+	data = bus.read_i2c_block_data(address,0x00,16)
+	print(data)
+	time.sleep(3)
 	
 	
