@@ -77,17 +77,18 @@ int main(int argc, char* argv[])
 {
     int exit_flag = 0;
     string user_data[2];
+    string dump[2];
 
     //initialize zcm:
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to incoming channels:
-    Handler message_handler,h0,h1,h2,h3,h4,h5,h6;
-    zcm.subscribe("ACTUATORS",&Handler::read_acts,&message_handler);
-    zcm.subscribe("RC_IN",&Handler::read_rc,&message_handler);
-    zcm.subscribe("PWM_OUT",&Handler::read_pwm,&message_handler);
-    zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&message_handler);
-    zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&message_handler);
+    Handler handlerObject,h0,h1,h2,h3,h4,h5,h6;
+    zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
+    zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
+    zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
+    zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&handlerObject);
+    zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
     //module status channels:
     zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
     zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
@@ -104,6 +105,8 @@ int main(int argc, char* argv[])
     sys_status.should_exit = 0;
     sys_status.armed = 0;
 
+    bool allow_arm = false;
+
     zcm.start();
     zcm.flush();
     zcm.publish("STATUS",&sys_status);
@@ -113,6 +116,7 @@ int main(int argc, char* argv[])
         //get user input:
         std::cout <<"\n\n\nInput: <target> <action> (\"help !\" for options):" << std::endl;
         std::cin >> user_data[0] >> user_data[1];
+        std::cout << ">>" << user_data[0] << " " << user_data[1] << std::endl;
 
 
         if (!user_data[0].compare("help"))
@@ -220,14 +224,92 @@ int main(int argc, char* argv[])
                 std::cout << "Exiting monitor: goodbye!." << std::endl;
                 exit_flag = 1;
             }
+
+            if (!user_data[1].compare("check"))
+            {
+                std::cout << "Running pre-flight checks..." << std::endl;
+                //must enter name and other information to be logged
+                std::cout << "\nEnter research pilot name (first last):" <<std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                std::cout << "\nEnter FAA Part 107 pilot name (first last):" <<std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                std::cout << "\nEnter RC pilot name: (first last):" <<std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                std::cout << "\nEnter Date and time (mm/dd/yy 00:00):" << std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                //weather conditions
+                std::cout << "\nEnter ambient temperature in C:" << std::endl;
+                std::cin >> dump[0];
+                std::cout << "\n>>" << dump[0] << " degrees C." << std::endl;
+                std::cout << "\nEnter wind data (Velocity Direction):" << std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                //data checks
+                std::cout << "\n\nDisplaying sensor data: \nVN-200:\n" << std::endl;
+                for (int i=0; i<5; i++)
+                {
+                    std::cout << handlerObject.vn200.time << " " << handlerObject.vn200.week << " " << (int)handlerObject.vn200.tracking << " " << (int)handlerObject.vn200.gpsfix << " " << (int)handlerObject.vn200.error <<  " "
+                              << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.latitude << " "
+                              << handlerObject.vn200.longitude << " " << handlerObject.vn200.altitude << " " << handlerObject.vn200.vx << " " << handlerObject.vn200.vy << " "
+                              << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";
+                    usleep(500000);
+                }
+                std::cout << "\nADC data:\n" << std::endl;
+                for (int i=0; i<5; i++)
+                {
+                    std::cout << handlerObject.sens.Vmag << " " << handlerObject.sens.alpha << " " << handlerObject.sens.beta << " " << handlerObject.sens.l_ail << " "
+                              << handlerObject.sens.r_ail << " " << handlerObject.sens.l_ele << " " << handlerObject.sens.r_ele << " " << handlerObject.sens.rud << "\n";
+                    usleep(500000);
+                }
+                std::cout << "\nRC input:\n" << std::endl;
+                for (int i=0; i<5; i++)
+                {
+                    for (int j=0;j<8;j++)
+                    {
+                        std::cout << handlerObject.rc_in.rc_chan[j] << " ";
+                    }
+                    std::cout << "\n";
+                    usleep(500000);
+                }
+                std::cout << "\nPWM output:\n" << std::endl;
+                for (int i=0; i<5; i++)
+                {
+                    for (int j=0;j<8;j++)
+                    {
+                        std::cout << handlerObject.pwm.pwm_out[j] << " ";
+                    }
+                    std::cout << "\n";
+                    usleep(500000);
+                }
+                //consider guiding pilot through output checks with manual yes entry
+
+                std::cout << "\n\nWould you like to proceed with a flight? (y/n)" << std::endl;
+                std::cin >> dump[0];
+                if (!dump[0].compare("y"))
+                {
+                    allow_arm = true;
+                    std::cout << "\nGood luck!\n.\n.\n.\nyou may now arm the system.";
+                }
+            }
         }
         else if (!user_data[0].compare("pwm"))
         {
             if (!user_data[1].compare("arm"))
             {
-                sys_status.armed = 1;
-                std::cout << "pwm outputs armed.\nlogging started..." << std::endl;
-                zcm.publish("STATUS",&sys_status);
+                if (allow_arm)
+                {
+                    sys_status.armed = 1;
+                    std::cout << "pwm outputs armed.\nlogging started..." << std::endl;
+                    zcm.publish("STATUS",&sys_status);
+                }
+                else
+                {
+                    std::cout << "must perform preflight check first!" << std::endl;
+                }
             }
             else if (!user_data[1].compare("disarm"))
             {

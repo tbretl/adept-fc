@@ -20,7 +20,6 @@ class Handler
     public:
         ~Handler() = default;
 
-
         status_t stat;
 
         Handler()
