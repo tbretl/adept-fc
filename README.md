@@ -2,6 +2,14 @@
 
 This repository has the code that will run onboard the ADEPT-FC aircraft, to test flight control with distributed electric propulsion.
 
+# Running the autopilot
+1. build the software `make all` 
+2. type `sudo ./bin/adept_fc >&1 | tee outlog.dat` 
+
+This will print outputs to the terminal and to the file `outlog.dat` (usefull for flights when the terminal isn't attached). 
+
+
+
 # VN-200 Module with ZCM Integration
 
 Compile with this command in folder `/vnins`:
