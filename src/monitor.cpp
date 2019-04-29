@@ -55,7 +55,7 @@ class Handler
             acts = *msg;
         }
 
-        void read_status(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
         {
             stat = *msg;
         }
@@ -82,13 +82,20 @@ int main(int argc, char* argv[])
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to incoming channels:
-    Handler message_handler;
+    Handler message_handler,h0,h1,h2,h3,h4,h5,h6;
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&message_handler);
     zcm.subscribe("RC_IN",&Handler::read_rc,&message_handler);
     zcm.subscribe("PWM_OUT",&Handler::read_pwm,&message_handler);
     zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&message_handler);
-    zcm.subscribe("STATUS",&Handler::read_status,&message_handler);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&message_handler);
+    //module status channels:
+    zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
+    zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
+    zcm.subscribe("STATUS2",&Handler::read_stat,&h2);
+    zcm.subscribe("STATUS3",&Handler::read_stat,&h3);
+    zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
+    zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
+    zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
 
     //structures to publish:
     status_t sys_status;
@@ -97,9 +104,8 @@ int main(int argc, char* argv[])
     sys_status.should_exit = 0;
     sys_status.armed = 0;
 
-
-    //run zcm as a separate thread:
     zcm.start();
+    zcm.flush();
     zcm.publish("STATUS",&sys_status);
 
     while (!exit_flag)
@@ -114,7 +120,7 @@ int main(int argc, char* argv[])
             std::cout << "\n\n\n\n\n";
             std::cout << "list of modules and commands: \n" << std::endl;
             std::cout << "<all> - commands sent to all modules:" << std::endl;
-            std::cout << "      <exit> - shuts everything down\n" << std::endl;
+            std::cout << "      <exit> - shuts everything down" << std::endl;
             std::cout << "      <status> - lists module run status\n" << std::endl;
             std::cout << "<monitor>" << std::endl;
             std::cout << "      <exit> - shuts monitor down" << std::endl;
@@ -133,7 +139,78 @@ int main(int argc, char* argv[])
                 sys_status.should_exit = 1;
                 exit_flag = 1;
                 zcm.publish("STATUS",&sys_status);
-                usleep(5000000);
+                //wait for confirmation from modules:
+                while (!(h0.stat.module_status==0 && h1.stat.module_status==0 && h2.stat.module_status==0
+                      && h3.stat.module_status==0 && h4.stat.module_status==0 && h5.stat.module_status==0
+                      && h6.stat.module_status==0)){}
+                std::cout << "\nGoodbye.\n\n" ;
+            }
+            if (!user_data[1].compare("status"))
+            {
+                std::cout << "\nModule status:" << std::endl;
+                if (h0.stat.module_status==1)
+                {
+                    std::cout << "  rc_in: running" << std::endl;
+                }
+                else if (h0.stat.module_status==0)
+                {
+                    std::cout << "  rc_in: stopped" << std::endl;
+                }
+
+                if (h1.stat.module_status==1)
+                {
+                    std::cout << "  vn_200: running" << std::endl;
+                }
+                else if (h1.stat.module_status==0)
+                {
+                    std::cout << "  vn_200: stopped" << std::endl;
+                }
+
+                if (h2.stat.module_status==1)
+                {
+                    std::cout << "  adc: running" << std::endl;
+                }
+                else if (h2.stat.module_status==0)
+                {
+                    std::cout << "  adc: stopped" << std::endl;
+                }
+
+                if (h3.stat.module_status==1)
+                {
+                    std::cout << "  hitl: running" << std::endl;
+                }
+                else if (h3.stat.module_status==0)
+                {
+                    std::cout << "  hitl: stopped" << std::endl;
+                }
+
+                if (h4.stat.module_status==1)
+                {
+                    std::cout << "  autopilot: running" << std::endl;
+                }
+                else if (h4.stat.module_status==0)
+                {
+                    std::cout << "  autopilot: stopped" << std::endl;
+                }
+
+                if (h5.stat.module_status==1)
+                {
+                    std::cout << "  scribe: running" << std::endl;
+                }
+                else if (h5.stat.module_status==0)
+                {
+                    std::cout << "  scribe: stopped" << std::endl;
+                }
+
+                if (h6.stat.module_status==1)
+                {
+                    std::cout << "  pwm_out: running" << std::endl;
+                }
+                else if (h6.stat.module_status==0)
+                {
+                    std::cout << "  pwm_out: stopped" << std::endl;
+                }
+
             }
         }
         else if (!user_data[0].compare("monitor"))

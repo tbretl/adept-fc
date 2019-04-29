@@ -14,11 +14,11 @@
 class status_t
 {
     public:
-        int8_t     should_exit;
+        int16_t    should_exit;
 
-        int8_t     armed;
+        int16_t    armed;
 
-        int8_t     module_status;
+        int16_t    module_status;
 
     public:
         /**
@@ -124,13 +124,13 @@ int status_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) const
     uint32_t pos = 0;
     int thislen;
 
-    thislen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->should_exit, 1);
+    thislen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->should_exit, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->armed, 1);
+    thislen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->armed, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->module_status, 1);
+    thislen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->module_status, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     return pos;
@@ -141,13 +141,13 @@ int status_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen)
     uint32_t pos = 0;
     int thislen;
 
-    thislen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->should_exit, 1);
+    thislen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->should_exit, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->armed, 1);
+    thislen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->armed, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->module_status, 1);
+    thislen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->module_status, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     return pos;
@@ -156,15 +156,15 @@ int status_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen)
 uint32_t status_t::_getEncodedSizeNoHash() const
 {
     uint32_t enc_size = 0;
-    enc_size += __int8_t_encoded_array_size(NULL, 1);
-    enc_size += __int8_t_encoded_array_size(NULL, 1);
-    enc_size += __int8_t_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t status_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0xa32035204c1d55daLL;
+    uint64_t hash = (uint64_t)0x2357165c16d6e8c2LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

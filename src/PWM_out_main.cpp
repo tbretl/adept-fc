@@ -350,9 +350,11 @@ int main(int argc, char *argv[])
 
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
+        usleep(5000);
     }
 
-
+    module_stat.module_status = 0;
+    zcm.publish("STATUS6",&module_stat);
 
     zcm.stop();
     std::cout << "pwm_out module exiting..." << std::endl;

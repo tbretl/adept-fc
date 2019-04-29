@@ -114,7 +114,11 @@ int main()
 
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);
+        usleep(5000);
     }
+
+    module_stat.module_status = 0;
+    zcm.publish("STATUS0",&module_stat);
 
     std::cout << "rc_in module exiting..." << std::endl;
     //pass a message back to monitor as well (feature to add)

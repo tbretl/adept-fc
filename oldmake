@@ -35,8 +35,8 @@ autopilot: $(SRC)/autopilot_main.cpp
 hitl: $(SRC)/interface.cpp 
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/interface.cpp -o $(BIN)/hitl 
 
-monitor: $(SRC)/monitor.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor 
+monitor: $(SRC)/monsub.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monsub.cpp -o $(BIN)/monitor 
 
 clean:
 	rm -f $(BIN)/vnins

@@ -72,9 +72,12 @@ int main()
         msg.beta = 2.0;
         msg.Vmag = 1.0;
         zcm.publish("SENSOR_DATA", &msg);
-        usleep(1000000);
+        usleep(5000);
 
     }
+
+    module_stat.module_status = 0;
+    zcm.publish("STATUS3",&module_stat);
 
     std::cout << "HITL interface module exiting..." << std::endl;
     //pass a message back to monitor as well (feature to add)

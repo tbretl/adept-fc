@@ -265,6 +265,9 @@ int main()
     // close serial port
     RS232_CloseComport(COMPORT);
 
+    module_stat.module_status = 0;
+    zcm.publish("STATUS1",&module_stat);
+
     std::cout << "vn200 module exiting..." << std::endl;
 
     // exit

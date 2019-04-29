@@ -78,10 +78,13 @@ int main(int argc, char *argv[])
         acts.dt[5] = 0;
         acts.dt[6] = 0;
         acts.dt[7] = 0;
-        usleep(100000);
+        usleep(5000);
         //publish the actuator values:
         zcm.publish("ACTUATORS", &acts);
     }
+
+    module_stat.module_status = 0;
+    zcm.publish("STATUS4",&module_stat);
 
     std::cout << "autopilot module exiting..." << std::endl;
     //pass a message back to monitor as well (feature to add)

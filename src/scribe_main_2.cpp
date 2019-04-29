@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
     while (!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS5",&module_stat);
+        usleep(5000);
 
         if (handlerObject.stat.armed)
         {
@@ -171,6 +172,9 @@ int main(int argc, char *argv[])
                           << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";
         }
     }
+
+    module_stat.module_status = 0;
+    zcm.publish("STATUS5",&module_stat);
 
     std::cout << "scribe module exiting..." << std::endl;
     //pass a message back to monitor as well (feature to add)
