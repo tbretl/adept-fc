@@ -54,12 +54,18 @@ int main(int argc, char *argv[])
     zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&handlerObject);
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
 
+    //for bublishing stat of this module
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
     //run zcm as a separate thread:
     zcm.start();
 
     //control loop:
     while (!handlerObject.stat.should_exit)
     {
+        zcm.publish("STATUS4",&module_stat);
         //compute actuator values:
         acts.de = 0;
         acts.da = 0;

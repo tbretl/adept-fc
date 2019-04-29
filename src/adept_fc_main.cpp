@@ -10,22 +10,43 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <zcm/zcm-cpp.hpp>
+//message types:
+#include "status_t.hpp"
 
 using namespace std;
+
+class Handler
+{
+    public:
+        ~Handler() = default;
+
+        //create a message object which can be accessed outside of the function call
+        status_t stat;
+
+        Handler()
+        {
+            memset(&stat, 0, sizeof(stat));
+            stat.should_exit = 0;
+        }
+
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        {
+            stat = *msg;
+        }
+};
 
 void run_process (const char* path){
 
     pid_t child_pid;
 
-    /* Duplicate this process.  */
     child_pid = fork ();
 
     if (child_pid != 0){
-        /* This is the parent process. Do nothing.  */
+        //parent
     }
     else {
-        execl (path, NULL,NULL); // make sure memory allocation is appropriate in final application
-        /* The execvp function returns only if an error occurs.  */
+        execl (path, path, NULL);
         std::cout << "an error occurred in execl" << std::endl;
         abort ();
     }
@@ -35,6 +56,20 @@ void run_process (const char* path){
 
 int main(int argc, char *argv[])
 {
+    zcm::ZCM zcm {"ipc"};
+
+    //subscribe to channels
+    Handler h0,h1,h2,h3,h4,h5,h6;
+    zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
+    zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
+    zcm.subscribe("STATUS2",&Handler::read_stat,&h2);
+    zcm.subscribe("STATUS3",&Handler::read_stat,&h3);
+    zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
+    zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
+    zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
+
+    zcm.start();
+
     //read in configuration file:
     string line[2];
     bool hitl = false;
@@ -45,49 +80,47 @@ int main(int argc, char *argv[])
     hitl = !line[1].compare("true");
     config_stream.close();
 
-
-    char exe_path[50];
-
     //rc_in
-    strcpy(exe_path,"bin/rc_in");
-    run_process(exe_path);
+    run_process("bin/rc_in");
+    while (!(h0.stat.module_status==1)){}
     std::cout<< "rc_in started" << std::endl;
 
     if(!hitl){
-        //ADC sensor input
 
         //vectornav sensor input
-        strcpy(exe_path,"bin/vnins");
-        run_process(exe_path);
+        run_process("bin/vnins");
+        while (!(h1.stat.module_status==1)){} //vn20 module not publishing... fix
         std::cout << "VN-200 started" << std::endl;
+
+        //ADC sensor input
+
     }
     else {
         //HITL interface
-        strcpy(exe_path,"bin/interface");
-        run_process(exe_path);
+        run_process("bin/interface");
+        while (!(h3.stat.module_status==1)){}
         std::cout << "HITL interface started" << std::endl;
     }
 
     //autopilot
-    strcpy(exe_path,"bin/autopilot");
-    run_process(exe_path);
+    run_process("bin/autopilot");
+    while (!(h4.stat.module_status==1)){}
     std::cout << "autopilot started" << std::endl;
 
     //Logger module
-    strcpy(exe_path,"bin/scribe");
-    run_process(exe_path);
+    run_process("bin/scribe");
+    while (!(h5.stat.module_status==1)){}
     std::cout << "scribe started" << std::endl;
 
     //pwm_out
-    strcpy(exe_path,"bin/pwm_out");
-    run_process(exe_path);
-    std::cout<< "pwm_out started" << std::endl << "wait for init..." << "\n.\n.\n.\n";
-    usleep(15000000);
+    run_process("bin/pwm_out");
+    while (!(h6.stat.module_status==1)){}
+    std::cout<< "pwm_out started" << std::endl;
 
+    zcm.stop();
 
-
-    //launch system monitor, consume this thread: -only include this if software will not be auto-starting.
-    execl ("bin/monitor", NULL,NULL);
+    //launch system monitor, consume this thread:
+    execl ("bin/monitor", "bin/monitor",NULL);
 
     return 0;
 }

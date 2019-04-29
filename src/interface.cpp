@@ -56,11 +56,17 @@ int main()
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
 
+    //for bublishing stat of this module
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
 
     zcm.start();
 
     while(!handlerObject.stat.should_exit)
     {
+        zcm.publish("STATUS3",&module_stat);
         //publish a random number to the a_x sensor data
         msg.alpha = 3.0;
         msg.beta = 2.0;

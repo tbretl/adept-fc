@@ -59,6 +59,10 @@ int main()
     //initialize ZCM
     zcm::ZCM zcm {"ipc"};
 
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
     //subscribe to incoming channels:
     Handler handlerObject;
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
@@ -77,8 +81,10 @@ int main()
 
     zcm.start();
     //main loop
+
     while (!handlerObject.stat.should_exit)
     {
+        zcm.publish("STATUS0",&module_stat);
         //read in each of the 8 channels:
         for (int i = 0; i<8; i++)
         {

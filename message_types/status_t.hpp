@@ -18,7 +18,7 @@ class status_t
 
         int8_t     armed;
 
-        int8_t     flight_mode;
+        int8_t     module_status;
 
     public:
         /**
@@ -130,7 +130,7 @@ int status_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) const
     thislen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->armed, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->flight_mode, 1);
+    thislen = __int8_t_encode_array(buf, offset + pos, maxlen - pos, &this->module_status, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     return pos;
@@ -147,7 +147,7 @@ int status_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen)
     thislen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->armed, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->flight_mode, 1);
+    thislen = __int8_t_decode_array(buf, offset + pos, maxlen - pos, &this->module_status, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     return pos;

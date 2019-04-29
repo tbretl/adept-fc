@@ -2,5 +2,5 @@ struct status_t
 {
     int8_t should_exit;
     int8_t armed; 
-    int8_t flight_mode;    
+    int8_t module_status;     
 }

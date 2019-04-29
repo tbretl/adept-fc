@@ -214,11 +214,18 @@ int main(int argc, char *argv[])
     pwm_t pwm_comm;
     memset(&pwm_comm, 0 , sizeof(pwm_comm));
 
+
     //subscribe to incoming channels:
     Handler handlerObject;
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
+
+    //for bublishing stat of this module
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
     //initialize PWM outputs
     //************************************************************
     auto pwm = get_rcout();
@@ -246,7 +253,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        usleep(1000000); //without this, initialization of multiple channels fails
+        usleep(500000); //without this, initialization of multiple channels fails
     }
 
     //set disarm pwm values
@@ -261,15 +268,13 @@ int main(int argc, char *argv[])
             pwm_comm.pwm_out[i] = disarm_pwm_esc;
        }
     }
-
-    std::cout << "pwm outputs initialized." << std::endl;
-	//done initilizing PWM outputs
     //************************************************************
 
     zcm.start();
 
     while (!handlerObject.stat.should_exit)
     {
+        zcm.publish("STATUS6",&module_stat);
         //maneuver lookup
         man_run = handlerObject.rc_in.rc_chan[maneuver_chan];
 

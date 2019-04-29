@@ -129,10 +129,17 @@ int main(int argc, char *argv[])
     zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&handlerObject);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
 
+    //for bublishing stat of this module
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
     zcm.start();
 
     while (!handlerObject.stat.should_exit)
     {
+        zcm.publish("STATUS5",&module_stat);
+
         if (handlerObject.stat.armed)
         {
             //log rc inputs

@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     while (!exit_flag)
     {
         //get user input:
-        std::cout <<"Input: <target> <action> (\"help !\" for options):" << std::endl;
+        std::cout <<"\n\n\nInput: <target> <action> (\"help !\" for options):" << std::endl;
         std::cin >> user_data[0] >> user_data[1];
 
 
@@ -115,6 +115,7 @@ int main(int argc, char* argv[])
             std::cout << "list of modules and commands: \n" << std::endl;
             std::cout << "<all> - commands sent to all modules:" << std::endl;
             std::cout << "      <exit> - shuts everything down\n" << std::endl;
+            std::cout << "      <status> - lists module run status\n" << std::endl;
             std::cout << "<monitor>" << std::endl;
             std::cout << "      <exit> - shuts monitor down" << std::endl;
             std::cout << "      <check> - performs pre-flight check\n" << std::endl;
