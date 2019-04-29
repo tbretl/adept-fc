@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     zcm.unsubscribe(sub6);
 
 
-    //zcm.stop();
+    zcm.stop();
 
     //launch system monitor, consume this thread:
     execl ("bin/monitor", "bin/monitor",NULL);

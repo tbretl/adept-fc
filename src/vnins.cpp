@@ -44,7 +44,7 @@ int flush()
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
-            printf("error - poll returned %d in readline\n", len);
+            std::cout << "error - poll returned " << len <<" in readline\n";
             return 1;
         } else if (len == 0)
         {
@@ -69,11 +69,11 @@ int readline(unsigned char* buf, int maxlen)
         len = RS232_PollComport(COMPORT, &c, 1);
         if (len < 0)
         {
-            printf("error - poll returned code %d in readline\n", len);
+            std::cout << "error - poll returned code " << len << " in readline\n";
             return -1;
         } else if (len > 1)
         {
-            printf("error - read %d > 1 bytes in readline\n", len);
+            std::cout << "error - read " << len << " > 1 bytes in readline\n";
             return -1;
         } else if (len == 1)
         {
@@ -84,7 +84,7 @@ int readline(unsigned char* buf, int maxlen)
                 return nc;
             } else if (nc >= maxlen)
             {
-                printf("error - read %d bytes with no end of line\n", nc);
+                std::cout << "error - read " << nc << " bytes with no end of line\n";
                 return -1;
             }
         }
@@ -97,14 +97,14 @@ bool is_valid_line(unsigned char* line)
     unsigned int len = strlen((char*) line);
     if (len == 0)
     {
-        printf("error: line has zero length\n%s\n", line);
+        std::cout << "error: line has zero length\n" << line << std::endl;
         return false;
     }
 
     // it starts with '$'
     if (line[0] != '$')
     {
-        printf("error: line starts with %c and not with $\n%s\n", line[0], line);
+        std::cout << "error: line starts with " << line[0] << " and not with $\n" << line << std::endl;
         return false;
     }
 
@@ -123,7 +123,7 @@ bool is_valid_line(unsigned char* line)
     }
     if (! has_asterix)
     {
-        printf("error: line contains no *\n%s\n", line);
+        std::cout << "error: line contains no *\n" << line << std::endl;
         return false;
     }
 
@@ -132,7 +132,7 @@ bool is_valid_line(unsigned char* line)
     unsigned long b = (unsigned long) cs8;
     if (a != b)
     {
-        printf("error: line checksum does not match (%lu, %lu)\n%s\n", a, b, line);
+        std::cout << "error: line checksum does not match (" << a << "," << b << ")\n" << line << std::endl;
         return false;
     }
 
@@ -146,7 +146,7 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     int len = strlen((char*) line);
     if (len != len_expected)
     {
-        printf("error: line has length %d, should be %d\n", len, len_expected);
+        std::cout << "error: line has length "<< len << ", should be " << len_expected << std::endl;
         return 1;
     }
 
@@ -204,7 +204,7 @@ int main()
     // open serial port
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
     {
-        printf("error while opening port\n");
+        std::cout << "error while opening port" << std::endl;
         return 1;
     }
 
@@ -244,7 +244,7 @@ int main()
         if (result < 0)
         {
         //log an error message:
-            printf("WARNING: error while reading from port: %d\n", result);
+            std::cout << "WARNING: error while reading from port: " << result << std::endl;
             continue;
         }
 
@@ -259,9 +259,6 @@ int main()
         }
     }
 
-    // stop zcm
-    zcm.stop();
-
     // close serial port
     RS232_CloseComport(COMPORT);
 
@@ -269,6 +266,9 @@ int main()
     zcm.publish("STATUS1",&module_stat);
 
     std::cout << "vn200 module exiting..." << std::endl;
+
+    // stop zcm
+    zcm.stop();
 
     // exit
     return 0;
