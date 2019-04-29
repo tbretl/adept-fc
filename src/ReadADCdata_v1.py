@@ -10,7 +10,7 @@ spi.open(0,0)
 spi.max_speed_hz=24000000   #16bits=1data, 1.5MSPS needed
 
 SCLK=23
-CS=24
+CS=26
 MISO=21
 GPIO.setup(SCLK,GPIO.OUT)
 GPIO.setup(CS,GPIO.OUT)
