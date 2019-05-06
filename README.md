@@ -44,3 +44,24 @@ ce matches the CPU time difference.
  using the `python3` version, since it's simpler, more robust, easier to parse, etc., and since it seems to be taking no more %CPU than the `
 C` version.
 
+# ADC (FIXME)
+
+Hardware setup:
+* Attach chip select wires to physical pins 24 (CE0) and 26 (CE1) on pi.
+
+Kernel setup:
+* Use the following overlay in `/boot/config.txt`:
+```
+dtparam=spi=on
+dtoverlay=spi0-2cs
+```
+
+Software setup:
+* In `adept-fc`, compile as:
+```
+g++ src/adc.cpp -lwiringPi -o bin/adc
+```
+* In `adept-fc`, run as:
+```
+./bin/adc
+```
