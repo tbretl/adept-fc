@@ -13,7 +13,7 @@
 #define COMPORT			22 		// '/dev/ttyAMA0'
 #define BAUDRATE		115200
 #define BUFFER_LENGTH 	255
-#define MESSAGE_LENGTH  142
+#define MESSAGE_LENGTH  154
 
 // Constants for communication protocol control (p80 of VN-200 user manual)
 enum class SerialCount { NONE, SYNCIN_COUNT, SYNCIN_TIME, SYNCOUT_COUNT, GPS_PPS };
@@ -178,7 +178,7 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     field = strtok(NULL, ",");
     msg->time = strtod(field, NULL);
     field = strtok(NULL, ",");
-    msg->week = (long long) strtoul(field, NULL, 0);
+    msg->week = (long long) strtoul(field, NULL, 10);
     field = strtok(NULL, ",");
     unsigned long tmp = strtoul(field, NULL, 16);
     bool bits[16];
@@ -214,6 +214,11 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     msg->posuncertainty = strtod(field, NULL);
     field = strtok(NULL, ",");
     msg->veluncertainty = strtod(field, NULL);
+    field = strtok(NULL, ",T");
+    // it is important to force base 10 in this conversion, because
+    // the time is most likely padded with leading zeros, which causes
+    // a default interpretation as octal
+    msg->time_gpspps = (long long) strtoul(field, NULL, 10);
 
     return 0;
 }
@@ -361,19 +366,9 @@ int main()
         return 1;
     }
     
-    ////////////////////////
-    // TEMP FOR CONFIG DEV
-    
+    // configure
     config();
     
-    // close serial port
-    RS232_CloseComport(COMPORT);
-    
-    return 0;
-    
-    //
-    ////////////////////////
-
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
 
@@ -402,7 +397,7 @@ int main()
         result = readline(line, BUFFER_LENGTH);
         if (result < 0)
         {
-        //log an error message:
+            //log an error message:
             cout << "WARNING: error while reading from port: " << result << endl;
             continue;
         }
@@ -411,7 +406,7 @@ int main()
         {
             continue;
         }
-
+        
         if (parseline(line, &msg) == 0)
         {
             zcm.publish("VNINS_DATA", &msg);

@@ -48,6 +48,8 @@ class vnins_data_t
 
         float      veluncertainty;
 
+        int64_t    time_gpspps;
+
     public:
         /**
          * Destructs a message properly if anything inherits from it
@@ -203,6 +205,9 @@ int vnins_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) con
     thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->veluncertainty, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->time_gpspps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -262,6 +267,9 @@ int vnins_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxle
     thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->veluncertainty, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->time_gpspps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -285,12 +293,13 @@ uint32_t vnins_data_t::_getEncodedSizeNoHash() const
     enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t vnins_data_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0x47f4712cf8b0b248LL;
+    uint64_t hash = (uint64_t)0x51743327d2fa1d2bLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

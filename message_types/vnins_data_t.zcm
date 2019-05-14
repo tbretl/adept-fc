@@ -17,4 +17,5 @@ struct vnins_data_t
     float attuncertainty;
     float posuncertainty;
     float veluncertainty;
+    int64_t time_gpspps;    // microseconds since GPS_PPS (note - user manual is WRONG - it's micro, not nano)
 }

@@ -42,6 +42,7 @@ class Handler
 			cout << " (lat, lon, alt) = (" << data.latitude << ", " << data.longitude << ", " << data.altitude << ")" << endl;
 			cout << " (vx, vy, vz) = (" << data.vx << ", " << data.vy << ", " << data.vz << ")" << endl;
 			cout << " (au, pu, vu) = (" << data.attuncertainty << ", " << data.posuncertainty << ", " << data.veluncertainty << ")" << endl;
+			cout << " time_gpspps (microseconds): " << data.time_gpspps << endl;
 		}
 };
 
