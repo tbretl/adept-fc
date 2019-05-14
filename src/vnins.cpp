@@ -209,35 +209,7 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     return 0;
 }
 
-/**
-string checksum(string &cmd) {
-    // cmd should contain neither the prefix "$" nor the suffix "*"
-    
-    // compute the 8-bit checksum
-    unsigned int i;
-    unsigned char cs8 = 0;
-    for (int i = 0; i < len; ++i)
-    {
-        cs8 ^= data[i];
-    }
-    
-    // convert the 8-bit checksum to a hexadecimal string
-    stringstream stream;
-    stream << setfill('0')          // output has form "0X" and not "X"
-           << setw(2)               // output has two characters
-           << hex                   // convert anything after this to hex
-           << (unsigned int) cs8;   // interpret checksum as int before converting
-    return stream.str();
-}
-
-void async(bool on) {
-    string cmd = "VNASY,0";
-    cout << cmd.c_str() << " : " << cmd.size() << endl;
-    cmd = "$" + cmd + "*" + checksum((unsigned char*) cmd.c_str(), cmd.size()) + "\r\n";
-}
-**/
-
-bool sendCommand(string &s) {
+bool writecommand(string &s) {
     // compute 8-bit checksum with a range-based for loop
     unsigned char cs8 = 0;
     for (unsigned char const &c: s) {
@@ -266,7 +238,7 @@ bool sendCommand(string &s) {
     if (result < 0) {
         cout << "WARNING: error ("
              << result
-             << ") on sending this command:" << endl
+             << ") on sending command "
              << s << endl;
         return false;
     }
@@ -277,82 +249,51 @@ bool sendCommand(string &s) {
     if (result < 0) {
         cout << "WARNING: error ("
              << result
-             << ") on responding to this command:" << endl
+             << ") on responding to command "
              << s << endl;
         return false;
     }
     
-    cout << line << endl;
+    // check if response is valid
+    if (! is_valid_line(line)) {
+        return false;
+    }
+    
+    // check for error in response
+    char* field;
+    field = strtok((char*) line + 1, ",");
+    if (strcmp(field, "VNERR") == 0) {
+        field = strtok(NULL, ",");
+        field = strtok(field, "*");
+        cout << "WARNING: error (VNERR,"
+             << field
+             << ") in response to command "
+             << s << endl;
+        return false;
+    }
     
     return true;
 }
 
-int async(bool on) {
+bool async(bool on) {
     string s = "VNASY,";
     s += (on ? "1" : "0");
-    return sendCommand(s);
+    return writecommand(s);
 }
-
 
 void config() {
     
+    // turn off asynchronous outputs
+    async(false);
+    
+    // configure custom outputs...
+    
+    //
+    // FIXME
+    //
+    
+    // turn on asyncrhonous outputs
     async(true);
-    
-    /**
-    unsigned char line[BUFFER_LENGTH];
-    int result;
-    result = readline(line, BUFFER_LENGTH);
-    if (result < 0) {
-        //log an error message:
-        cout << "WARNING: error while reading from port: " << result << endl;
-    } else {
-        cout << line << endl;
-    }
-    * **/
-    
-    /**
-    //string cmd = "VNERR,03";
-    //cout << checksum((unsigned char*) cmd.c_str(), cmd.size()) << endl;
-    //return;
-    
-    
-    string cmd = "VNASY,0";
-    cout << cmd.c_str() << " : " << cmd.size() << endl;
-    cmd = "$" + cmd + "*" + checksum((unsigned char*) cmd.c_str(), cmd.size()) + "\r\n";
-    cout << "cmd: " << cmd << " (size: " << cmd.size() << ")" << endl;
-    
-    
-    //unsigned char buf[];
-    //int res = RS232_SendBuf(COMPORT, buf, len);
-    //int RS232_SendBuf(int comport_number, unsigned char *buf, int size);
-    
-    unsigned char line[BUFFER_LENGTH];
-    int result;
-    result = readline(line, BUFFER_LENGTH);
-    if (result < 0) {
-        //log an error message:
-        cout << "WARNING: error while reading from port: " << result << endl;
-    } else {
-        cout << line << endl;
-    }
-    
-    cout << cmd.c_str() << " : " << cmd.size() << endl;
-    result = RS232_SendBuf(COMPORT, (unsigned char*) cmd.c_str(), cmd.size());
-    if (result < 0) {
-        //log an error message:
-        cout << "WARNING: error while writing to port: " << result << endl;
-        return;
-    }
-    
-    result = readline(line, BUFFER_LENGTH);
-    if (result < 0) {
-        //log an error message:
-        cout << "WARNING: error while reading from port: " << result << endl;
-    } else {
-        cout << line << endl;
-    }
-    **/
-    
 }
 
 int main()
@@ -374,12 +315,7 @@ int main()
     ////////////////////////
     // TEMP FOR CONFIG DEV
     
-    cout << "config..." << endl;
     config();
-    
-    
-    //port.write('$VNASY,0*XX\r\n'.encode())
-    
     
     // close serial port
     RS232_CloseComport(COMPORT);
