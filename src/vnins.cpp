@@ -15,6 +15,15 @@
 #define BUFFER_LENGTH 	255
 #define MESSAGE_LENGTH  142
 
+// Constants for communication protocol control (p80 of VN-200 user manual)
+enum class SerialCount { NONE, SYNCIN_COUNT, SYNCIN_TIME, SYNCOUT_COUNT, GPS_PPS };
+enum class SerialState { OFF, VPE, INS };
+enum class SPICount { NONE, SYNCIN_COUNT, SYNCIN_TIME, SYNCOUT_COUNT, GPS_PPS };
+enum class SPIStatus { OFF, VPE, INS };
+enum class SerialChecksum { CS_8 = 1, CS_16 = 3 };
+enum class SPIChecksum { OFF, CS_8 = 1, CS_16 = 3 };
+enum class ErrorMode { IGNORE, SEND, SEND_AND_ADOR_OFF };
+
 using namespace std;
 
 class Handler
@@ -259,6 +268,10 @@ bool writecommand(string &s) {
         return false;
     }
     
+    // replace s with response
+    s.clear();
+    s.append((const char*) line);
+    
     // check for error in response
     char* field;
     field = strtok((char*) line + 1, ",");
@@ -281,16 +294,52 @@ bool async(bool on) {
     return writecommand(s);
 }
 
-void config() {
+bool getprotocol() {
+    // The default communicaton protocol (at factory settings) is:
+    //
+    //  $VNRRG,30,0,0,0,0,1,0,1*6C
+    //
     
+    string s = "VNRRG,30";
+    bool result = writecommand(s);
+    cout << "VN-200 communication protocol: " << s << endl;
+    return result;
+}
+
+bool setprotocol(
+    SerialCount serialcount=SerialCount::GPS_PPS,
+    SerialState serialstate=SerialState::OFF,
+    SPICount spicount=SPICount::NONE,
+    SPIStatus spistatus=SPIStatus::OFF,
+    SerialChecksum serialchecksum=SerialChecksum::CS_8,
+    SPIChecksum spichecksum=SPIChecksum::OFF,
+    ErrorMode errormode=ErrorMode::SEND
+) {
+    string s = "VNWRG,30";
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(serialcount));
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(serialstate));
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(spicount));
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(spistatus));
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(serialchecksum));
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(spichecksum));
+    s += ",";
+    s += std::to_string(static_cast<unsigned char>(errormode));
+    
+    return writecommand(s);
+}
+
+void config() {
     // turn off asynchronous outputs
     async(false);
     
-    // configure custom outputs...
-    
-    //
-    // FIXME
-    //
+    // set communication protocol
+    setprotocol();
     
     // turn on asyncrhonous outputs
     async(true);
