@@ -24,8 +24,6 @@ enum class SerialChecksum { CS_8 = 1, CS_16 = 3 };
 enum class SPIChecksum { OFF, CS_8 = 1, CS_16 = 3 };
 enum class ErrorMode { IGNORE, SEND, SEND_AND_ADOR_OFF };
 
-using namespace std;
-
 class Handler
 {
     public:
@@ -39,7 +37,7 @@ class Handler
             stat.should_exit = 0;
         }
 
-        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const std::string& chan,const status_t *msg)
         {
             stat = *msg;
         }
@@ -63,7 +61,7 @@ int flush(unsigned int timeout_ms = 500)
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
-            cout << "error - poll returned " << len << " in flush" << endl;
+            std::cout << "error - poll returned " << len << " in flush" << std::endl;
             return 1;
         } else if (len == 0)
         {
@@ -88,11 +86,11 @@ int readline(unsigned char* buf, int maxlen)
         len = RS232_PollComport(COMPORT, &c, 1);
         if (len < 0)
         {
-            cout << "error - poll returned code " << len << " in readline" << endl;
+            std::cout << "error - poll returned code " << len << " in readline" << std::endl;
             return -1;
         } else if (len > 1)
         {
-            cout << "error - read " << len << " > 1 bytes in readline" << endl;
+            std::cout << "error - read " << len << " > 1 bytes in readline" << std::endl;
             return -1;
         } else if (len == 1)
         {
@@ -103,7 +101,7 @@ int readline(unsigned char* buf, int maxlen)
                 return nc;
             } else if (nc >= maxlen)
             {
-                cout << "error - read " << nc << " bytes with no end of line" << endl;
+                std::cout << "error - read " << nc << " bytes with no end of line" << std::endl;
                 return -1;
             }
         }
@@ -116,14 +114,14 @@ bool is_valid_line(unsigned char* line)
     unsigned int len = strlen((char*) line);
     if (len == 0)
     {
-        cout << "error: line has zero length\n" << line << endl;
+        std::cout << "error: line has zero length\n" << line << std::endl;
         return false;
     }
 
     // it starts with '$'
     if (line[0] != '$')
     {
-        cout << "error: line starts with " << line[0] << " and not with $\n" << line << endl;
+        std::cout << "error: line starts with " << line[0] << " and not with $\n" << line << std::endl;
         return false;
     }
 
@@ -142,7 +140,7 @@ bool is_valid_line(unsigned char* line)
     }
     if (! has_asterix)
     {
-        cout << "error: line contains no *\n" << line << endl;
+        std::cout << "error: line contains no *\n" << line << std::endl;
         return false;
     }
 
@@ -151,7 +149,7 @@ bool is_valid_line(unsigned char* line)
     unsigned long b = (unsigned long) cs8;
     if (a != b)
     {
-        cout << "error: line checksum does not match (" << a << "," << b << ")\n" << line << endl;
+        std::cout << "error: line checksum does not match (" << a << "," << b << ")\n" << line << std::endl;
         return false;
     }
 
@@ -165,7 +163,7 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     int len = strlen((char*) line);
     if (len != len_expected)
     {
-        cout << "error: line has length "<< len << ", should be " << len_expected << endl;
+        std::cout << "error: line has length "<< len << ", should be " << len_expected << std::endl;
         return 1;
     }
 
@@ -223,7 +221,7 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     return 0;
 }
 
-bool writecommand(string &s) {
+bool writecommand(std::string &s) {
     // compute 8-bit checksum with a range-based for loop
     unsigned char cs8 = 0;
     for (unsigned char const &c: s) {
@@ -231,11 +229,11 @@ bool writecommand(string &s) {
     }
     
     // convert 8-bit checksum to hex string
-    stringstream stream;
-    stream << setfill('0')          // output has form "0X" and not "X"
-           << setw(2)               // output has two characters
-           << hex                   // convert anything after this to hex
-           << (unsigned int) cs8;   // interpret checksum as int before converting
+    std::stringstream stream;
+    stream << std::setfill('0')         // output has form "0X" and not "X"
+           << std::setw(2)              // output has two characters
+           << std::hex                  // convert anything after this to hex
+           << (unsigned int) cs8;       // interpret checksum as int before converting
     
     // prefix
     s.insert(0, "$");
@@ -250,10 +248,10 @@ bool writecommand(string &s) {
     // send command
     int result = RS232_SendBuf(COMPORT, (unsigned char*) s.c_str(), s.size());
     if (result < 0) {
-        cout << "WARNING: error ("
-             << result
-             << ") on sending command "
-             << s << endl;
+        std::cout << "WARNING: error ("
+                  << result
+                  << ") on sending command "
+                  << s << std::endl;
         return false;
     }
     
@@ -261,10 +259,10 @@ bool writecommand(string &s) {
     unsigned char line[BUFFER_LENGTH];
     result = readline(line, BUFFER_LENGTH);
     if (result < 0) {
-        cout << "WARNING: error ("
-             << result
-             << ") on responding to command "
-             << s << endl;
+        std::cout << "WARNING: error ("
+                  << result
+                  << ") on responding to command "
+                  << s << std::endl;
         return false;
     }
     
@@ -283,10 +281,10 @@ bool writecommand(string &s) {
     if (strcmp(field, "VNERR") == 0) {
         field = strtok(NULL, ",");
         field = strtok(field, "*");
-        cout << "WARNING: error (VNERR,"
-             << field
-             << ") in response to command "
-             << s << endl;
+        std::cout << "WARNING: error (VNERR,"
+                  << field
+                  << ") in response to command "
+                  << s << std::endl;
         return false;
     }
     
@@ -294,7 +292,7 @@ bool writecommand(string &s) {
 }
 
 bool async(bool on) {
-    string s = "VNASY,";
+    std::string s = "VNASY,";
     s += (on ? "1" : "0");
     return writecommand(s);
 }
@@ -305,9 +303,9 @@ bool getprotocol() {
     //  $VNRRG,30,0,0,0,0,1,0,1*6C
     //
     
-    string s = "VNRRG,30";
+    std::string s = "VNRRG,30";
     bool result = writecommand(s);
-    cout << "VN-200 communication protocol: " << s << endl;
+    std::cout << "VN-200 communication protocol: " << s << std::endl;
     return result;
 }
 
@@ -320,7 +318,7 @@ bool setprotocol(
     SPIChecksum spichecksum=SPIChecksum::OFF,
     ErrorMode errormode=ErrorMode::SEND
 ) {
-    string s = "VNWRG,30";
+    std::string s = "VNWRG,30";
     s += ",";
     s += std::to_string(static_cast<unsigned char>(serialcount));
     s += ",";
@@ -346,7 +344,7 @@ void config() {
     // set communication protocol
     setprotocol();
     
-    // turn on asyncrhonous outputs
+    // turn on asynchronous outputs
     async(true);
 }
 
@@ -355,7 +353,7 @@ int main()
     // open serial port
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
     {
-        cout << "error while opening port" << endl;
+        std::cout << "error while opening port" << std::endl;
         return 1;
     }
 
@@ -398,7 +396,7 @@ int main()
         if (result < 0)
         {
             //log an error message:
-            cout << "WARNING: error while reading from port: " << result << endl;
+            std::cout << "WARNING: error while reading from port: " << result << std::endl;
             continue;
         }
 
@@ -419,7 +417,7 @@ int main()
     module_stat.module_status = 0;
     zcm.publish("STATUS1",&module_stat);
 
-    cout << "vn200 module exiting..." << endl;
+    std::cout << "vn200 module exiting..." << std::endl;
 
     // stop zcm
     zcm.stop();
