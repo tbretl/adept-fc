@@ -337,12 +337,37 @@ bool setprotocol(
     return writecommand(s);
 }
 
+bool setoutputfrequency(int rate=40) {
+    const int nrates = 11;
+    const int rates[nrates] = {1, 2, 4, 5, 10, 20, 25, 40, 50, 100, 200};
+    
+    bool acceptable = false;
+    for (int i=0; i<nrates; ++i) {
+        if (rate == rates[i]) {
+            acceptable = true;
+        }
+    }
+    if (! acceptable) {
+        std::cout << "WARNING: unacceptable rate " << rate << " in setoutputfrequency" << std::endl;
+        return false;
+    }
+    
+    std::string s = "VNWRG,07";
+    s += ",";
+    s += std::to_string(rate);
+    
+    return writecommand(s);
+}
+
 void config() {
     // turn off asynchronous outputs
     async(false);
     
     // set communication protocol
     setprotocol();
+    
+    // set output frequency (will fail if baud rate does not support the desired frequency)
+    setoutputfrequency();
     
     // turn on asynchronous outputs
     async(true);
