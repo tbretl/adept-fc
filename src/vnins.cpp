@@ -7,6 +7,8 @@
 #include <time.h>
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <chrono>
 
 #define COMPORT			22 		// '/dev/ttyAMA0'
 #define BAUDRATE		115200
@@ -34,16 +36,25 @@ class Handler
         }
 };
 
-int flush()
+int flush(unsigned int timeout_ms = 500)
 {
+    auto start_time = std::chrono::steady_clock::now();
+    
     unsigned char c;
     size_t len;
     while (true)
     {
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= timeout_ms) {
+            // time out (no data to flush)
+            return 0;
+        }
+        
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
-            cout << "error - poll returned " << len <<" in readline" << endl;
+            cout << "error - poll returned " << len << " in flush" << endl;
             return 1;
         } else if (len == 0)
         {
@@ -198,6 +209,152 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     return 0;
 }
 
+/**
+string checksum(string &cmd) {
+    // cmd should contain neither the prefix "$" nor the suffix "*"
+    
+    // compute the 8-bit checksum
+    unsigned int i;
+    unsigned char cs8 = 0;
+    for (int i = 0; i < len; ++i)
+    {
+        cs8 ^= data[i];
+    }
+    
+    // convert the 8-bit checksum to a hexadecimal string
+    stringstream stream;
+    stream << setfill('0')          // output has form "0X" and not "X"
+           << setw(2)               // output has two characters
+           << hex                   // convert anything after this to hex
+           << (unsigned int) cs8;   // interpret checksum as int before converting
+    return stream.str();
+}
+
+void async(bool on) {
+    string cmd = "VNASY,0";
+    cout << cmd.c_str() << " : " << cmd.size() << endl;
+    cmd = "$" + cmd + "*" + checksum((unsigned char*) cmd.c_str(), cmd.size()) + "\r\n";
+}
+**/
+
+bool sendCommand(string &s) {
+    // compute 8-bit checksum with a range-based for loop
+    unsigned char cs8 = 0;
+    for (unsigned char const &c: s) {
+        cs8 ^= c;
+    }
+    
+    // convert 8-bit checksum to hex string
+    stringstream stream;
+    stream << setfill('0')          // output has form "0X" and not "X"
+           << setw(2)               // output has two characters
+           << hex                   // convert anything after this to hex
+           << (unsigned int) cs8;   // interpret checksum as int before converting
+    
+    // prefix
+    s.insert(0, "$");
+    
+    // suffix (with checksum)
+    s += "*";
+    s += stream.str();
+    
+    // termination characters
+    s += "\r\n";
+    
+    // send command
+    int result = RS232_SendBuf(COMPORT, (unsigned char*) s.c_str(), s.size());
+    if (result < 0) {
+        cout << "WARNING: error ("
+             << result
+             << ") on sending this command:" << endl
+             << s << endl;
+        return false;
+    }
+    
+    // get response
+    unsigned char line[BUFFER_LENGTH];
+    result = readline(line, BUFFER_LENGTH);
+    if (result < 0) {
+        cout << "WARNING: error ("
+             << result
+             << ") on responding to this command:" << endl
+             << s << endl;
+        return false;
+    }
+    
+    cout << line << endl;
+    
+    return true;
+}
+
+int async(bool on) {
+    string s = "VNASY,";
+    s += (on ? "1" : "0");
+    return sendCommand(s);
+}
+
+
+void config() {
+    
+    async(true);
+    
+    /**
+    unsigned char line[BUFFER_LENGTH];
+    int result;
+    result = readline(line, BUFFER_LENGTH);
+    if (result < 0) {
+        //log an error message:
+        cout << "WARNING: error while reading from port: " << result << endl;
+    } else {
+        cout << line << endl;
+    }
+    * **/
+    
+    /**
+    //string cmd = "VNERR,03";
+    //cout << checksum((unsigned char*) cmd.c_str(), cmd.size()) << endl;
+    //return;
+    
+    
+    string cmd = "VNASY,0";
+    cout << cmd.c_str() << " : " << cmd.size() << endl;
+    cmd = "$" + cmd + "*" + checksum((unsigned char*) cmd.c_str(), cmd.size()) + "\r\n";
+    cout << "cmd: " << cmd << " (size: " << cmd.size() << ")" << endl;
+    
+    
+    //unsigned char buf[];
+    //int res = RS232_SendBuf(COMPORT, buf, len);
+    //int RS232_SendBuf(int comport_number, unsigned char *buf, int size);
+    
+    unsigned char line[BUFFER_LENGTH];
+    int result;
+    result = readline(line, BUFFER_LENGTH);
+    if (result < 0) {
+        //log an error message:
+        cout << "WARNING: error while reading from port: " << result << endl;
+    } else {
+        cout << line << endl;
+    }
+    
+    cout << cmd.c_str() << " : " << cmd.size() << endl;
+    result = RS232_SendBuf(COMPORT, (unsigned char*) cmd.c_str(), cmd.size());
+    if (result < 0) {
+        //log an error message:
+        cout << "WARNING: error while writing to port: " << result << endl;
+        return;
+    }
+    
+    result = readline(line, BUFFER_LENGTH);
+    if (result < 0) {
+        //log an error message:
+        cout << "WARNING: error while reading from port: " << result << endl;
+    } else {
+        cout << line << endl;
+    }
+    **/
+    
+}
+
 int main()
 {
     // open serial port
@@ -213,6 +370,24 @@ int main()
     {
         return 1;
     }
+    
+    ////////////////////////
+    // TEMP FOR CONFIG DEV
+    
+    cout << "config..." << endl;
+    config();
+    
+    
+    //port.write('$VNASY,0*XX\r\n'.encode())
+    
+    
+    // close serial port
+    RS232_CloseComport(COMPORT);
+    
+    return 0;
+    
+    //
+    ////////////////////////
 
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
