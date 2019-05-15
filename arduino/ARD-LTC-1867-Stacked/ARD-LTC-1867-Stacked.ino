@@ -71,6 +71,8 @@ void loop() {
     // sample all the channels and send data over serial 
     SerialConsole.print(time_gpspps);
     SerialConsole.print(",");
+    SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_0P, UNIPOLAR));
+    SerialConsole.print(",");
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_1P, UNIPOLAR));
     SerialConsole.print(','); 
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_2P, UNIPOLAR));
