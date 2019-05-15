@@ -11,14 +11,11 @@ all: adc vnins subber demo pwm_out scribe rc_in adept_fc autopilot hitl monitor
 adc: $(SRC)/adc.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc.cpp $(SRC)/rs232.c -o $(BIN)/adc
 
-adc_subber: $(SRC)/adc_subber.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc_subber.cpp -o $(BIN)/adc_subber
-
 vnins: $(SRC)/vnins.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/vnins.cpp $(SRC)/rs232.c -o $(BIN)/vnins
 
 subber: $(SRC)/subber.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/subber.cpp -o $(BIN)/vnins_subber
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/subber.cpp -o $(BIN)/subber
 
 demo: $(SRC)/demo.cpp
 	$(CXX) $(CXXFLAGS) $(SRC)/demo.cpp $(SRC)/rs232.c -o $(BIN)/demo
@@ -45,8 +42,9 @@ monitor: $(SRC)/monitor.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor 
 
 clean:
+	rm -f $(BIN)/adc
 	rm -f $(BIN)/vnins
-	rm -f $(BIN)/vnins_subber
+	rm -f $(BIN)/subber
 	rm -f $(BIN)/demo
 	rm -f $(BIN)/pwm_out
 	rm -f $(BIN)/scribe

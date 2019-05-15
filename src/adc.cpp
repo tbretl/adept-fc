@@ -186,7 +186,8 @@ int main()
 
     while(!handlerObject.stat.should_exit)
     {
-        zcm.publish("STATUS1",&module_stat);
+        // FIXME: which status channel?
+        // zcm.publish("STATUS1",&module_stat);
 
         result = readline(line, BUFFER_LENGTH);
         if (result < 0)
@@ -210,10 +211,11 @@ int main()
     // close serial port
     RS232_CloseComport(COMPORT);
 
-    module_stat.module_status = 0;
-    zcm.publish("STATUS1",&module_stat);
+    // FIXME: which status channel?
+    //module_stat.module_status = 0;
+    //zcm.publish("STATUS1",&module_stat);
 
-    std::cout << "vn200 module exiting..." << std::endl;
+    std::cout << "adc module exiting..." << std::endl;
 
     // stop zcm
     zcm.stop();
