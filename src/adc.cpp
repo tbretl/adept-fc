@@ -1,132 +1,223 @@
+#include <zcm/zcm-cpp.hpp>
+#include "adc_data_t.hpp"
+#include "status_t.hpp"
+#include "rs232.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string>
 #include <iostream>
-#include <errno.h>
-#include <wiringPiSPI.h>
-#include <unistd.h>
+#include <iomanip>
+#include <chrono>
 
-////////////////////////////////////
-// Taken from the LTC186* library
+#define COMPORT			24 		// '/dev/ttyACM0'
+#define BAUDRATE		230400
+#define BUFFER_LENGTH 	255
 
-#ifndef _BV
-#define _BV(a) (1<<(a))
-#endif
+class Handler
+{
+    public:
+        ~Handler() = default;
 
-#define LTC186X_CONFIG_SINGLE_END 7
-#define LTC186X_CONFIG_ODD        6
-#define LTC186X_CONFIG_S1         5
-#define LTC186X_CONFIG_S0         4
-#define LTC186X_CONFIG_COM        3
-#define LTC186X_CONFIG_UNI        2
-#define LTC186X_CONFIG_SLP        1
+        status_t stat;
 
-#define LTC186X_CHAN_DIFF_0P_1N    (0)
-#define LTC186X_CHAN_DIFF_2P_3N    (_BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_DIFF_4P_5N    (_BV(LTC186X_CONFIG_S1))
-#define LTC186X_CHAN_DIFF_6P_7N    (_BV(LTC186X_CONFIG_S1) | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_DIFF_1P_0N    (_BV(LTC186X_CONFIG_ODD))
-#define LTC186X_CHAN_DIFF_3P_2N    (_BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_DIFF_5P_4N    (_BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S1))
-#define LTC186X_CHAN_DIFF_7P_6N    (_BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S1) | _BV(LTC186X_CONFIG_S0))
+        Handler()
+        {
+            memset(&stat, 0, sizeof(stat));
+            stat.should_exit = 0;
+        }
 
-#define LTC186X_CHAN_DIFF_0P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END))
-#define LTC186X_CHAN_DIFF_1P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD))
-#define LTC186X_CHAN_DIFF_2P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_DIFF_3P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_DIFF_4P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_S1))
-#define LTC186X_CHAN_DIFF_5P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S1))
-#define LTC186X_CHAN_DIFF_6P_7COM  (_BV(LTC186X_CONFIG_COM) | _BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_S1)  | _BV(LTC186X_CONFIG_S0))
+        void read_stat(const zcm::ReceiveBuffer* rbuf,const std::string& chan,const status_t *msg)
+        {
+            stat = *msg;
+        }
+};
 
-#define LTC186X_CHAN_SINGLE_0P     (_BV(LTC186X_CONFIG_SINGLE_END))
-#define LTC186X_CHAN_SINGLE_1P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD))
-#define LTC186X_CHAN_SINGLE_2P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_SINGLE_3P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_SINGLE_4P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_S1))
-#define LTC186X_CHAN_SINGLE_5P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S1))
-#define LTC186X_CHAN_SINGLE_6P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_S1)  | _BV(LTC186X_CONFIG_S0))
-#define LTC186X_CHAN_SINGLE_7P     (_BV(LTC186X_CONFIG_SINGLE_END) | _BV(LTC186X_CONFIG_ODD) | _BV(LTC186X_CONFIG_S1) | _BV(LTC186X_CONFIG_S0))
-
-//
-////////////////////////////////////
-
-using namespace std;
-
-uint8_t getConfig(uint8_t channel, uint8_t unipolar=1) {
-	uint8_t config;
-	
-	config = unipolar?_BV(LTC186X_CONFIG_UNI):0;
-	config |= channel 
-		& (_BV(LTC186X_CONFIG_SINGLE_END) 
-			| _BV(LTC186X_CONFIG_ODD) 
-			| _BV(LTC186X_CONFIG_S1) 
-			| _BV(LTC186X_CONFIG_S0)
-			| _BV(LTC186X_CONFIG_COM));
-	
-	return config;
+int flush(unsigned int timeout_ms = 500)
+{
+    auto start_time = std::chrono::steady_clock::now();
+    
+    unsigned char c;
+    size_t len;
+    while (true)
+    {
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= timeout_ms) {
+            // time out (no data to flush)
+            return 0;
+        }
+        
+        len = RS232_PollComport(COMPORT, &c, 1);
+        if ((len < 0) || (len > 1))
+        {
+            std::cout << "error - poll returned " << len << " in flush" << std::endl;
+            return 1;
+        } else if (len == 0)
+        {
+            // do nothing
+        } else if (len == 1)
+        {
+            if (c == '\n')
+            {
+                return 0;
+            }
+        }
+    }
 }
 
-void getBits(uint8_t c, char* bits) {
-	// convert a byte into a null-terminated char array
-	// (bits must be a pointer to an array of length 9)
-	for (int i=7; i>=0; --i) {
-		bits[i] = (c & (1 << i)) ? '1' : '0';
-	}
-	bits[8] = '\0';
+int readline(unsigned char* buf, int maxlen)
+{
+    unsigned char c;
+    int nc = 0;
+    size_t len;
+    while (true)
+    {
+        len = RS232_PollComport(COMPORT, &c, 1);
+        if (len < 0)
+        {
+            std::cout << "error - poll returned code " << len << " in readline" << std::endl;
+            return -1;
+        } else if (len > 1)
+        {
+            std::cout << "error - read " << len << " > 1 bytes in readline" << std::endl;
+            return -1;
+        } else if (len == 1)
+        {
+            buf[nc] = c;
+            nc++;
+            if (c == '\n') {
+                buf[nc] = '\0';
+                return nc;
+            } else if (nc >= maxlen)
+            {
+                std::cout << "error - read " << nc << " bytes with no end of line" << std::endl;
+                return -1;
+            }
+        }
+    }
 }
 
-int main() {
-	// which bus (0 for "/dev/spidev0.0" or 1 for "/dev/spidev0.1")
-	int bus = 0;
-	
-	// holds result (i.e., error code) from calls to wiringPiSPI
-	int res;
-	
-	// open SPI bus 0 at clock speed 8 MHz - should return a positive integer (a file descriptor)
-	res = wiringPiSPISetup(bus, 8000000);
-	cout << "SPI setup: " << res << endl;
-	
-	// sleep for 1 ms (FIXME: unnecessary?)
-	usleep(5000);
-	
-	// command - it is one byte (bits say channel number, properties, etc.)
-	uint8_t cmd = getConfig(LTC186X_CHAN_SINGLE_0P);
-	
-	// print bits in command
-	char bits[9];
-	getBits(cmd, bits);
-	bool sleeping = cmd & _BV(LTC186X_CONFIG_SLP);
-	cout << "SPI cmd : "
-		 << int(cmd) << " (int) : "
-		 << bits << " (bits) : " 
-		 << (sleeping ? "sleeping" : "not sleeping")
-		 << endl;
-	
-	// create buffer with bytes [command, "don't use"]
-	uint8_t buf[2];
-	buf[0] = cmd;
-	buf[1] = 0;
-	
-	// send command (bus, buffer, buffer length) to trigger ADC conversion -
-	// this will overwrite the buffer with data from read
-	res = wiringPiSPIDataRW(bus, buf, 2);
-	cout << "SPI RW : " << res << " : ";
-	cout << "[" << int(buf[0]) << ", " << int(buf[1]) << "] (int) : ";
-	getBits(buf[0], bits);
-	cout << "[" << bits << ", ";
-	getBits(buf[1], bits);
-	cout << bits << "] (bits)" << endl;
-	
-	// sleep for 1 ms (FIXME: unnecessary?)
-	usleep(5000);
-	
-	// send command (bus, buffer, buffer length) to get ADC data - again,
-	// this will overwrite the buffer with data from read
-	res = wiringPiSPIDataRW(bus, buf, 2);
-	cout << "SPI RW : " << res << " : ";
-	cout << "[" << int(buf[0]) << ", " << int(buf[1]) << "] (int) : ";
-	getBits(buf[0], bits);
-	cout << "[" << bits << ", ";
-	getBits(buf[1], bits);
-	cout << bits << "] (bits)" << endl;
-	
-	// exit with no error
-	return 0;
+bool is_valid_line(unsigned char* line)
+{
+    // it has non-zero length
+    unsigned int len = strlen((char*) line);
+    if (len == 0)
+    {
+        std::cout << "error: line has zero length\n" << line << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+int parseline(unsigned char* line, adc_data_t *msg)
+{
+    /**
+    // Check that line has correct length for VNINS
+    const int len_expected = MESSAGE_LENGTH;
+    int len = strlen((char*) line);
+    if (len != len_expected)
+    {
+        std::cout << "error: line has length "<< len << ", should be " << len_expected << std::endl;
+        return 1;
+    }
+    **/
+
+    
+    // it is important to force base 10 in this conversion, because
+    // the time is most likely padded with leading zeros, which causes
+    // a default interpretation as octal
+    char* field;
+    field = strtok((char*) line, ",");
+    if (field == NULL) {
+        std::cout << "error: line contains no commas" << std::endl;
+        return 1;
+    }
+    msg->time_gpspps = (long long) strtoul(field, NULL, 10);
+    for (int i=0; i<16; ++i) {
+        field = strtok(NULL, ",");
+        if (field == NULL) {
+            std::cout << "error: in parseline at data field " << i << std::endl;
+            return 1;
+        }
+        msg->data[i] = strtod(field, NULL);
+    }
+    
+    return 0;
+}
+
+int main()
+{
+    // open serial port
+    if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
+    {
+        std::cout << "error while opening port" << std::endl;
+        return 1;
+    }
+
+    // flush serial port
+    RS232_flushRXTX(COMPORT);
+    if (flush() != 0)
+    {
+        return 1;
+    }
+    
+    // initialize zcm
+    zcm::ZCM zcm {"ipc"};
+
+    //subscribe
+    Handler handlerObject;
+    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
+
+    // create objects to publish
+    adc_data_t msg;
+    memset(&msg,0,sizeof(msg));
+
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
+    // start zcm as a separate thread
+    zcm.start();
+
+    unsigned char line[BUFFER_LENGTH];
+    int result;
+
+    while(!handlerObject.stat.should_exit)
+    {
+        zcm.publish("STATUS1",&module_stat);
+
+        result = readline(line, BUFFER_LENGTH);
+        if (result < 0)
+        {
+            //log an error message:
+            std::cout << "WARNING: error while reading from port: " << result << std::endl;
+            continue;
+        }
+
+        if (! is_valid_line(line))
+        {
+            continue;
+        }
+        
+        if (parseline(line, &msg) == 0)
+        {
+            zcm.publish("ADC_DATA", &msg);
+        }
+    }
+
+    // close serial port
+    RS232_CloseComport(COMPORT);
+
+    module_stat.module_status = 0;
+    zcm.publish("STATUS1",&module_stat);
+
+    std::cout << "vn200 module exiting..." << std::endl;
+
+    // stop zcm
+    zcm.stop();
+
+    // exit
+    return 0;
 }

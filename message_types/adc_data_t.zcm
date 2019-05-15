@@ -1,0 +1,5 @@
+struct adc_data_t
+{
+    int32_t data[16];
+    int64_t time_gpspps;   // microseconds since GPS_PPS
+}

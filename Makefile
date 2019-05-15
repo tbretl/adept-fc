@@ -6,7 +6,13 @@ LIBS = -lzcm -lnavio
 BIN = ./bin
 SRC = ./src
 
-all: vnins subber demo pwm_out scribe rc_in adept_fc autopilot hitl monitor 
+all: adc vnins subber demo pwm_out scribe rc_in adept_fc autopilot hitl monitor 
+
+adc: $(SRC)/adc.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc.cpp $(SRC)/rs232.c -o $(BIN)/adc
+
+adc_subber: $(SRC)/adc_subber.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc_subber.cpp -o $(BIN)/adc_subber
 
 vnins: $(SRC)/vnins.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/vnins.cpp $(SRC)/rs232.c -o $(BIN)/vnins
