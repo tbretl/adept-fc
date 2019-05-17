@@ -36,7 +36,7 @@ class Handler
 int flush(unsigned int timeout_ms = 500)
 {
     auto start_time = std::chrono::steady_clock::now();
-    
+
     unsigned char c;
     size_t len;
     while (true)
@@ -47,7 +47,7 @@ int flush(unsigned int timeout_ms = 500)
             // time out (no data to flush)
             return 0;
         }
-        
+
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
@@ -124,7 +124,7 @@ int parseline(unsigned char* line, adc_data_t *msg)
     }
     **/
 
-    
+
     // it is important to force base 10 in this conversion, because
     // the time is most likely padded with leading zeros, which causes
     // a default interpretation as octal
@@ -143,7 +143,7 @@ int parseline(unsigned char* line, adc_data_t *msg)
         }
         msg->data[i] = strtod(field, NULL);
     }
-    
+
     return 0;
 }
 
@@ -162,7 +162,7 @@ int main()
     {
         return 1;
     }
-    
+
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
 
@@ -186,8 +186,8 @@ int main()
 
     while(!handlerObject.stat.should_exit)
     {
-        // FIXME: which status channel?
-        // zcm.publish("STATUS1",&module_stat);
+
+         zcm.publish("STATUS2",&module_stat);
 
         result = readline(line, BUFFER_LENGTH);
         if (result < 0)
@@ -201,7 +201,7 @@ int main()
         {
             continue;
         }
-        
+
         if (parseline(line, &msg) == 0)
         {
             zcm.publish("ADC_DATA", &msg);
@@ -211,9 +211,8 @@ int main()
     // close serial port
     RS232_CloseComport(COMPORT);
 
-    // FIXME: which status channel?
-    //module_stat.module_status = 0;
-    //zcm.publish("STATUS1",&module_stat);
+    module_stat.module_status = 0;
+    zcm.publish("STATUS2",&module_stat);
 
     std::cout << "adc module exiting..." << std::endl;
 

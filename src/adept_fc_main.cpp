@@ -89,10 +89,13 @@ int main(int argc, char *argv[])
 
         //vectornav sensor input
         run_process("bin/vnins");
-        while (!(h1.stat.module_status==1)){} //vn20 module not publishing... fix
+        while (!(h1.stat.module_status==1)){}
         std::cout << "VN-200 started" << std::endl;
 
         //ADC sensor input
+        run_process("bin/adc");
+        while(!(h2.stat.module_status==1)){}
+        std::cout << "ADC started" << std::endl;
 
     }
     else {

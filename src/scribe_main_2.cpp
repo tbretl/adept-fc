@@ -9,8 +9,8 @@
 #include <zcm/zcm-cpp.hpp>
 #include <fstream>
 //message types:
-#include "../message_types/vnins_data_t.hpp"  //need to test out
-#include "sensor_data_t.hpp"
+#include "vnins_data_t.hpp"
+#include "adc_data_t.hpp"
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 #include "rc_t.hpp"
@@ -27,7 +27,7 @@ class Handler
         rc_t rc_in;
         pwm_t pwm;
         actuators_t acts;
-        sensor_data_t sens;
+        adc_data_t sens;
         vnins_data_t vn200;
 
 
@@ -37,7 +37,8 @@ class Handler
             memset(&stat, 0, sizeof(stat));
             memset(&rc_in, 0, sizeof(rc_in));
             memset(&pwm, 0, sizeof(pwm));
-            memset(&acts, 0, sizeof(sens));
+            memset(&acts, 0, sizeof(acts));
+            memset(&sens, 0, sizeof(sens));
             memset(&vn200, 0, sizeof(vn200));
             stat.should_exit = 0;
 
@@ -59,7 +60,7 @@ class Handler
             acts = *msg;
         }
 
-        void read_sens(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
+        void read_sens(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
         {
             sens = *msg;
         }
@@ -126,7 +127,7 @@ int main(int argc, char *argv[])
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
     zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
-    zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&handlerObject);
+    zcm.subscribe("ADC_DATA",&Handler::read_sens,&handlerObject);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
 
     //for bublishing stat of this module
@@ -163,8 +164,12 @@ int main(int argc, char *argv[])
             }
             logfile_acts << "\n";
             //log sensor data
-            logfile_sens << handlerObject.sens.Vmag << " " << handlerObject.sens.alpha << " " << handlerObject.sens.beta << " " << handlerObject.sens.l_ail << " "
-                         << handlerObject.sens.r_ail << " " << handlerObject.sens.l_ele << " " << handlerObject.sens.r_ele << " " << handlerObject.sens.rud << "\n";
+            logfile_sens << handlerObject.sens.time_gpspps;
+            for (int i=0; i<16; i++)
+            {
+                logfile_sens << " " << handlerObject.sens.data[i];
+            }
+            logfile_sens << "\n";
             //log VN200 data
             logfile_vn200 << handlerObject.vn200.time << " " << handlerObject.vn200.week << " " << handlerObject.vn200.tracking << " " << handlerObject.vn200.gpsfix << " " << handlerObject.vn200.error <<  " "
                           << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.latitude << " "

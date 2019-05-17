@@ -105,8 +105,6 @@ int main(int argc, char* argv[])
     sys_status.should_exit = 0;
     sys_status.armed = 0;
 
-    bool allow_arm = false;
-
     zcm.start();
     zcm.flush();
     zcm.publish("STATUS",&sys_status);
@@ -228,26 +226,6 @@ int main(int argc, char* argv[])
             if (!user_data[1].compare("check"))
             {
                 std::cout << "Running pre-flight checks..." << std::endl;
-                //must enter name and other information to be logged
-                std::cout << "\nEnter research pilot name (first last):" <<std::endl;
-                std::cin >> dump[0] >> dump[1];
-                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
-                std::cout << "\nEnter FAA Part 107 pilot name (first last):" <<std::endl;
-                std::cin >> dump[0] >> dump[1];
-                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
-                std::cout << "\nEnter RC pilot name: (first last):" <<std::endl;
-                std::cin >> dump[0] >> dump[1];
-                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
-                std::cout << "\nEnter Date and time (mm/dd/yy 00:00):" << std::endl;
-                std::cin >> dump[0] >> dump[1];
-                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
-                //weather conditions
-                std::cout << "\nEnter ambient temperature in C:" << std::endl;
-                std::cin >> dump[0];
-                std::cout << "\n>>" << dump[0] << " degrees C." << std::endl;
-                std::cout << "\nEnter wind data (Velocity Direction):" << std::endl;
-                std::cin >> dump[0] >> dump[1];
-                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
                 //data checks
                 std::cout << "\n\nDisplaying sensor data: \nVN-200:\n" << std::endl;
                 for (int i=0; i<5; i++)
@@ -285,31 +263,36 @@ int main(int argc, char* argv[])
                     std::cout << "\n";
                     usleep(500000);
                 }
-                //consider guiding pilot through output checks with manual yes entry
-
-                std::cout << "\n\nWould you like to proceed with a flight? (y/n)" << std::endl;
+                //must enter name and other information to be logged
+                std::cout << "\nEnter research pilot name (first last):" <<std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                std::cout << "\nEnter FAA Part 107 pilot name (first last):" <<std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                std::cout << "\nEnter RC pilot name: (first last):" <<std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                std::cout << "\nEnter Date and time (mm/dd/yy 00:00):" << std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+                //weather conditions
+                std::cout << "\nEnter ambient temperature in C:" << std::endl;
                 std::cin >> dump[0];
-                if (!dump[0].compare("y"))
-                {
-                    allow_arm = true;
-                    std::cout << "\nGood luck!\n.\n.\n.\nyou may now arm the system.";
-                }
+                std::cout << "\n>>" << dump[0] << " degrees C." << std::endl;
+                std::cout << "\nEnter wind data (Velocity Direction):" << std::endl;
+                std::cin >> dump[0] >> dump[1];
+                std::cout << "\n>>" << dump[0] << " " << dump[1] << std::endl;
+
             }
         }
         else if (!user_data[0].compare("pwm"))
         {
             if (!user_data[1].compare("arm"))
             {
-                if (allow_arm)
-                {
-                    sys_status.armed = 1;
-                    std::cout << "pwm outputs armed.\nlogging started..." << std::endl;
-                    zcm.publish("STATUS",&sys_status);
-                }
-                else
-                {
-                    std::cout << "must perform preflight check first!" << std::endl;
-                }
+                sys_status.armed = 1;
+                std::cout << "pwm outputs armed.\nlogging started..." << std::endl;
+                zcm.publish("STATUS",&sys_status);
             }
             else if (!user_data[1].compare("disarm"))
             {
