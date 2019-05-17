@@ -8,6 +8,7 @@
 #include <cstring>
 #include <zcm/zcm-cpp.hpp>
 #include <fstream>
+#include <iomanip>
 //message types:
 #include "vnins_data_t.hpp"
 #include "adc_data_t.hpp"
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
     while (!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS5",&module_stat);
-        usleep(5000);
+        usleep(25000); //40 Hz for now
 
         if (handlerObject.stat.armed)
         {
@@ -164,14 +165,14 @@ int main(int argc, char *argv[])
             }
             logfile_acts << "\n";
             //log sensor data
-            logfile_sens << handlerObject.sens.time_gpspps;
+            logfile_sens << handlerObject.sens.time_gpspps << " " << handlerObject.sens.time_gps;
             for (int i=0; i<16; i++)
             {
                 logfile_sens << " " << handlerObject.sens.data[i];
             }
             logfile_sens << "\n";
             //log VN200 data
-            logfile_vn200 << handlerObject.vn200.time << " " << handlerObject.vn200.week << " " << handlerObject.vn200.tracking << " " << handlerObject.vn200.gpsfix << " " << handlerObject.vn200.error <<  " "
+            logfile_vn200 << std::setprecision(14) << handlerObject.vn200.time << std::setprecision(6) << " " << handlerObject.vn200.week << " " << handlerObject.vn200.tracking << " " << handlerObject.vn200.gpsfix << " " << handlerObject.vn200.error <<  " "
                           << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.latitude << " "
                           << handlerObject.vn200.longitude << " " << handlerObject.vn200.altitude << " " << handlerObject.vn200.vx << " " << handlerObject.vn200.vy << " "
                           << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";

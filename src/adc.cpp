@@ -1,5 +1,6 @@
 #include <zcm/zcm-cpp.hpp>
 #include "adc_data_t.hpp"
+#include "vnins_data_t.hpp"
 #include "status_t.hpp"
 #include "rs232.h"
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <cmath>
 
 #define COMPORT			24 		// '/dev/ttyACM0'
 #define BAUDRATE		230400
@@ -20,16 +22,22 @@ class Handler
         ~Handler() = default;
 
         status_t stat;
+        vnins_data_t vn200;
 
         Handler()
         {
             memset(&stat, 0, sizeof(stat));
-            stat.should_exit = 0;
+            memset(&vn200, 0, sizeof(vn200));
         }
 
         void read_stat(const zcm::ReceiveBuffer* rbuf,const std::string& chan,const status_t *msg)
         {
             stat = *msg;
+        }
+
+        void read_vn200(const zcm::ReceiveBuffer* rbuf,const std::string& chan,const vnins_data_t *msg)
+        {
+            vn200 = *msg;
         }
 };
 
@@ -124,7 +132,6 @@ int parseline(unsigned char* line, adc_data_t *msg)
     }
     **/
 
-
     // it is important to force base 10 in this conversion, because
     // the time is most likely padded with leading zeros, which causes
     // a default interpretation as octal
@@ -169,6 +176,7 @@ int main()
     //subscribe
     Handler handlerObject;
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
+    zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
 
     // create objects to publish
     adc_data_t msg;
@@ -204,6 +212,18 @@ int main()
 
         if (parseline(line, &msg) == 0)
         {
+            //compute ADC time_gps
+            double lastppstime = std::floor(handlerObject.vn200.time);
+            double adc_time_gpspps = ((double) msg.time_gpspps) / 1000000;
+            if (std::abs(handlerObject.vn200.time_gpspps - msg.time_gpspps) < 500000) {
+            msg.time_gps = lastppstime + adc_time_gpspps;
+            } else if (std::abs(handlerObject.vn200.time_gpspps - msg.time_gpspps) < 1500000) {
+            msg.time_gps = lastppstime + adc_time_gpspps - 1;
+            } else {
+            //std::cout << "WARNING: error in computing adc_gps_time" << std::endl;
+            // this number keeps showing up as time_gpspps: 4294967264
+            }
+            //publish ADC data
             zcm.publish("ADC_DATA", &msg);
         }
     }

@@ -17,19 +17,19 @@ class VNINSHandler {
             data = *msg;
             this->count++;
         }
-        
+
         bool tracking() {
 	    return (data.tracking == 1);
 	}
-		
+
 	bool gpsfix() {
 	    return (data.gpsfix == 1);
 	}
-		
+
 	bool error() {
 	    return (data.error == 1);
 	}
-        
+
         void print() {
 	    std::cout << "messages received: " << this->count << std::endl;
 	    std::cout << "most recent message: " << std::endl;
@@ -57,7 +57,7 @@ class ADCHandler {
             data = *msg;
             this->count++;
         }
-        
+
         void print(double vnins_gps_time, long long vnins_time_gpspps) {
 	    double lastppstime = std::floor(vnins_gps_time);
 	    double adc_time_gpspps = ((double) data.time_gpspps) / 1000000;
@@ -69,10 +69,11 @@ class ADCHandler {
 	    } else {
 		std::cout << "WARNING: error in computing adc_gps_time" << std::endl;
 	    }
-	    
+
 	    std::cout << "messages received: " << this->count << std::endl;
 	    std::cout << "most recent message: " << std::endl;
 	    std::cout << " time (computed from VNINS data): " << std::setprecision(14) << adc_gps_time << std::setprecision(6) << std::endl;
+	    std::cout << " time (computed from VNINS data in ADC module): " << std::setprecision(14) << data.time_gps << std::setprecision(6) << std::endl;
 	    std::cout << " time_gpspps (microseconds): " << data.time_gpspps << std::endl;
 	    for (int i=0; i<16; ++i) {
 		std::cout << "  data[" << i << "] = " << data.data[i] << std::endl;
@@ -90,7 +91,7 @@ int main(int argc, char *argv[]) {
     zcm.subscribe("VNINS_DATA", &VNINSHandler::read_messages, &vninsHandler);
     ADCHandler adcHandler;
     zcm.subscribe("ADC_DATA", &ADCHandler::read_messages, &adcHandler);
-    
+
     // start zcm as a separate thread:
     zcm.start();
 
@@ -100,12 +101,12 @@ int main(int argc, char *argv[]) {
         usleep(1000000);
         vninsHandler.print();
 	adcHandler.print(vninsHandler.data.time, vninsHandler.data.time_gpspps);
-        
+
     }
-	
+
 	// stop zcm
     zcm.stop();
-	
+
 	// exit with no error
     return 0;
 }

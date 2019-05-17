@@ -18,6 +18,8 @@ class adc_data_t
 
         int64_t    time_gpspps;
 
+        int64_t    time_gps;
+
     public:
         /**
          * Destructs a message properly if anything inherits from it
@@ -128,6 +130,9 @@ int adc_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) const
     thislen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->time_gpspps, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -142,6 +147,9 @@ int adc_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen)
     thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->time_gpspps, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -150,12 +158,13 @@ uint32_t adc_data_t::_getEncodedSizeNoHash() const
     uint32_t enc_size = 0;
     enc_size += __int32_t_encoded_array_size(NULL, 16);
     enc_size += __int64_t_encoded_array_size(NULL, 1);
+    enc_size += __int64_t_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t adc_data_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0xb0934e8c839fd06dLL;
+    uint64_t hash = (uint64_t)0x422f8e2ef4be672dLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 
