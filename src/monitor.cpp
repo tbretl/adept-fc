@@ -7,6 +7,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
+#include <iomanip>
 #include "zcm/zcm-cpp.hpp"
 //message types:
 #include "pwm_t.hpp"
@@ -60,7 +61,7 @@ class Handler
             stat = *msg;
         }
 
-        void read_sens(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
+        void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
         {
             adc = *msg;
         }
@@ -87,7 +88,7 @@ int main(int argc, char* argv[])
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
-    zcm.subscribe("ADC_DATA",&Handler::read_sens,&handlerObject);
+    zcm.subscribe("ADC_DATA",&Handler::read_adc,&handlerObject);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
     //module status channels:
     zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
@@ -106,7 +107,6 @@ int main(int argc, char* argv[])
     sys_status.armed = 0;
 
     zcm.start();
-    zcm.flush();
     zcm.publish("STATUS",&sys_status);
 
     while (!exit_flag)
@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
                 std::cout << "\n\nDisplaying sensor data: \nVN-200:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
-                    std::cout << handlerObject.vn200.time << " " << handlerObject.vn200.week << " " << (int)handlerObject.vn200.tracking << " " << (int)handlerObject.vn200.gpsfix << " " << (int)handlerObject.vn200.error <<  " "
+                    std::cout <<  std::setprecision(14) << handlerObject.vn200.time << std::setprecision(6) << " " << handlerObject.vn200.week << " " << (int)handlerObject.vn200.tracking << " " << (int)handlerObject.vn200.gpsfix << " " << (int)handlerObject.vn200.error <<  " "
                               << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.latitude << " "
                               << handlerObject.vn200.longitude << " " << handlerObject.vn200.altitude << " " << handlerObject.vn200.vx << " " << handlerObject.vn200.vy << " "
                               << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";
@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
                 std::cout << "\nADC data:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
-                    std::cout << handlerObject.adc.time_gps << " ";
+                    std::cout <<  std::setprecision(14) << handlerObject.adc.time_gps <<  std::setprecision(6) << " ";
                     for (int i=0; i<16; ++i) {
                         std::cout << handlerObject.adc.data[i] << " ";
                     }
@@ -249,6 +249,7 @@ int main(int argc, char* argv[])
                 std::cout << "\nRC input:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
+                    std::cout <<  std::setprecision(14) << handlerObject.rc_in.time_gps <<  std::setprecision(6) << " ";
                     for (int j=0;j<8;j++)
                     {
                         std::cout << handlerObject.rc_in.rc_chan[j] << " ";
@@ -259,6 +260,7 @@ int main(int argc, char* argv[])
                 std::cout << "\nPWM output:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
+                    std::cout <<  std::setprecision(14) << handlerObject.pwm.time_gps <<  std::setprecision(6) << " ";
                     for (int j=0;j<8;j++)
                     {
                         std::cout << handlerObject.pwm.pwm_out[j] << " ";

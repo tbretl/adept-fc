@@ -192,6 +192,8 @@ int main()
     unsigned char line[BUFFER_LENGTH];
     int result;
 
+    std::cout << "ADC started" << std::endl;
+
     while(!handlerObject.stat.should_exit)
     {
 

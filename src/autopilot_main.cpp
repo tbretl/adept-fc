@@ -1,6 +1,5 @@
 //This code is the HITL autopilot module that ESAERO will communicate with
 //Aaron Perry, 4/1/2019
-
 #include <stdio.h>
 #include <iostream>
 #include <unistd.h>
@@ -71,6 +70,7 @@ int main(int argc, char *argv[])
     //run zcm as a separate thread:
     zcm.start();
 
+    std::cout << "autopilot started" << std::endl;
     //control loop:
     while (!handlerObject.stat.should_exit)
     {

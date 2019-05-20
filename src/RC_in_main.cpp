@@ -1,6 +1,5 @@
 //Acquires RC input channel values and publishes them
 //Aaron Perry, 4/10/2019
-
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
@@ -64,12 +63,15 @@ int main()
     //load configuration
     int rc_fail_servo = 1500;
     int rc_fail_esc = 1000;
+    bool err_on = true;
     string dump;
     std::ifstream config_stream;
 
     config_stream.open("config_files/rc_in.config");
     config_stream >> dump >> rc_fail_servo;
     config_stream >> dump >> rc_fail_esc;
+    config_stream >> dump >> dump;
+    err_on = !dump.compare("true");
     config_stream.close();
 
     //initialize ZCM
@@ -92,12 +94,14 @@ int main()
     if (check_apm())
     {
         return 1;
+        std::cout << "RC_IN: failed to initialize rc input." << std::endl;
     }
     auto rcin = get_rcin();
     rcin->initialize();
 
     zcm.start();
-    //main loop
+
+    std::cout<< "rc_in started" << std::endl;
 
     while (!handlerObject.stat.should_exit)
     {
@@ -121,10 +125,13 @@ int main()
                 }
                 else if (i==4)//consider removing hard code on this one
                 {
-                    rc_in.rc_chan[i] = 1000; //manual flight mode
+                    rc_in.rc_chan[i] = 1000; //force manual flight mode to register
                 }
                 //log an error message
-                //std::cout << "error: RC read fail" << std::endl;
+                if (err_on)
+                {
+                    std::cout << "RC_IN: error: RC read fail" << std::endl;
+                }
             }
 
         }

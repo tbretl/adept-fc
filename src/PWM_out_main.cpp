@@ -286,6 +286,8 @@ int main(int argc, char *argv[])
 
     zcm.start();
 
+    std::cout<< "pwm_out started" << std::endl;
+
     while (!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS6",&module_stat);

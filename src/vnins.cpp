@@ -34,7 +34,6 @@ class Handler
         Handler()
         {
             memset(&stat, 0, sizeof(stat));
-            stat.should_exit = 0;
         }
 
         void read_stat(const zcm::ReceiveBuffer* rbuf,const std::string& chan,const status_t *msg)
@@ -46,7 +45,7 @@ class Handler
 int flush(unsigned int timeout_ms = 500)
 {
     auto start_time = std::chrono::steady_clock::now();
-    
+
     unsigned char c;
     size_t len;
     while (true)
@@ -57,7 +56,7 @@ int flush(unsigned int timeout_ms = 500)
             // time out (no data to flush)
             return 0;
         }
-        
+
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
@@ -227,24 +226,24 @@ bool writecommand(std::string &s) {
     for (unsigned char const &c: s) {
         cs8 ^= c;
     }
-    
+
     // convert 8-bit checksum to hex string
     std::stringstream stream;
     stream << std::setfill('0')         // output has form "0X" and not "X"
            << std::setw(2)              // output has two characters
            << std::hex                  // convert anything after this to hex
            << (unsigned int) cs8;       // interpret checksum as int before converting
-    
+
     // prefix
     s.insert(0, "$");
-    
+
     // suffix (with checksum)
     s += "*";
     s += stream.str();
-    
+
     // termination characters
     s += "\r\n";
-    
+
     // send command
     int result = RS232_SendBuf(COMPORT, (unsigned char*) s.c_str(), s.size());
     if (result < 0) {
@@ -254,7 +253,7 @@ bool writecommand(std::string &s) {
                   << s << std::endl;
         return false;
     }
-    
+
     // get response
     unsigned char line[BUFFER_LENGTH];
     result = readline(line, BUFFER_LENGTH);
@@ -265,16 +264,16 @@ bool writecommand(std::string &s) {
                   << s << std::endl;
         return false;
     }
-    
+
     // check if response is valid
     if (! is_valid_line(line)) {
         return false;
     }
-    
+
     // replace s with response
     s.clear();
     s.append((const char*) line);
-    
+
     // check for error in response
     char* field;
     field = strtok((char*) line + 1, ",");
@@ -287,7 +286,7 @@ bool writecommand(std::string &s) {
                   << s << std::endl;
         return false;
     }
-    
+
     return true;
 }
 
@@ -302,7 +301,7 @@ bool getprotocol() {
     //
     //  $VNRRG,30,0,0,0,0,1,0,1*6C
     //
-    
+
     std::string s = "VNRRG,30";
     bool result = writecommand(s);
     std::cout << "VN-200 communication protocol: " << s << std::endl;
@@ -333,14 +332,14 @@ bool setprotocol(
     s += std::to_string(static_cast<unsigned char>(spichecksum));
     s += ",";
     s += std::to_string(static_cast<unsigned char>(errormode));
-    
+
     return writecommand(s);
 }
 
 bool setoutputfrequency(int rate=40) {
     const int nrates = 11;
     const int rates[nrates] = {1, 2, 4, 5, 10, 20, 25, 40, 50, 100, 200};
-    
+
     bool acceptable = false;
     for (int i=0; i<nrates; ++i) {
         if (rate == rates[i]) {
@@ -351,24 +350,24 @@ bool setoutputfrequency(int rate=40) {
         std::cout << "WARNING: unacceptable rate " << rate << " in setoutputfrequency" << std::endl;
         return false;
     }
-    
+
     std::string s = "VNWRG,07";
     s += ",";
     s += std::to_string(rate);
-    
+
     return writecommand(s);
 }
 
 void config() {
     // turn off asynchronous outputs
     async(false);
-    
+
     // set communication protocol
     setprotocol();
-    
+
     // set output frequency (will fail if baud rate does not support the desired frequency)
     setoutputfrequency();
-    
+
     // turn on asynchronous outputs
     async(true);
 }
@@ -388,10 +387,10 @@ int main()
     {
         return 1;
     }
-    
+
     // configure
     config();
-    
+
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
 
@@ -413,6 +412,8 @@ int main()
     unsigned char line[BUFFER_LENGTH];
     int result;
 
+    std::cout << "VN-200 started" << std::endl;
+
     while(!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS1",&module_stat);
@@ -429,7 +430,7 @@ int main()
         {
             continue;
         }
-        
+
         if (parseline(line, &msg) == 0)
         {
             zcm.publish("VNINS_DATA", &msg);

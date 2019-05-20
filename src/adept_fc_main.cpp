@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <chrono>
 #include <zcm/zcm-cpp.hpp>
 //message types:
 #include "status_t.hpp"
@@ -82,43 +83,95 @@ int main(int argc, char *argv[])
 
     //rc_in
     run_process("bin/rc_in");
-    while (!(h0.stat.module_status==1)){}
-    std::cout<< "rc_in started" << std::endl;
+    auto start_time = std::chrono::steady_clock::now();
+    while (!(h0.stat.module_status==1)){
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= 1000) {
+            std::cout << "Timeout on rc_in startup..." << std::endl;
+            break;
+        }
+    }
+
 
     if(!hitl){
 
         //vectornav sensor input
         run_process("bin/vnins");
-        while (!(h1.stat.module_status==1)){}
-        std::cout << "VN-200 started" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        while (!(h1.stat.module_status==1)){
+            auto current_time = std::chrono::steady_clock::now();
+            unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+            if (time_ms >= 1000) {
+                std::cout << "Timeout on vnins startup..." << std::endl;
+            break;
+            }
+        }
+
 
         //ADC sensor input
         run_process("bin/adc");
-        while(!(h2.stat.module_status==1)){}
-        std::cout << "ADC started" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        while(!(h2.stat.module_status==1)){
+            auto current_time = std::chrono::steady_clock::now();
+            unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+            if (time_ms >= 2000) {
+                std::cout << "Timeout on ADC startup..." << std::endl;
+            break;
+            }
+        }
+
 
     }
     else {
         //HITL interface
         run_process("bin/hitl");
-        while (!(h3.stat.module_status==1)){}
-        std::cout << "hitl started" << std::endl;
+        start_time = std::chrono::steady_clock::now();
+        while (!(h3.stat.module_status==1)){
+            auto current_time = std::chrono::steady_clock::now();
+            unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+            if (time_ms >= 1000) {
+                std::cout << "Timeout on hitl startup..." << std::endl;
+            break;
+            }
+        }
     }
 
     //autopilot
     run_process("bin/autopilot");
-    while (!(h4.stat.module_status==1)){}
-    std::cout << "autopilot started" << std::endl;
+    start_time = std::chrono::steady_clock::now();
+    while (!(h4.stat.module_status==1)){
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= 1000) {
+            std::cout << "Timeout on autopilot startup..." << std::endl;
+        break;
+        }
+    }
 
     //Logger module
     run_process("bin/scribe");
-    while (!(h5.stat.module_status==1)){}
-    std::cout << "scribe started" << std::endl;
+    start_time = std::chrono::steady_clock::now();
+    while (!(h5.stat.module_status==1)){
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= 1000) {
+            std::cout << "Timeout on scribe startup..." << std::endl;
+        break;
+        }
+    }
 
     //pwm_out
     run_process("bin/pwm_out");
-    while (!(h6.stat.module_status==1)){}
-    std::cout<< "pwm_out started" << std::endl;
+    start_time = std::chrono::steady_clock::now();
+    while (!(h6.stat.module_status==1)){
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= 10000) {
+            std::cout << "Timeout on pwm startup..." << std::endl;
+        break;
+        }
+    }
 
     zcm.unsubscribe(sub0);
     zcm.unsubscribe(sub1);

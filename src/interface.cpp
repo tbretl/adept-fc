@@ -1,13 +1,13 @@
 //test program to publish messages:
-
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
+#include <chrono>
 #include <zcm/zcm-cpp.hpp>
 //message types:
-#include "sensor_data_t.hpp"
+#include "adc_data_t.hpp"
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 
@@ -19,17 +19,14 @@ class Handler
     public:
         ~Handler() = default;
 
-        //create a message object which can be accessed outside of the function call
-        actuators_t acts = {};
+        actuators_t acts;
         status_t stat;
 
         Handler()
         {
             memset(&acts, 0, sizeof(acts));
             memset(&stat, 0, sizeof(stat));
-            stat.should_exit = 0;
         }
-
 
         void read_acts(const zcm::ReceiveBuffer* rbuf,const string& chan,const actuators_t *msg)
         {
@@ -48,7 +45,7 @@ int main()
     zcm::ZCM zcm {"ipc"};
 
     //create objects to publish
-    sensor_data_t msg = {};
+    adc_data_t msg;
     memset(&msg, 0, sizeof(msg));
 
     //subscribe to channels
@@ -64,14 +61,16 @@ int main()
 
     zcm.start();
 
+    std::cout << "hitl started" << std::endl;
+
     while(!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS3",&module_stat);
-        //publish a random number to the a_x sensor data
-        msg.alpha = 3.0;
-        msg.beta = 2.0;
-        msg.Vmag = 1.0;
-        zcm.publish("SENSOR_DATA", &msg);
+
+        //in hitl mode, use RPI time as GPS time
+        msg.time_gps = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+        zcm.publish("ADC_DATA", &msg);
         usleep(5000);
 
     }
