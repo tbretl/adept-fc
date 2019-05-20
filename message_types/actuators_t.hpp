@@ -22,6 +22,8 @@ class actuators_t
 
         double     dt[8];
 
+        double     time_gps;
+
     public:
         /**
          * Destructs a message properly if anything inherits from it
@@ -138,6 +140,9 @@ int actuators_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) cons
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->dt[0], 8);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -158,6 +163,9 @@ int actuators_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->dt[0], 8);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -168,12 +176,13 @@ uint32_t actuators_t::_getEncodedSizeNoHash() const
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 8);
+    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t actuators_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0x1ab7f936254d9d65LL;
+    uint64_t hash = (uint64_t)0x3b2c8408ad076035LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

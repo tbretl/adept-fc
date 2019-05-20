@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     sprintf(file_rc,"FlightLog_%i_rc.dat",fileNum);
     sprintf(file_pwm,"FlightLog_%i_pwm.dat",fileNum);
     sprintf(file_acts,"FlightLog_%i_acts.dat",fileNum);
-    sprintf(file_sens,"FlightLog_%i_sens.dat",fileNum);
+    sprintf(file_sens,"FlightLog_%i_adc.dat",fileNum);
     sprintf(file_vn200,"FlightLog_%i_vn200.dat",fileNum);
 
     std::ofstream logfile_rc;
@@ -146,18 +146,21 @@ int main(int argc, char *argv[])
         if (handlerObject.stat.armed)
         {
             //log rc inputs
+            logfile_rc << std::setprecision(14) << handlerObject.rc_in.time_gps << std::setprecision(6) <<" ";
             for (int i=0;i<8;i++)
             {
                 logfile_rc << handlerObject.rc_in.rc_chan[i] << " ";
             }
             logfile_rc << "\n";
             //log pwm inputs
+            logfile_pwm << std::setprecision(14) << handlerObject.pwm.time_gps << std::setprecision(6) <<" ";
             for (int i=0;i<11;i++)
             {
                 logfile_pwm << handlerObject.pwm.pwm_out[i] << " ";
             }
             logfile_pwm << "\n";
             //log actuator values
+            logfile_acts << std::setprecision(14) << handlerObject.acts.time_gps << std::setprecision(6) << " ";
             logfile_acts << handlerObject.acts.da << " " << handlerObject.acts.de << " " << handlerObject.acts.dr << " ";
             for (int i=0;i<8;i++)
             {
@@ -165,7 +168,7 @@ int main(int argc, char *argv[])
             }
             logfile_acts << "\n";
             //log sensor data
-            logfile_sens << handlerObject.sens.time_gpspps << " " << handlerObject.sens.time_gps;
+            logfile_sens << handlerObject.sens.time_gpspps << " " << std::setprecision(14) << handlerObject.sens.time_gps << std::setprecision(6) ;
             for (int i=0; i<16; i++)
             {
                 logfile_sens << " " << handlerObject.sens.data[i];

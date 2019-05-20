@@ -1,4 +1,5 @@
 struct rc_t
 {
-    int16_t rc_chan[8]; 
+    int16_t rc_chan[8];
+    double time_gps;  
 }

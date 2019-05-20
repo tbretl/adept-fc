@@ -10,9 +10,11 @@
 #include <Navio2/RCInput_Navio2.h>
 #include <Common/Util.h>
 #include <memory>
+#include <chrono>
 //message types:
 #include "rc_t.hpp"
 #include "status_t.hpp"
+#include "adc_data_t.hpp"
 
 #define READ_FAILED -1
 
@@ -24,18 +26,32 @@ class Handler
         ~Handler() = default;
 
         status_t stat;
+        adc_data_t adc;
 
         Handler()
         {
             memset(&stat,0,sizeof(stat));
-            stat.should_exit = 0;
+            memset(&adc,0,sizeof(adc));
         }
 
         void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
         {
             stat = *msg;
         }
+
+        void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
+        {
+            adc = *msg;
+        }
 };
+
+double get_gps_time(Handler* adchandle)
+{
+    double adc_gps = adchandle->adc.time_gps;
+    int64_t adc_time = adchandle->adc.time_rpi;
+    int64_t rpi_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    return  adc_gps + (rpi_time - adc_time)/1000000;
+}
 
 std::unique_ptr <RCInput> get_rcin()
 {
@@ -66,6 +82,7 @@ int main()
     //subscribe to incoming channels:
     Handler handlerObject;
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
+    zcm.subscribe("ADC_DATA",&Handler::read_adc,&handlerObject);
 
     //initialize message objects
     rc_t rc_in;
@@ -111,6 +128,8 @@ int main()
             }
 
         }
+        //timestamp the data
+        rc_in.time_gps = get_gps_time(&handlerObject);
 
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);

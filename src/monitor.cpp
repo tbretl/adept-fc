@@ -13,7 +13,7 @@
 #include "rc_t.hpp"
 #include "actuators_t.hpp"
 #include "status_t.hpp"
-#include "sensor_data_t.hpp"
+#include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"
 
 using std::string;
@@ -23,7 +23,7 @@ class Handler
     public:
         ~Handler() = default;
 
-        sensor_data_t sens;
+        adc_data_t adc;
         rc_t rc_in;
         pwm_t pwm;
         actuators_t acts;
@@ -36,7 +36,7 @@ class Handler
             memset(&acts, 0, sizeof(acts));
             memset(&rc_in, 0, sizeof(rc_in));
             memset(&pwm, 0, sizeof(pwm));
-            memset(&sens, 0, sizeof(sens));
+            memset(&adc, 0, sizeof(adc));
             memset(&vn200, 0, sizeof(vn200));
         }
 
@@ -60,9 +60,9 @@ class Handler
             stat = *msg;
         }
 
-        void read_sens(const zcm::ReceiveBuffer* rbuf,const string& chan,const sensor_data_t *msg)
+        void read_sens(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
         {
-            sens = *msg;
+            adc = *msg;
         }
 
         void read_vn200(const zcm::ReceiveBuffer* rbuf,const string& chan,const vnins_data_t *msg)
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
-    zcm.subscribe("SENSOR_DATA",&Handler::read_sens,&handlerObject);
+    zcm.subscribe("ADC_DATA",&Handler::read_sens,&handlerObject);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
     //module status channels:
     zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
@@ -239,8 +239,11 @@ int main(int argc, char* argv[])
                 std::cout << "\nADC data:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
-                    std::cout << handlerObject.sens.Vmag << " " << handlerObject.sens.alpha << " " << handlerObject.sens.beta << " " << handlerObject.sens.l_ail << " "
-                              << handlerObject.sens.r_ail << " " << handlerObject.sens.l_ele << " " << handlerObject.sens.r_ele << " " << handlerObject.sens.rud << "\n";
+                    std::cout << handlerObject.adc.time_gps << " ";
+                    for (int i=0; i<16; ++i) {
+                        std::cout << handlerObject.adc.data[i] << " ";
+                    }
+                    std::cout << std::endl;
                     usleep(500000);
                 }
                 std::cout << "\nRC input:\n" << std::endl;

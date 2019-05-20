@@ -16,6 +16,8 @@ class pwm_t
     public:
         int16_t    pwm_out[14];
 
+        double     time_gps;
+
     public:
         /**
          * Destructs a message properly if anything inherits from it
@@ -123,6 +125,9 @@ int pwm_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) const
     thislen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->pwm_out[0], 14);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -134,6 +139,9 @@ int pwm_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen)
     thislen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->pwm_out[0], 14);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -141,12 +149,13 @@ uint32_t pwm_t::_getEncodedSizeNoHash() const
 {
     uint32_t enc_size = 0;
     enc_size += __int16_t_encoded_array_size(NULL, 14);
+    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t pwm_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0x119945674df4db74LL;
+    uint64_t hash = (uint64_t)0x2969e543fcaa5117LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

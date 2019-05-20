@@ -4,4 +4,5 @@ struct actuators_t
     double da;
     double dr;
     double dt[8];
+    double time_gps; 
 }

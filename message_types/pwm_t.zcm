@@ -1,4 +1,5 @@
 struct pwm_t
 {
-    int16_t pwm_out[14]; 
+    int16_t pwm_out[14];
+    double time_gps;  
 }
