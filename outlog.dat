@@ -1,0 +1,22 @@
+rc_in started
+VN-200 started
+ADC started
+ADC: error: in parseline at data field 0
+autopilot started
+scribe started
+pwm_out started
+
+
+
+Input: <target> <action> ("help !" for options):
+>>all exit
+Exiting all modules.
+rc_in module exiting...
+adc module exiting...
+autopilot module exiting...
+pwm_out module exiting...
+vn200 module exiting...
+scribe module exiting...
+
+Goodbye.
+
