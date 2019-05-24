@@ -1,4 +1,3 @@
-//This code is the HITL autopilot module that ESAERO will communicate with
 //Aaron Perry, 4/1/2019
 #include <stdio.h>
 #include <iostream>
@@ -6,8 +5,7 @@
 #include <string.h>
 #include <zcm/zcm-cpp.hpp>
 #include <chrono>
-//imessage types:
-#include "sensor_data_t.hpp"
+//message types:
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 #include "adc_data_t.hpp"
@@ -87,7 +85,7 @@ int main(int argc, char *argv[])
         acts.dt[5] = 0;
         acts.dt[6] = 0;
         acts.dt[7] = 0;
-        usleep(5000);
+        usleep(10000);
 
         //timestamp the values:
         acts.time_gps = get_gps_time(&handlerObject);

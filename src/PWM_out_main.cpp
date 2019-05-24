@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
         pwm_comm.time_gps = get_gps_time(&handlerObject);
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
-        usleep(5000);
+        usleep(10000);
     }
 
     module_stat.module_status = 0;

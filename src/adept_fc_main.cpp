@@ -61,13 +61,13 @@ int main(int argc, char *argv[])
 
     //subscribe to channels
     Handler h0,h1,h2,h3,h4,h5,h6;
-    auto* sub0 = zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
-    auto* sub1 = zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
-    auto* sub2 = zcm.subscribe("STATUS2",&Handler::read_stat,&h2);
-    auto* sub3 = zcm.subscribe("STATUS3",&Handler::read_stat,&h3);
-    auto* sub4 = zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
-    auto* sub5 = zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
-    auto* sub6 = zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
+    zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
+    zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
+    zcm.subscribe("STATUS2",&Handler::read_stat,&h2);
+    zcm.subscribe("STATUS3",&Handler::read_stat,&h3);
+    zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
+    zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
+    zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
 
     zcm.start();
 
@@ -173,20 +173,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    zcm.unsubscribe(sub0);
-    zcm.unsubscribe(sub1);
-    zcm.unsubscribe(sub2);
-    zcm.unsubscribe(sub3);
-    zcm.unsubscribe(sub4);
-    zcm.unsubscribe(sub5);
-    zcm.unsubscribe(sub6);
-
-
     zcm.stop();
 
     //launch system monitor, consume this thread:
     execl ("bin/monitor", "bin/monitor",NULL);
-
 
 
     return 0;

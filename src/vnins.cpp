@@ -435,6 +435,9 @@ int main()
         {
             zcm.publish("VNINS_DATA", &msg);
         }
+
+        //loop timing
+        usleep(10000); //100 hz
     }
 
     // close serial port

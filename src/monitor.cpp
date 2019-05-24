@@ -111,6 +111,7 @@ int main(int argc, char* argv[])
 
     while (!exit_flag)
     {
+        usleep(500000);
         //get user input:
         std::cout <<"\n\n\nInput: <target> <action> (\"help !\" for options):" << std::endl;
         std::cin >> user_data[0] >> user_data[1];

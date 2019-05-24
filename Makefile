@@ -24,7 +24,7 @@ pwm_out: $(SRC)/PWM_out_main.cpp
 	$(CXX) $(CXXFLAGS) $(SRC)/PWM_out_main.cpp $(LIBS) $(INCS) -o $(BIN)/pwm_out
 
 scribe: $(SRC)/scribe_main_2.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/scribe_main_2.cpp -o $(BIN)/scribe 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/scribe_main.cpp -o $(BIN)/scribe 
 
 rc_in: $(SRC)/RC_in_main.cpp
 	$(CXX) $(CXXFLAGS) $(SRC)/RC_in_main.cpp $(LIBS) $(INCS) -o $(BIN)/rc_in 

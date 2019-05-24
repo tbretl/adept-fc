@@ -140,7 +140,7 @@ int main()
 
         //publish the RC values
         zcm.publish("RC_IN", &rc_in);
-        usleep(5000);
+        usleep(10000);
     }
 
     module_stat.module_status = 0;

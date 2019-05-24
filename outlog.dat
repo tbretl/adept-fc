@@ -1,22 +1,20 @@
 rc_in started
 VN-200 started
 ADC started
-ADC: error: in parseline at data field 0
+ADC: error: in parseline at data field 10
 autopilot started
 scribe started
+ADC: WARNING: error in computing adc_gps_time
 pwm_out started
 
 
 
 Input: <target> <action> ("help !" for options):
->>all exit
-Exiting all modules.
+>>monitor exit
+Exiting monitor: goodbye!.
 rc_in module exiting...
-adc module exiting...
 autopilot module exiting...
 pwm_out module exiting...
-vn200 module exiting...
 scribe module exiting...
-
-Goodbye.
-
+adc module exiting...
+vn200 module exiting...

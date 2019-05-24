@@ -232,6 +232,8 @@ int main()
             msg.time_rpi = rpi_time;
             //publish ADC data
             zcm.publish("ADC_DATA", &msg);
+            //loop timing
+            usleep(10000);
         }
     }
 
