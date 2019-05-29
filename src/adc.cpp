@@ -219,12 +219,22 @@ int main()
         if (parseline(line, &msg) == 0)
         {
             //compute ADC time_gps
+            double vn_gps_time_pps = handlerObject.vn200.time_gpspps;
             double lastppstime = std::floor(handlerObject.vn200.time);
-            double adc_time_gpspps = ((double) msg.time_gpspps) / 1000000;
-            if (std::abs(handlerObject.vn200.time_gpspps - msg.time_gpspps) < 500000) {
-            msg.time_gps = lastppstime + adc_time_gpspps;
-            } else if (std::abs(handlerObject.vn200.time_gpspps - msg.time_gpspps) < 1500000) {
-            msg.time_gps = lastppstime + adc_time_gpspps - 1;
+            double adc_time_gpspps = (double) msg.time_gpspps;
+
+            if (std::abs(vn_gps_time_pps - adc_time_gpspps) < 500000) {
+
+                msg.time_gps = lastppstime + adc_time_gpspps/1000000;
+
+            } else if (std::abs(vn_gps_time_pps - adc_time_gpspps) < 1500000) {
+
+                if (handlerObject.vn200.time_gpspps < msg.time_gpspps) {
+                    msg.time_gps = lastppstime + adc_time_gpspps/1000000 - 1;
+                } else {
+                    msg.time_gps = lastppstime + adc_time_gpspps/1000000;
+                }
+
             } else {
                 std::cout << "ADC: WARNING: error in computing adc_gps_time" << std::endl;
             }

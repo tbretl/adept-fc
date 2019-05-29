@@ -23,7 +23,7 @@ demo: $(SRC)/demo.cpp
 pwm_out: $(SRC)/PWM_out_main.cpp 
 	$(CXX) $(CXXFLAGS) $(SRC)/PWM_out_main.cpp $(LIBS) $(INCS) -o $(BIN)/pwm_out
 
-scribe: $(SRC)/scribe_main_2.cpp
+scribe: $(SRC)/scribe_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/scribe_main.cpp -o $(BIN)/scribe 
 
 rc_in: $(SRC)/RC_in_main.cpp

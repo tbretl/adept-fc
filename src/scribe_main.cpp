@@ -24,48 +24,101 @@ class Handler
         ~Handler() = default;
 
         status_t stat;
-        rc_t rc_in;
-        pwm_t pwm;
-        actuators_t acts;
-        adc_data_t adc;
-        vnins_data_t vn200;
-
-
+        std::ostringstream log_buffer;
 
         Handler()
         {
             memset(&stat, 0, sizeof(stat));
-            memset(&rc_in, 0, sizeof(rc_in));
-            memset(&pwm, 0, sizeof(pwm));
-            memset(&acts, 0, sizeof(acts));
-            memset(&adc, 0, sizeof(adc));
-            memset(&vn200, 0, sizeof(vn200));
         }
 
 
         void read_rc(const zcm::ReceiveBuffer* rbuf,const string& chan,const rc_t *msg)
         {
-            rc_in = *msg;
+            if(log_buffer << std::setprecision(14) << msg->time_gps << std::setprecision(6) <<" "){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
+            }
+            for (int i=0;i<8;i++)
+            {
+                if(log_buffer << msg->rc_chan[i] << " "){
+                }else{
+                    std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
+                }
+            }
+            if(log_buffer << "\n"){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
+            }
         }
 
         void read_pwm(const zcm::ReceiveBuffer* rbuf,const string& chan,const pwm_t *msg)
         {
-            pwm = *msg;
+            if(log_buffer << std::setprecision(14) << msg->time_gps << std::setprecision(6) <<" "){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
+            }
+            for (int i=0;i<11;i++)
+            {
+                if(log_buffer << msg->pwm_out[i] << " "){
+                }else{
+                    std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
+                }
+            }
+            if(log_buffer << "\n"){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
+            }
         }
 
         void read_acts(const zcm::ReceiveBuffer* rbuf,const string& chan,const actuators_t *msg)
         {
-            acts = *msg;
+            if(log_buffer << std::setprecision(14) << msg->time_gps << std::setprecision(6) << " "
+                          << msg->da << " " << msg->de << " " << msg->dr << " "){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
+            }
+            for (int i=0;i<8;i++)
+            {
+                if(log_buffer << msg->dt[i] << " "){
+                }else{
+                    std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
+                }
+            }
+            if(log_buffer << "\n"){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
+            }
         }
 
         void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
         {
-            adc = *msg;
+            if(log_buffer << msg->time_gpspps << " " << std::setprecision(14) << msg->time_gps << std::setprecision(6)){
+            }else {
+                std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
+            }
+            for (int i=0; i<16; i++)
+            {
+                if(log_buffer << " " << msg->data[i]){
+                }else {
+                    std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
+                }
+            }
+            if(log_buffer << "\n"){
+            }else {
+                std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
+            }
         }
 
         void read_vn200(const zcm::ReceiveBuffer* rbuf,const string& chan,const vnins_data_t *msg)
         {
-            vn200 = *msg;
+            if(log_buffer << std::setprecision(6) << msg->time_gpspps << " " << std::setprecision(14) << msg->time << std::setprecision(6) << " " << msg->week << " "
+                          << (int)msg->tracking << " " << (int)msg->gpsfix << " " << (int)msg->error <<  " "
+                          << msg->pitch << " " << msg->roll << " " << msg->yaw << " " << msg->latitude << " "
+                          << msg->longitude << " " << msg->altitude << " " << msg->vx << " " << msg->vy << " "
+                          << msg->vz << " " << msg->attuncertainty << " " << msg->posuncertainty << " " << msg->veluncertainty << "\n"){
+            }else{
+                std::cout << "SCRIBE ERROR: message buffer overflow on vnins." << std::endl;
+            }
         }
 
         void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
@@ -73,7 +126,12 @@ class Handler
             stat = *msg;
         }
 
-
+        string clear_buffer()
+        {
+            string out = log_buffer.str();
+            log_buffer.str("");
+            return out;
+        }
 };
 
 
@@ -85,7 +143,7 @@ int main(int argc, char *argv[])
     char file_rc[25];
     char file_pwm[25];
     char file_acts[25];
-    char file_sens[25];
+    char file_adc[25];
     char file_vn200[25];
 
     //sequencing file numbers:
@@ -101,34 +159,34 @@ int main(int argc, char *argv[])
     sprintf(file_rc,"FlightLog_%i_rc.dat",fileNum);
     sprintf(file_pwm,"FlightLog_%i_pwm.dat",fileNum);
     sprintf(file_acts,"FlightLog_%i_acts.dat",fileNum);
-    sprintf(file_sens,"FlightLog_%i_adc.dat",fileNum);
+    sprintf(file_adc,"FlightLog_%i_adc.dat",fileNum);
     sprintf(file_vn200,"FlightLog_%i_vn200.dat",fileNum);
 
     std::ofstream logfile_rc;
     std::ofstream logfile_pwm;
     std::ofstream logfile_acts;
-    std::ofstream logfile_sens;
+    std::ofstream logfile_adc;
     std::ofstream logfile_vn200;
 
     logfile_rc.open(file_rc,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
     logfile_pwm.open(file_pwm,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
     logfile_acts.open(file_acts,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
-    logfile_sens.open(file_sens,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
+    logfile_adc.open(file_adc,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
     logfile_vn200.open(file_vn200,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
 
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to incoming channels:
-    Handler handlerObject;
-    zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
+    Handler vnins_handler,adc_handler,acts_handler,pwm_handler,rc_handler,handlerObject;
+    zcm.subscribe("RC_IN",&Handler::read_rc,&rc_handler);
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
-    zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
-    zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
-    zcm.subscribe("ADC_DATA",&Handler::read_adc,&handlerObject);
-    zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
+    zcm.subscribe("PWM_OUT",&Handler::read_pwm,&pwm_handler);
+    zcm.subscribe("ACTUATORS",&Handler::read_acts,&acts_handler);
+    zcm.subscribe("ADC_DATA",&Handler::read_adc,&adc_handler);
+    zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&vnins_handler);
 
-    //for bublishing stat of this module
+    //for publishing stat of this module
     status_t module_stat;
     memset(&module_stat,0,sizeof(module_stat));
     module_stat.module_status = 1;//module running
@@ -140,44 +198,21 @@ int main(int argc, char *argv[])
     while (!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS5",&module_stat);
-        usleep(12500); //80Hz
+        usleep(25000); //40Hz
 
         if (handlerObject.stat.armed)
         {
             //log rc inputs
-            logfile_rc << std::setprecision(14) << handlerObject.rc_in.time_gps << std::setprecision(6) <<" ";
-            for (int i=0;i<8;i++)
-            {
-                logfile_rc << handlerObject.rc_in.rc_chan[i] << " ";
-            }
-            logfile_rc << "\n";
+            logfile_rc << rc_handler.clear_buffer();
             //log pwm inputs
-            logfile_pwm << std::setprecision(14) << handlerObject.pwm.time_gps << std::setprecision(6) <<" ";
-            for (int i=0;i<11;i++)
-            {
-                logfile_pwm << handlerObject.pwm.pwm_out[i] << " ";
-            }
-            logfile_pwm << "\n";
+            logfile_pwm << pwm_handler.clear_buffer();
             //log actuator values
-            logfile_acts << std::setprecision(14) << handlerObject.acts.time_gps << std::setprecision(6) << " ";
-            logfile_acts << handlerObject.acts.da << " " << handlerObject.acts.de << " " << handlerObject.acts.dr << " ";
-            for (int i=0;i<8;i++)
-            {
-                logfile_acts << handlerObject.acts.dt[i] << " ";
-            }
-            logfile_acts << "\n";
+            logfile_acts << acts_handler.clear_buffer();
             //log sensor data
-            logfile_sens << handlerObject.adc.time_gpspps << " " << std::setprecision(14) << handlerObject.adc.time_gps << std::setprecision(6) ;
-            for (int i=0; i<16; i++)
-            {
-                logfile_sens << " " << handlerObject.adc.data[i];
-            }
-            logfile_sens << "\n";
+            logfile_adc << adc_handler.clear_buffer();
             //log VN200 data
-            logfile_vn200 << std::setprecision(14) << handlerObject.vn200.time << std::setprecision(6) << " " << handlerObject.vn200.week << " " << handlerObject.vn200.tracking << " " << handlerObject.vn200.gpsfix << " " << handlerObject.vn200.error <<  " "
-                          << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.latitude << " "
-                          << handlerObject.vn200.longitude << " " << handlerObject.vn200.altitude << " " << handlerObject.vn200.vx << " " << handlerObject.vn200.vy << " "
-                          << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";
+            logfile_vn200 << vnins_handler.clear_buffer();
+
         }
     }
 
@@ -185,13 +220,12 @@ int main(int argc, char *argv[])
     zcm.publish("STATUS5",&module_stat);
 
     std::cout << "scribe module exiting..." << std::endl;
-    //pass a message back to monitor as well (feature to add)
 
     //close log files:
     logfile_rc.close();
     logfile_pwm.close();
     logfile_acts.close();
-    logfile_sens.close();
+    logfile_adc.close();
     logfile_vn200.close();
 
     zcm.stop();
