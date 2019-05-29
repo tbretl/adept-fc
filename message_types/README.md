@@ -1,1 +1,3 @@
-This is where all message types will be stored. The current contents are not exhaustive, and are subject to change. 04/1/2019 
+Generate message types from .zcm files as: 
+
+zcm-gen --cpp adc_t.zcm 
