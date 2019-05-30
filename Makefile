@@ -39,7 +39,7 @@ autopilot: $(SRC)/autopilot_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot 
 
 hitl: $(SRC)/interface.cpp 
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/interface.cpp -o $(BIN)/hitl 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(SRC)/interface.cpp -o $(BIN)/hitl 
 
 monitor: $(SRC)/monitor.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor
@@ -59,8 +59,10 @@ clean:
 	rm -f $(BIN)/pwm_out
 	rm -f $(BIN)/scribe
 	rm -f $(BIN)/rc_in
+	rm -f $(BIN)/udp_receive
 	rm -f $(BIN)/adept_fc 
 	rm -f $(BIN)/autopilot
 	rm -f $(BIN)/hitl
 	rm -f $(BIN)/monitori
-	rm -f $(BIN)/udp_send 
+	rm -f $(BIN)/udp_send
+

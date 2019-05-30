@@ -10,12 +10,15 @@
 using boost::asio::ip::udp;
 using boost::asio::ip::address;
 
-struct Client {
+class Client {
+
+public:
 
     boost::asio::io_service io_service;
     udp::socket socket{io_service};
     std::array<char, 1024> recv_buffer;
     udp::endpoint remote_endpoint;
+
 
 
     Client()
