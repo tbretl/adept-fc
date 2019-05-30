@@ -5,8 +5,11 @@ INCS = -I./message_types -I$(NAVIO) -L$(NAVIO)
 LIBS = -lzcm -lnavio 
 BIN = ./bin
 SRC = ./src
+TST = ./test
 
-all: adc vnins subber demo pwm_out scribe rc_in adept_fc autopilot hitl monitor 
+all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor
+
+demos: subber demo
 
 adc: $(SRC)/adc.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc.cpp $(SRC)/rs232.c -o $(BIN)/adc
@@ -14,11 +17,11 @@ adc: $(SRC)/adc.cpp
 vnins: $(SRC)/vnins.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/vnins.cpp $(SRC)/rs232.c -o $(BIN)/vnins
 
-subber: $(SRC)/subber.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/subber.cpp -o $(BIN)/subber
+subber: $(TST)/subber.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(TST)/subber.cpp -o $(BIN)/subber
 
-demo: $(SRC)/demo.cpp
-	$(CXX) $(CXXFLAGS) $(SRC)/demo.cpp $(SRC)/rs232.c -o $(BIN)/demo
+demo: $(TST)/demo.cpp
+	$(CXX) $(CXXFLAGS) -I./src/ $(TST)/demo.cpp $(SRC)/rs232.c -o $(BIN)/demo
 
 pwm_out: $(SRC)/PWM_out_main.cpp 
 	$(CXX) $(CXXFLAGS) $(SRC)/PWM_out_main.cpp $(LIBS) $(INCS) -o $(BIN)/pwm_out
