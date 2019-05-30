@@ -5,6 +5,8 @@
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 
+#define UDP_PORT "1337"
+
 using boost::asio::ip::udp;
 
 class UDPClient
@@ -36,10 +38,14 @@ private:
 	udp::endpoint endpoint_;
 };
 
-int main()
+int main(int argc, char *argv[])
 {
+	if (argc < 2) {
+		std::cout << "missing argument: ip address" << std::endl;
+		return 1; 
+	}
 	boost::asio::io_service io_service;
-	UDPClient client(io_service, "192.168.0.35", "1337");
-
-	client.send("Hello, World!");
+	UDPClient client(io_service, argv[1], UDP_PORT);
+	//!,ax,ay,az,u,v,w,V,alpha,beta,lat,lon,alt,p,q,r,phi,theta,psi
+	client.send("!,0.1,0.2,0.3,10,20,30,60,5,6,5200,4300,100,0.05,0.06,0.07,5,10,15,!");
 }
