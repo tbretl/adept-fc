@@ -9,7 +9,7 @@ TST = ./test
 
 all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor
 
-demos: subber demo
+demos: subber demo udp_send udp_receive
 
 adc: $(SRC)/adc.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc.cpp $(SRC)/rs232.c -o $(BIN)/adc
@@ -39,10 +39,17 @@ autopilot: $(SRC)/autopilot_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot 
 
 hitl: $(SRC)/interface.cpp 
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/interface.cpp -o $(BIN)/hitl 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(SRC)/interface.cpp -o $(BIN)/hitl 
 
 monitor: $(SRC)/monitor.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor
+
+udp_receive: $(TST)/udp_receive.cpp 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(TST)/udp_receive.cpp -o $(BIN)/udp_receive 
+
+udp_send: $(TST)/udp_sender.cpp 
+	$(CXX) $(CXXFLAGS) -lboost_system -lpthread $(TST)/udp_sender.cpp -o $(BIN)/udp_send 
+	
 
 clean:
 	rm -f $(BIN)/adc
@@ -52,7 +59,10 @@ clean:
 	rm -f $(BIN)/pwm_out
 	rm -f $(BIN)/scribe
 	rm -f $(BIN)/rc_in
+	rm -f $(BIN)/udp_receive
 	rm -f $(BIN)/adept_fc 
 	rm -f $(BIN)/autopilot
 	rm -f $(BIN)/hitl
-	rm -f $(BIN)/monitor
+	rm -f $(BIN)/monitori
+	rm -f $(BIN)/udp_send
+
