@@ -17,7 +17,7 @@
 #include "status_t.hpp"
 
 #define UDP_PORT 1337
-#define UDP_OUT "1337"
+#define UDP_OUT "1338"
 
 using std::string;
 using boost::asio::ip::udp;
@@ -80,17 +80,21 @@ public:
     vnins_data_t vnins_msg;
     status_t module_stat;
     zcm::ZCM zcm {"ipc"};
+    Handler handlerObject,act_handler;
 
-    Client(const string my_IP,const string their_IP) {
+    Client(const string my_IP,const string their_IP)
+        : handlerObject(their_IP), act_handler(their_IP)
+    {
         //zcm
         memset(&adc_msg, 0, sizeof(adc_msg));
         memset(&vnins_msg, 0, sizeof(vnins_msg));
         memset(&module_stat,0,sizeof(module_stat));
-        Handler handlerObject(their_IP),act_handler(their_IP);
+
         zcm.subscribe("ACTUATORS",&Handler::read_acts,&act_handler);
         zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
         module_stat.module_status = 1;//module running
         zcm.start();
+        zcm.publish("STATUS3",&module_stat);
         //udp
         socket.open(udp::v4());
         socket.bind(udp::endpoint(address::from_string(my_IP), UDP_PORT));
@@ -98,10 +102,17 @@ public:
         io_service.run();
     }
 
+    ~Client() {
+        zcm.stop();
+        socket.close();
+    }
+
     void start_receive() {
         socket.async_receive_from(boost::asio::buffer(recv_buffer),
             remote_endpoint,
             boost::bind(&Client::handle_receive, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+
+            //add a message time_out here
     }
 
     void handle_receive(const boost::system::error_code& error, size_t bytes_transferred) {
@@ -109,17 +120,24 @@ public:
             std::cout << "Receive failed: " << error.message() << "\n";
             return;
         }
-        std::cout << "Received: '" << std::string(recv_buffer.begin(), recv_buffer.begin()+bytes_transferred) << "' (" << error.message() << ")\n";
+        //std::cout << "Received: '" << std::string(recv_buffer.begin(), recv_buffer.begin()+bytes_transferred) << "' (" << error.message() << ")\n";
         //do the zcm publishing here;
         adc_msg.time_gps = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         vnins_msg.time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         //publish values which came in from simulation
         zcm.publish("ADC_DATA", &adc_msg);
         zcm.publish("VNINS_DATA",&vnins_msg);
+        zcm.publish("STATUS3",&module_stat);
 
         usleep(5000);
-        start_receive();
+        if (!handlerObject.stat.should_exit){
+            start_receive();
+        }else {
+            module_stat.module_status = 0;
+            zcm.publish("STATUS3",&module_stat);
+        }
     }
+
 };
 
 
@@ -133,19 +151,9 @@ int main()
     std::cout << "hitl started" << std::endl;
 
     Client udp_zcm_interface(rpi_IP,pc_IP);
-//    while(!handlerObject.stat.should_exit)
-//    {
-//        //publish hitl module status
-//        //zcm.publish("STATUS3",&module_stat);
-//
-//    }
 
-//    module_stat.module_status = 0;
-//    zcm.publish("STATUS3",&module_stat);
 
     std::cout << "HITL interface module exiting..." << std::endl;
     //pass a message back to monitor as well (feature to add)
-
-//    zcm.stop();
     return 0;
 }
