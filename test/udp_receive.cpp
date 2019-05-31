@@ -4,8 +4,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#define IPADDRESS "192.168.0.35"
-#define UDP_PORT 1337
+#define IPADDRESS "192.168.0.11"
+#define UDP_PORT 1338
 
 using boost::asio::ip::udp;
 using boost::asio::ip::address;

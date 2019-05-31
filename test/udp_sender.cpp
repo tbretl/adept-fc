@@ -47,5 +47,9 @@ int main(int argc, char *argv[])
 	boost::asio::io_service io_service;
 	UDPClient client(io_service, argv[1], UDP_PORT);
 	//!,ax,ay,az,u,v,w,V,alpha,beta,lat,lon,alt,p,q,r,phi,theta,psi
+
+while(1){
 	client.send("!,0.1,0.2,0.3,10,20,30,60,5,6,5200,4300,100,0.05,0.06,0.07,5,10,15,!");
+usleep(5000); 
+}
 }
