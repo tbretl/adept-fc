@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to incoming channels:
-    Handler handlerObject,h0,h1,h2,h3,h4,h5,h6;
+    Handler handlerObject,h0,h1,h2,h3,h4,h5,h6,h7;
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
@@ -98,6 +98,7 @@ int main(int argc, char* argv[])
     zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
     zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
     zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
+    zcm.subscribe("STATUS7",&Handler::read_stat,&h7);
 
     //structures to publish:
     status_t sys_status;
@@ -145,7 +146,7 @@ int main(int argc, char* argv[])
                 //wait for confirmation from modules:
                 while (!(h0.stat.module_status==0 && h1.stat.module_status==0 && h2.stat.module_status==0
                       && h3.stat.module_status==0 && h4.stat.module_status==0 && h5.stat.module_status==0
-                      && h6.stat.module_status==0)){}
+                      && h6.stat.module_status==0 && h7.stat.module_status == 0)){}
                 std::cout << "\nGoodbye.\n\n" ;
             }
             if (!user_data[1].compare("status"))

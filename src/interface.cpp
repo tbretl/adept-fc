@@ -12,7 +12,6 @@
 #include <zcm/zcm-cpp.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <typeinfo>
 //message types:
 #include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"

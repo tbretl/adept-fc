@@ -4,11 +4,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string.h>
 #include <chrono>
 #include <zcm/zcm-cpp.hpp>
@@ -37,7 +39,7 @@ class Handler
         }
 };
 
-void run_process (const char* path){
+pid_t run_process(const char* path){
 
     pid_t child_pid;
 
@@ -45,6 +47,7 @@ void run_process (const char* path){
 
     if (child_pid != 0){
         //parent
+        return child_pid;
     }
     else {
         execl (path, path, NULL);
@@ -60,7 +63,7 @@ int main(int argc, char *argv[])
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to channels
-    Handler h0,h1,h2,h3,h4,h5,h6;
+    Handler h0,h1,h2,h3,h4,h5,h6,h7;
     zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
     zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
     zcm.subscribe("STATUS2",&Handler::read_stat,&h2);
@@ -68,6 +71,7 @@ int main(int argc, char *argv[])
     zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
     zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
     zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
+    zcm.subscribe("STATUS7",&Handler::read_stat,&h7);
 
     zcm.start();
 
@@ -81,8 +85,10 @@ int main(int argc, char *argv[])
     hitl = !line[1].compare("true");
     config_stream.close();
 
+    ostringstream pid_list;
+
     //rc_in
-    run_process("bin/rc_in");
+    pid_list << run_process("bin/rc_in") << " ";
     auto start_time = std::chrono::steady_clock::now();
     while (!(h0.stat.module_status==1)){
         auto current_time = std::chrono::steady_clock::now();
@@ -97,7 +103,7 @@ int main(int argc, char *argv[])
     if(!hitl){
 
         //vectornav sensor input
-        run_process("bin/vnins");
+        pid_list << run_process("bin/vnins") << " ";
         start_time = std::chrono::steady_clock::now();
         while (!(h1.stat.module_status==1)){
             auto current_time = std::chrono::steady_clock::now();
@@ -110,7 +116,7 @@ int main(int argc, char *argv[])
 
 
         //ADC sensor input
-        run_process("bin/adc");
+        pid_list << run_process("bin/adc") << " ";
         start_time = std::chrono::steady_clock::now();
         while(!(h2.stat.module_status==1)){
             auto current_time = std::chrono::steady_clock::now();
@@ -125,7 +131,7 @@ int main(int argc, char *argv[])
     }
     else {
         //HITL interface
-        run_process("bin/hitl");
+        pid_list << run_process("bin/hitl") << " ";
         start_time = std::chrono::steady_clock::now();
         while (!(h3.stat.module_status==1)){
             auto current_time = std::chrono::steady_clock::now();
@@ -138,7 +144,7 @@ int main(int argc, char *argv[])
     }
 
     //autopilot
-    run_process("bin/autopilot");
+    pid_list << run_process("bin/autopilot") << " ";
     start_time = std::chrono::steady_clock::now();
     while (!(h4.stat.module_status==1)){
         auto current_time = std::chrono::steady_clock::now();
@@ -150,7 +156,7 @@ int main(int argc, char *argv[])
     }
 
     //Logger module
-    run_process("bin/scribe");
+    pid_list << run_process("bin/scribe") << " ";
     start_time = std::chrono::steady_clock::now();
     while (!(h5.stat.module_status==1)){
         auto current_time = std::chrono::steady_clock::now();
@@ -162,7 +168,7 @@ int main(int argc, char *argv[])
     }
 
     //pwm_out
-    run_process("bin/pwm_out");
+    pid_list << run_process("bin/pwm_out");
     start_time = std::chrono::steady_clock::now();
     while (!(h6.stat.module_status==1)){
         auto current_time = std::chrono::steady_clock::now();
@@ -173,10 +179,35 @@ int main(int argc, char *argv[])
         }
     }
 
+    string temp_pids = pid_list.str();
+    char * send_pids = new char [temp_pids.length() + 1];
+    strcpy(send_pids,temp_pids.c_str());
+    //red_flag
+    pid_t child_pid;
+    child_pid = fork ();
+    if (child_pid != 0){
+        //parent
+        //launch system monitor, consume this thread:
+        execl ("bin/monitor", "bin/monitor",NULL);
+    }
+    else {
+        execl ("bin/red_flag", "bin/red_flag",send_pids, nullptr);
+        std::cout << "an error occurred in execl" << std::endl;
+        abort ();
+    }
+    start_time = std::chrono::steady_clock::now();
+    while (!(h7.stat.module_status==1)){
+        auto current_time = std::chrono::steady_clock::now();
+        unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+        if (time_ms >= 20000) {
+            std::cout << "Timeout on red_flag startup..." << std::endl;
+        break;
+        }
+    }
+
     zcm.stop();
 
-    //launch system monitor, consume this thread:
-    execl ("bin/monitor", "bin/monitor",NULL);
+
 
 
     return 0;

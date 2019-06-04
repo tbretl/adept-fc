@@ -7,9 +7,12 @@ BIN = ./bin
 SRC = ./src
 TST = ./test
 
-all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor
+all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor red_flag
 
 demos: subber demo udp_send udp_receive
+
+red_flag: $(SRC)/red_flag.cpp 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/red_flag.cpp -o $(BIN)/red_flag 
 
 adc: $(SRC)/adc.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc.cpp $(SRC)/rs232.c -o $(BIN)/adc
