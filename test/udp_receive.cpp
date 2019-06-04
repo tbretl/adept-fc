@@ -21,7 +21,7 @@ public:
 
 
 
-    Client(my_IP)
+    Client(const std::string my_IP)
     {
         socket.open(udp::v4());
         socket.bind(udp::endpoint(address::from_string(my_IP), UDP_PORT));

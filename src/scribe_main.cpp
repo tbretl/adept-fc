@@ -113,7 +113,7 @@ class Handler
         {
             if(log_buffer << std::setprecision(6) << msg->time_gpspps << " " << std::setprecision(14) << msg->time << std::setprecision(6) << " " << msg->week << " "
                           << (int)msg->tracking << " " << (int)msg->gpsfix << " " << (int)msg->error <<  " "
-                          << msg->pitch << " " << msg->roll << " " << msg->yaw << " " << msg->latitude << " "
+                          << msg->roll << " " << msg->pitch << " " << msg->yaw << " " << msg->latitude << " "
                           << msg->longitude << " " << msg->altitude << " " << msg->vx << " " << msg->vy << " "
                           << msg->vz << " " << msg->attuncertainty << " " << msg->posuncertainty << " " << msg->veluncertainty << "\n"){
             }else{

@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <stdlib.h>
 #include <string.h>
 #include <chrono>
 #include <zcm/zcm-cpp.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <typeinfo>
 //message types:
 #include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"
@@ -43,8 +45,6 @@ class Handler
         {
             memset(&acts, 0, sizeof(acts));
             memset(&stat, 0, sizeof(stat));
-            //socket.open(udp::v4());
-            //socket.bind(udp::endpoint(address::from_string(their_IP), UDP_PORT));
             udp::resolver resolver(io_service);
             udp::resolver::query query(udp::v4(), their_IP, UDP_OUT);
             udp::resolver::iterator iter = resolver.resolve(query);
@@ -58,7 +58,14 @@ class Handler
         void read_acts(const zcm::ReceiveBuffer* rbuf,const string& chan,const actuators_t *msg)
         {
             acts = *msg;
-            string out_msg = "working!";
+            std::ostringstream data_out;
+            data_out << "!," << msg->da << "," << msg->de << "," << msg->dr << ",";
+            for (int i=0;i<8;i++)
+            {
+                data_out << msg->dt[i] << ",";
+            }
+            data_out << "!";
+            string out_msg = data_out.str();
             socket.send_to(boost::asio::buffer(out_msg, out_msg.size()), endpoint);
         }
 
@@ -121,8 +128,10 @@ public:
             std::cout << "Receive failed: " << error.message() << "\n";
             return;
         }
-        //std::cout << "Received: '" << std::string(recv_buffer.begin(), recv_buffer.begin()+bytes_transferred) << "' (" << error.message() << ")\n";
-        //do the zcm publishing here;
+        std::string incoming_msg = std::string(recv_buffer.begin(), recv_buffer.begin()+bytes_transferred);
+        //parse the message:
+        parse_message(incoming_msg,&adc_msg,&vnins_msg);
+        //time stamp:
         adc_msg.time_gps = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         vnins_msg.time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         //publish values which came in from simulation
@@ -139,14 +148,40 @@ public:
         }
     }
 
+    void parse_message(const std::string udp_message,adc_data_t* adc, vnins_data_t* vn200){
+        std::string dump;
+        std::string in_data[20];
+        std::istringstream ss(udp_message);
+        int i = 0;
+        while(std::getline(ss, dump, ',')) {
+            in_data[i] = dump;
+            i++;
+        }
+        if (!in_data[0].compare("!") && !in_data[19].compare("!")){
+            //fill structure fields:
+            vn200->roll = (float) std::stod(in_data[16],nullptr);
+            vn200->pitch = (float) std::stod(in_data[17],nullptr);
+            vn200->yaw = (float) std::stod(in_data[18],nullptr);
+            vn200->latitude = std::stod(in_data[10],nullptr);
+            vn200->longitude = std::stod(in_data[11],nullptr);
+            vn200->altitude = std::stod(in_data[12],nullptr);
+            vn200->vx = (float) std::stod(in_data[4],nullptr);
+            vn200->vy = (float) std::stod(in_data[5],nullptr);
+            vn200->vz = (float) std::stod(in_data[6],nullptr);
+        } else {
+            std::cout << "ERROR: bad UDP message received [hitl]." << std::endl;
+        }
+        return;
+    }
+
 };
 
 
 int main()
 {
     //read in config variables
-    string rpi_IP;// = "192.168.0.35";
-    string pc_IP;// = "192.168.0.11";
+    string rpi_IP;
+    string pc_IP;
     string dump;
     std::ifstream config_stream;
 
@@ -158,7 +193,6 @@ int main()
     std::cout << "hitl started" << std::endl;
 
     Client udp_zcm_interface(rpi_IP,pc_IP);
-
 
     std::cout << "hitl module exiting..." << std::endl;
     return 0;
