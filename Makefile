@@ -63,6 +63,6 @@ clean:
 	rm -f $(BIN)/adept_fc 
 	rm -f $(BIN)/autopilot
 	rm -f $(BIN)/hitl
-	rm -f $(BIN)/monitori
+	rm -f $(BIN)/monitor
 	rm -f $(BIN)/udp_send
 
