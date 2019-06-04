@@ -1,12 +1,15 @@
 //keeps track of process ID's and CPU usage.
 //Aaron Perry 6/4/2019
 #include <stdio.h>
+#include <stdlib.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
 #include <iomanip>
+#include <sys/types.h>
+#include <dirent.h>
 #include "zcm/zcm-cpp.hpp"
 //message types:
 #include "pwm_t.hpp"
@@ -38,13 +41,41 @@ class Handler
 
 };
 
+bool proc_exist(const std::string PID) {
+    DIR* dir;
+    struct dirent* ent;
+    dir = opendir("/proc");
+    while((ent = readdir(dir)) != NULL) {
+        if (!PID.compare(ent->d_name)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
 int main(int argc, char* argv[])
 {
+    //store PIDs of module processes
+    std::string proc_names[] = {"rc_in","hitl","vnins","adc","autopilot","scribe","pwm_out"};
     std::stringstream pid_list(argv[1]);
-    std::cout << "red: " << pid_list.str() << std::endl;
-    //pull into a list
+    std::string PIDs[6];
+    std::string dump;
+    for (int i; i<6; i++){
+        if(std::getline(pid_list, dump, ' ')){
+            PIDs[i] = dump;
+        }
+    }
+    int name_inds[6];
+    if (PIDs[5].empty()) { //hitl mode
+//        int temp[] = {0,1,4,5,6,6};
+//        name_inds = temp;
+    }else{//flight mode
+//        int temp[] = {0,2,3,4,5,6};
+//        name_inds = temp;
+    }
+
+
     //length of list determines order of PIDS (hitl vs no hitl)
     //cycle through list and check
     //cout an error if process dies
@@ -78,6 +109,7 @@ int main(int argc, char* argv[])
         zcm.publish("STATUS7",&module_stat);
         usleep(500000); //2Hz
         //check each module status
+
         //get cpu load
     }
 
