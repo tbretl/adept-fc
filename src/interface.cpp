@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>
 #include <string.h>
 #include <chrono>
@@ -23,7 +24,7 @@ using std::string;
 using boost::asio::ip::udp;
 using boost::asio::ip::address;
 
-//object class to handle incoming messages
+//object class to handle ZCM messages
 class Handler
 {
     public:
@@ -144,16 +145,21 @@ public:
 int main()
 {
     //read in config variables
-    string rpi_IP = "192.168.0.35";
-    string pc_IP = "192.168.0.11";
+    string rpi_IP;// = "192.168.0.35";
+    string pc_IP;// = "192.168.0.11";
+    string dump;
+    std::ifstream config_stream;
 
+    config_stream.open("config_files/network_params.config");
+    config_stream >> dump >> rpi_IP;
+    config_stream >> dump >> pc_IP;
+    config_stream.close();
 
     std::cout << "hitl started" << std::endl;
 
     Client udp_zcm_interface(rpi_IP,pc_IP);
 
 
-    std::cout << "HITL interface module exiting..." << std::endl;
-    //pass a message back to monitor as well (feature to add)
+    std::cout << "hitl module exiting..." << std::endl;
     return 0;
 }

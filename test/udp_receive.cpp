@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#define IPADDRESS "192.168.0.11"
+//#define IPADDRESS "192.168.0.11"
 #define UDP_PORT 1338
 
 using boost::asio::ip::udp;
@@ -21,10 +21,10 @@ public:
 
 
 
-    Client()
+    Client(my_IP)
     {
         socket.open(udp::v4());
-        socket.bind(udp::endpoint(address::from_string(IPADDRESS), UDP_PORT));
+        socket.bind(udp::endpoint(address::from_string(my_IP), UDP_PORT));
         start_receive();
         io_service.run();
     }
@@ -53,8 +53,13 @@ public:
 };
 
 
-int main() {
+int main(int argc, char *argv[]) {
 
-    Client receiver;
+	if (argc < 2) {
+		std::cout << "missing argument: ip address" << std::endl;
+		return 1;
+	}
+
+    Client receiver(argv[1]);
     return 0;
 }

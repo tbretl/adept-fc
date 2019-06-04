@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2) {
 		std::cout << "missing argument: ip address" << std::endl;
-		return 1; 
+		return 1;
 	}
 	boost::asio::io_service io_service;
 	UDPClient client(io_service, argv[1], UDP_PORT);
@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 
 while(1){
 	client.send("!,0.1,0.2,0.3,10,20,30,60,5,6,5200,4300,100,0.05,0.06,0.07,5,10,15,!");
-usleep(5000); 
+    usleep(5000);
 }
+
 }
