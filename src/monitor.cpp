@@ -16,6 +16,7 @@
 #include "status_t.hpp"
 #include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"
+#include "red_flag_t.hpp"
 
 using std::string;
 
@@ -30,6 +31,8 @@ class Handler
         actuators_t acts;
         status_t stat;
         vnins_data_t vn200;
+        red_flag_t r_flag;
+
 
         Handler()
         {
@@ -39,6 +42,7 @@ class Handler
             memset(&pwm, 0, sizeof(pwm));
             memset(&adc, 0, sizeof(adc));
             memset(&vn200, 0, sizeof(vn200));
+            memset(&r_flag, 0, sizeof(r_flag));
         }
 
         void read_rc(const zcm::ReceiveBuffer* rbuf,const string& chan,const rc_t *msg)
@@ -70,6 +74,11 @@ class Handler
         {
             vn200 = *msg;
         }
+
+        void read_red(const zcm::ReceiveBuffer* rbuf,const string& chan,const red_flag_t *msg)
+        {
+            r_flag = *msg;
+        }
 };
 
 
@@ -84,7 +93,7 @@ int main(int argc, char* argv[])
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to incoming channels:
-    Handler handlerObject,h0,h1,h2,h3,h4,h5,h6,h7;
+    Handler handlerObject,h0,h1,h2,h3,h4,h5,h6,h7,hred;
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("PWM_OUT",&Handler::read_pwm,&handlerObject);
@@ -99,6 +108,7 @@ int main(int argc, char* argv[])
     zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
     zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
     zcm.subscribe("STATUS7",&Handler::read_stat,&h7);
+    zcm.subscribe("RED_FLAG",&Handler::read_red,&hred);
 
     //structures to publish:
     status_t sys_status;

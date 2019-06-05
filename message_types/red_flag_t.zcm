@@ -1,0 +1,5 @@
+struct red_flag_t
+{
+    float cpu;
+    int16_t pid_status[6];
+}
