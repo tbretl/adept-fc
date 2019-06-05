@@ -20,7 +20,8 @@ This repository has the code that will run onboard the ADEPT-FC aircraft, to tes
 5. type `all exit` to shutdown all modules. 
 
 # Running in HITL mode
-1. change `hitle false` to `hitl true` in `config_files/adept_fc.config`. 
+1. change `hitl false` to `hitl true` in `config_files/adept_fc.config`. 
 2. Run the autopilot as usual. 
 
+note: the 'hitl' module expects udp messages upon startup. 
 
