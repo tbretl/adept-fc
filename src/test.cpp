@@ -19,7 +19,7 @@ int main() {
             first = second;
             second = next;
         }
-        cout << next << endl;
+        std::cout << next << std::endl;
     }
 
     return 0;
