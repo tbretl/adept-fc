@@ -97,7 +97,6 @@ int main(int argc, char *argv[])
     zcm.publish("STATUS4",&module_stat);
 
     std::cout << "autopilot module exiting..." << std::endl;
-    //pass a message back to monitor as well (feature to add)
 
     zcm.stop();
 

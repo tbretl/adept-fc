@@ -118,8 +118,6 @@ public:
         socket.async_receive_from(boost::asio::buffer(recv_buffer),
             remote_endpoint,
             boost::bind(&Client::handle_receive, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-
-            //add a message time_out here
     }
 
     void handle_receive(const boost::system::error_code& error, size_t bytes_transferred) {

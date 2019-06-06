@@ -147,7 +147,6 @@ int main()
     zcm.publish("STATUS0",&module_stat);
 
     std::cout << "rc_in module exiting..." << std::endl;
-    //pass a message back to monitor as well (feature to add)
 
     zcm.stop();
 

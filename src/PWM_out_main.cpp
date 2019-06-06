@@ -16,6 +16,7 @@
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 #include "adc_data_t.hpp"
+#include "vnins_data_t.hpp"
 
 using std::string;
 
@@ -27,17 +28,21 @@ class Handler
         rc_t rc_in;
         status_t stat;
         adc_data_t adc;
+        vnins_data_t vnins;
         double acts[11]={0};
         int mode_emergency = 0;
         int rc_emergency = 0;
         int64_t last_rc_time = 0;
         int64_t last_act_time = 0;
+        int64_t last_vnins_time = 0;
+        int64_t last_adc_time = 0;
 
         Handler()
         {
             memset(&rc_in,0,sizeof(rc_in));
             memset(&stat,0,sizeof(stat));
             memset(&adc,0,sizeof(adc));
+            memset(&vnins,0,sizeof(vnins));
         }
 
 
@@ -50,6 +55,13 @@ class Handler
         void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
         {
             adc = *msg;
+            last_adc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        }
+
+        void read_vn200(const zcm::ReceiveBuffer* rbuf,const string& chan,const vnins_data_t *msg)
+        {
+            vnins = *msg;
+            last_vnins_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         }
 
         void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
@@ -236,11 +248,12 @@ int main(int argc, char *argv[])
 
 
     //subscribe to incoming channels:
-    Handler handlerObject;
+    Handler handlerObject,sens_handler;
     zcm.subscribe("RC_IN",&Handler::read_rc,&handlerObject);
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
     zcm.subscribe("ACTUATORS",&Handler::read_acts,&handlerObject);
-    zcm.subscribe("ADC_DATA",&Handler::read_adc,&handlerObject);
+    zcm.subscribe("ADC_DATA",&Handler::read_adc,&sens_handler);
+    zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&sens_handler);
 
     //for bublishing stat of this module
     status_t module_stat;
@@ -259,7 +272,7 @@ int main(int argc, char *argv[])
         std::cout << "Not root. Please launch with Sudo." << std::endl;
     }
 
-    for (int i=0;i<=num_outputs; i++)
+    for (int i=0;i<num_outputs; i++)
     {
 
         if( !(pwm->initialize(i)) )
@@ -278,7 +291,7 @@ int main(int argc, char *argv[])
     }
 
     //set disarm pwm values
-    for (int i = 0; i<=num_outputs; i++)
+    for (int i = 0; i<num_outputs; i++)
     {
        if (i<=2)
        {
@@ -294,6 +307,13 @@ int main(int argc, char *argv[])
     zcm.start();
 
     std::cout<< "pwm_out started" << std::endl;
+
+    //initialize emergency message loss detection
+    bool message_thrown[2] = {false,false};
+    handlerObject.last_act_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    handlerObject.last_rc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    sens_handler.last_adc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    sens_handler.last_vnins_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     while (!handlerObject.stat.should_exit)
     {
@@ -335,15 +355,26 @@ int main(int argc, char *argv[])
 
         //handle emergency logic:
         int64_t current_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        if (current_time-handlerObject.last_act_time < 500000) {
+        //if we lose actuator, adc, or vnins data, autopilot cannot be in co
+        if ((current_time-handlerObject.last_act_time < 500000) && (current_time-sens_handler.last_adc_time < 500000) && (current_time-sens_handler.last_vnins_time < 500000)) {
             handlerObject.mode_emergency = 0;
+            message_thrown[1] = false;
         } else {
             handlerObject.mode_emergency = 1;
+            if (message_thrown[1] == false){
+                std::cout << "WARNING: Mode emergency detected. Switching to manual flight mode." << std::endl;
+                message_thrown[1] = true;
+            }
         }
         if (current_time-handlerObject.last_rc_time < 500000) {
             handlerObject.rc_emergency = 0;
+            message_thrown[0] = false;
         } else {
             handlerObject.rc_emergency = 1;
+            if (message_thrown[0] == false) {
+                std::cout << "WARNING: RC emergency detected. Switching to disarm." << std::endl;
+                message_thrown[0] = true;
+            }
         }
 
         //pwm output logic
@@ -351,7 +382,7 @@ int main(int argc, char *argv[])
         {
             if (handlerObject.rc_in.rc_chan[mode_chan]<mode_cutoff || handlerObject.mode_emergency == 1) //manual flight mode:
             {
-                 for (int i=0; i<=num_outputs-1; i++)
+                 for (int i=0; i<num_outputs; i++)
                 {
                     pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
@@ -359,7 +390,7 @@ int main(int argc, char *argv[])
             }
             else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
             {
-                for (int i=0; i<=num_outputs-1; i++)
+                for (int i=0; i<num_outputs; i++)
                 {
                     pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.acts[i],servo_min,servo_max,surface_min[i],surface_max[i]);
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
@@ -368,7 +399,7 @@ int main(int argc, char *argv[])
         }
         else //disarmed
         {
-            for (int i = 0; i<=num_outputs-1; i++)
+            for (int i = 0; i<num_outputs; i++)
             {
                 if (i<=2)
                 {
@@ -381,7 +412,7 @@ int main(int argc, char *argv[])
             }
         }
         //timestamp the data
-        pwm_comm.time_gps = get_gps_time(&handlerObject);
+        pwm_comm.time_gps = get_gps_time(&sens_handler);
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
         usleep(10000);

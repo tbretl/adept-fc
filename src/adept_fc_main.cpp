@@ -1,6 +1,5 @@
 //This code launches the autopilot framework
 //Aaron Perry, 4/9/2019
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -24,7 +23,6 @@ class Handler
     public:
         ~Handler() = default;
 
-        //create a message object which can be accessed outside of the function call
         status_t stat;
 
         Handler()

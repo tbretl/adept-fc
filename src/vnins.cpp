@@ -406,7 +406,6 @@ int main()
     memset(&module_stat,0,sizeof(module_stat));
     module_stat.module_status = 1;//module running
 
-    // start zcm as a separate thread
     zcm.start();
 
     unsigned char line[BUFFER_LENGTH];
@@ -421,7 +420,6 @@ int main()
         result = readline(line, BUFFER_LENGTH);
         if (result < 0)
         {
-            //log an error message:
             std::cout << "WARNING: error while reading from port: " << result << std::endl;
             continue;
         }
@@ -448,9 +446,7 @@ int main()
 
     std::cout << "vn200 module exiting..." << std::endl;
 
-    // stop zcm
     zcm.stop();
 
-    // exit
     return 0;
 }

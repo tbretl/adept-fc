@@ -1,13 +1,12 @@
-//this will be the terminal interface to the rest of the modules
+//this is the terminal interface to the rest of the modules
 //Aaron Perry, 4/19/2019
-//input options: preflight-check command, query any channel, restart a module (safety feature),  clean exit to watchdog mode, clean exit of whole autopilot
-
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
 #include <iomanip>
+#include <chrono>
 #include "zcm/zcm-cpp.hpp"
 //message types:
 #include "pwm_t.hpp"
@@ -154,10 +153,19 @@ int main(int argc, char* argv[])
                 exit_flag = 1;
                 zcm.publish("STATUS",&sys_status);
                 //wait for confirmation from modules:
+                auto start_time = std::chrono::steady_clock::now();
                 while (!(h0.stat.module_status==0 && h1.stat.module_status==0 && h2.stat.module_status==0
                       && h3.stat.module_status==0 && h4.stat.module_status==0 && h5.stat.module_status==0
-                      && h6.stat.module_status==0 && h7.stat.module_status == 0)){}
+                      && h6.stat.module_status==0 && h7.stat.module_status == 0)){
+                    auto current_time = std::chrono::steady_clock::now();
+                    unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+                    if (time_ms >= 1000) {
+                        std::cout << "Timeout on shutdown...check for hung processes." << std::endl;
+                        break;
+                    }
+                }
                 std::cout << "\nGoodbye.\n\n" ;
+
             }
             if (!user_data[1].compare("status"))
             {
