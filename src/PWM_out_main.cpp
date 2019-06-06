@@ -28,6 +28,10 @@ class Handler
         status_t stat;
         adc_data_t adc;
         double acts[11]={0};
+        int mode_emergency = 0;
+        int rc_emergency = 0;
+        int64_t last_rc_time = 0;
+        int64_t last_act_time = 0;
 
         Handler()
         {
@@ -40,6 +44,7 @@ class Handler
         void read_rc(const zcm::ReceiveBuffer* rbuf,const string& chan,const rc_t *msg)
         {
             rc_in = *msg;
+            last_rc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         }
 
         void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
@@ -54,6 +59,7 @@ class Handler
 
         void read_acts(const zcm::ReceiveBuffer* rbuf,const string& chan,const actuators_t *msg)
         {
+            last_act_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
             acts[0] = msg->da;
             acts[1] = msg->de;
             acts[2] = msg->dr;
@@ -62,6 +68,7 @@ class Handler
                 acts[i] = msg->dt[i-3];
             }
         }
+
 };
 
 std::unique_ptr <RCOutput> get_rcout()
@@ -293,7 +300,6 @@ int main(int argc, char *argv[])
         zcm.publish("STATUS6",&module_stat);
         //maneuver lookup
         man_run = handlerObject.rc_in.rc_chan[maneuver_chan];
-
         if (man_run >= 1500)
         {
             if(prev_status < 1500)
@@ -313,7 +319,6 @@ int main(int argc, char *argv[])
 
         prev_status = man_run;
 
-
         //get maneuver gain:
         if (handlerObject.rc_in.rc_chan[gain_chan] > 1750)
         {
@@ -328,10 +333,23 @@ int main(int argc, char *argv[])
             gainpick = 1;
         }
 
+        //handle emergency logic:
+        int64_t current_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        if (current_time-handlerObject.last_act_time < 500000) {
+            handlerObject.mode_emergency = 0;
+        } else {
+            handlerObject.mode_emergency = 1;
+        }
+        if (current_time-handlerObject.last_rc_time < 500000) {
+            handlerObject.rc_emergency = 0;
+        } else {
+            handlerObject.rc_emergency = 1;
+        }
+
         //pwm output logic
-        if (handlerObject.stat.armed)
+        if (handlerObject.stat.armed && handlerObject.rc_emergency == 0)
         {
-            if (handlerObject.rc_in.rc_chan[mode_chan]<mode_cutoff) //manual flight mode:
+            if (handlerObject.rc_in.rc_chan[mode_chan]<mode_cutoff || handlerObject.mode_emergency == 1) //manual flight mode:
             {
                  for (int i=0; i<=num_outputs-1; i++)
                 {
@@ -339,7 +357,7 @@ int main(int argc, char *argv[])
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
-            else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff) //auto flight mode:
+            else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
             {
                 for (int i=0; i<=num_outputs-1; i++)
                 {
@@ -361,7 +379,6 @@ int main(int argc, char *argv[])
                     pwm_comm.pwm_out[i] = disarm_pwm_esc;
                 }
             }
-
         }
         //timestamp the data
         pwm_comm.time_gps = get_gps_time(&handlerObject);

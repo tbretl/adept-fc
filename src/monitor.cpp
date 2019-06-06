@@ -225,6 +225,15 @@ int main(int argc, char* argv[])
                     std::cout << "  pwm_out: stopped" << std::endl;
                 }
 
+                if (h7.stat.module_status==1)
+                {
+                    std::cout << "  red_flag: running" << std::endl;
+                }
+                else if (h7.stat.module_status==0)
+                {
+                    std::cout << "  red_flag: stopped" << std::endl;
+                }
+
             }
         }
         else if (!user_data[0].compare("monitor"))

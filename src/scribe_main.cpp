@@ -92,7 +92,7 @@ class Handler
 
         void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
         {
-            if(log_buffer << msg->time_gpspps << " " << std::setprecision(14) << msg->time_gps << std::setprecision(6)){
+            if(log_buffer << msg->time_gpspps << " " << std::setprecision(14) << msg->time_rpi << " " << msg->time_gps << std::setprecision(6)){
             }else {
                 std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
             }
