@@ -1,8 +1,8 @@
 # Installation
 
-Set java path by adding this line to the end of `~/.bashrc`:
+Set library path in `~/.bashrc`
 ```
-export JAVA_HOME=/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt
+export LD_LIBRARY_PATH=/usr/local/lib/
 ```
 
 ## [Install sodium](https://libsodium.gitbook.io/doc/installation)
