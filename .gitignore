@@ -261,8 +261,10 @@ dmypy.json
 ### Binary folder ###
 /bin
 
-### Project file ### 
+### Project file ###
 *.cbp
 *.layout
 Flight*
- 
+
+### Library folder (for external dependencies)
+/lib
