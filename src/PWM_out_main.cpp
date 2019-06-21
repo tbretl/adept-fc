@@ -404,13 +404,15 @@ int main(int argc, char *argv[])
                 if (i<=2)
                 {
                     pwm_comm.pwm_out[i] = disarm_pwm_servo;
+		    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
                 else
                 {
                     pwm_comm.pwm_out[i] = disarm_pwm_esc;
+		    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
-	    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+	    
         }
         //timestamp the data
         pwm_comm.time_gps = get_gps_time(&sens_handler);
