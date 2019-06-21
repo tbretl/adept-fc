@@ -410,6 +410,7 @@ int main(int argc, char *argv[])
                     pwm_comm.pwm_out[i] = disarm_pwm_esc;
                 }
             }
+	    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
         }
         //timestamp the data
         pwm_comm.time_gps = get_gps_time(&sens_handler);
