@@ -1,5 +1,11 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 //Reads in actuator commands and sends PWM commands out
-//Aaron Perry, 4/15/2019
+
 #include <zcm/zcm-cpp.hpp>
 #include <unistd.h>
 #include <stdio.h>
@@ -412,7 +418,7 @@ int main(int argc, char *argv[])
 		    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
-	    
+
         }
         //timestamp the data
         pwm_comm.time_gps = get_gps_time(&sens_handler);

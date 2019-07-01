@@ -1,6 +1,12 @@
+//
+// Use of this file is governed by the GPL License - see adept_fc/LICENSE_GPL
+//
+// It is a modified version of original source taken from:
+// https://gist.github.com/kaimallea/e112f5c22fe8ca6dc627
+//
+
 //simple client to send test UDP messages
-//original source: https://gist.github.com/kaimallea/e112f5c22fe8ca6dc627
-//modified by Aaron Perry 5/30/2019
+
 #include <iostream>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>

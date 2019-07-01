@@ -1,5 +1,11 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 //keeps track of process ID's and CPU usage.
-//Aaron Perry 6/4/2019
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>

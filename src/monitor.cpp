@@ -1,5 +1,11 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 //this is the terminal interface to the rest of the modules
-//Aaron Perry, 4/19/2019
+
 #include <stdio.h>
 #include <fstream>
 #include <iostream>

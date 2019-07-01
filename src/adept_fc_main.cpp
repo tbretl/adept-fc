@@ -1,5 +1,9 @@
-//This code launches the autopilot framework
-//Aaron Perry, 4/9/2019
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>

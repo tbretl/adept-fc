@@ -1,3 +1,9 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 #include "rs232.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,13 +68,13 @@ bool is_valid_line(unsigned char* line) {
         printf("error: line has zero length\n%s\n", line);
         return false;
     }
-    
+
     // it starts with '$'
     if (line[0] != '$') {
         printf("error: line starts with %c and not with $\n%s\n", line[0], line);
         return false;
     }
-    
+
     // it has an '*'
     bool has_asterix = false;
     unsigned int i;
@@ -84,7 +90,7 @@ bool is_valid_line(unsigned char* line) {
         printf("error: line contains no *\n%s\n", line);
         return false;
     }
-    
+
     // it has the correct checksum
     unsigned long a = strtoul((char*) line + i + 1, NULL, 16);
     unsigned long b = (unsigned long) cs8;
@@ -92,7 +98,7 @@ bool is_valid_line(unsigned char* line) {
         printf("error: line checksum does not match (%lu, %lu)\n%s\n", a, b, line);
         return false;
     }
-    
+
     return true;
 }
 
@@ -104,10 +110,10 @@ void parseline(unsigned char* line) {
         printf("error: line has length %d, should be %d\n", len, len_expected);
         return;
     }
-    
+
     // Terminate line at *
     line[len_expected - 5] = '\0';
-    
+
     // Get each field
     struct ins {
         double time;
@@ -175,18 +181,18 @@ void parseline(unsigned char* line) {
     field = strtok(NULL, ",");
     data.veluncertainty = strtod(field, NULL);
     printf("%f\n", data.veluncertainty);
-    
+
 }
 
 int main()
-{    
+{
     // open serial port
     printf("open port\n");
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1")) {
         printf("error while opening port\n");
         return 1;
     }
-    
+
     // flush serial port
     printf("flush port (Rx/Tx)\n");
     RS232_flushRXTX(COMPORT);
@@ -194,7 +200,7 @@ int main()
     if (flush() != 0) {
         return 1;
     }
-    
+
     // read lines from port
     int iters = 4;
     int result = 0;
@@ -208,28 +214,28 @@ int main()
         }
     }
     clock_t tstop = clock();
-    
+
     // print what was read to the terminal
     for (int i=0; i<iters; ++i) {
         printf(" %4d (%d bytes : %s) : %s", i, strlen((char*) line[i]), is_valid_line(line[i]) ? "valid" : "invalid", line[i]);
     }
-    
+
     // parse each line
     for (int i=0; i<iters; ++i) {
         if (is_valid_line(line[i])) {
             parseline(line[i]);
         }
     }
-    
+
     // find rate
     float tdiff = ((float) (tstop - tstart)) / (float) CLOCKS_PER_SEC;
     float rate = ((float) iters) / tdiff;
     printf("====\n  tdiff = %6.2f : rate = %6.2f\n", tdiff, rate);
-    
+
     // close serial port
     printf("close port\n");
     RS232_CloseComport(COMPORT);
-    
+
     // exit
     printf("exit with status 0\n");
     return 0;

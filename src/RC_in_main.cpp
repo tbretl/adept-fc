@@ -1,5 +1,11 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 //Acquires RC input channel values and publishes them
-//Aaron Perry, 4/10/2019
+
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>

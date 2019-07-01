@@ -1,4 +1,10 @@
-//Aaron Perry, 5/30/19
+//
+// Use of this file is governed by the GPL License - see adept_fc/LICENSE_GPL
+//
+// It is a modified version of original source taken from:
+// https://gist.github.com/kaimallea/e112f5c22fe8ca6dc627
+//
+
 #include <string>
 #include <iostream>
 #include <boost/asio.hpp>
@@ -23,7 +29,7 @@ public:
 
     Client(const std::string my_IP)
     {
-        std::cout << my_IP << std::endl; 
+        std::cout << my_IP << std::endl;
         socket.open(udp::v4());
         socket.bind(udp::endpoint(address::from_string(my_IP), UDP_PORT));
         start_receive();

@@ -1,3 +1,7 @@
+//
+// Use of this file is governed by the GPL License - see adept_fc/LICENSE_GPL
+//
+
 /*
 ***************************************************************************
 *
@@ -841,14 +845,3 @@ int RS232_GetPortnr(const char *devname)
 
   return -1;  /* device not found */
 }
-
-
-
-
-
-
-
-
-
-
-

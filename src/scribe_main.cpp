@@ -1,5 +1,11 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 //This code logs all of the data it receives to the SD card.
-//Aaron Perry, 4/1/2019
+
 #include <stdio.h>
 #include <iostream>
 #include <unistd.h>

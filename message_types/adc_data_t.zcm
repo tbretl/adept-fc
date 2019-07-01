@@ -1,7 +1,13 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 struct adc_data_t
 {
     int32_t data[16];
     int64_t time_gpspps;   // microseconds since GPS_PPS
     int64_t time_rpi; //microseconds since boot-up on the RPI
-    double time_gps; // gps time of sample measurement 
+    double time_gps; // gps time of sample measurement
 }

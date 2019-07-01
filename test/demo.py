@@ -1,3 +1,9 @@
+#
+# Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+#
+# Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+#
+
 import serial
 import time
 
@@ -27,15 +33,15 @@ def test_timing(port, iters=400):
 		lines.append(port.readline())
 	tstop = time.time()
 	tdiff = tstop - tstart
-	
+
 	for l in lines:
 		print(l)
-	
+
 	print('\n')
 	print(tdiff)
 	print(iters / tdiff)
 	#print(f`====\n  elapsed time for {iters} iters: {tdiff:.2f} seconds ({iters / tdiff:.2f} Hz)`)
-	
+
 def test_checksum(port):
 	line = port.readline()
 	print(line)
@@ -44,15 +50,15 @@ def test_checksum(port):
 	for b in line[1:-5]:
 		cksum ^= b
 	print(cksum, hex(cksum), int(line[-4:-2], 16))
-	
+
 def main():
 	# open serial port
 	port = serial.Serial(portname, baudrate, timeout=1, write_timeout=1)
-	
+
 	#test_suspend(port)
 	#test_timing(port)
 	test_checksum(port)
-	
+
 	# close serial port
 	port.close()
 

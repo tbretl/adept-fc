@@ -1,6 +1,12 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 //This module is designed to interact with a simulation
 //running on a separate computer on the same network with UDP.
-//Aaron Perry 5/30/2019
+
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>

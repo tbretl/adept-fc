@@ -1,6 +1,12 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 struct status_t
 {
     int16_t should_exit;
-    int16_t armed; 
-    int16_t module_status;     
+    int16_t armed;
+    int16_t module_status;
 }

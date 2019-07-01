@@ -1,3 +1,9 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
@@ -20,7 +26,7 @@ class Handler
             data = *msg;
             count++;
         }
-        
+
         void print() {
 			cout << " time_gpspps (microseconds): " << data.time_gpspps << endl;
 			for (int i=0; i<16; ++i) {
@@ -48,12 +54,12 @@ int main(int argc, char *argv[]) {
         cout << "most recent message received: " << endl;
         handlerObject.print();
         count = 0;
-        
+
     }
-	
+
 	// stop zcm
     zcm.stop();
-	
+
 	// exit with no error
     return 0;
 }

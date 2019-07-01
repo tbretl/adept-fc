@@ -1,5 +1,11 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 struct pwm_t
 {
     int16_t pwm_out[14];
-    double time_gps;  
+    double time_gps;
 }

@@ -1,3 +1,9 @@
+#
+# Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+#
+# Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+#
+
 import os
 import fileinput
 import re
@@ -93,7 +99,7 @@ if __name__ == '__main__':
 
 
     #visualize the data:
-    plt.plot(time_plt[0],0,'k-',label="Total % CPU") 
+    plt.plot(time_plt[0],0,'k-',label="Total % CPU")
     plt.legend()
     colors = ['red','blue','green','black']
     count = 0
@@ -104,10 +110,10 @@ if __name__ == '__main__':
             if rows_plt[i] in module_names:
                 temp = data_plt[i][:]
                 plt.text(time_plt[int(len(time_plt)/2)+count],temp[int(len(time_plt)/2)],rows_plt[i],color=colors[3])
-                count = count + 20 
+                count = count + 20
         except:
             print "error"
-    
+
     #total CPU usage
     for i in xrange(b):
         for j in xrange(a):
@@ -116,15 +122,15 @@ if __name__ == '__main__':
             except:
                 cpu_tot[i,0] = cpu_tot[i,0]
 
-            try: 
-                if (legend_plt[j,i] >= 0): 
-                    cpu_tot[i,(legend_plt[j,i]+1)] = cpu_tot[i,(legend_plt[j,i]+1)] + float(data_plt[j][i]) 
+            try:
+                if (legend_plt[j,i] >= 0):
+                    cpu_tot[i,(legend_plt[j,i]+1)] = cpu_tot[i,(legend_plt[j,i]+1)] + float(data_plt[j][i])
             except:
                 if (legend_plt[j,i] >= 0):
-                    cpu_tot[i,(legend_plt[j,i]+1)] = cpu_tot[i,(legend_plt[j,i]+1)] 
+                    cpu_tot[i,(legend_plt[j,i]+1)] = cpu_tot[i,(legend_plt[j,i]+1)]
 
     plt.plot(time_plt,cpu_tot[:,0],'k-',linewidth=2)
-  
+
     #plot formatting
     plt.grid(color='0.7', linestyle='-', linewidth=1)
     plt.xlabel("time [sec]")
@@ -135,14 +141,14 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(time_plt,cpu_tot[:,0],'k-',linewidth=2,label="ALL")
     plt.plot(time_plt,cpu_tot[:,1],'r-',linewidth=2,label="CPU 0")
-    plt.plot(time_plt,cpu_tot[:,2],'b-',linewidth=2,label="CPU 1") 
+    plt.plot(time_plt,cpu_tot[:,2],'b-',linewidth=2,label="CPU 1")
     plt.plot(time_plt,cpu_tot[:,3],'g-',linewidth=2,label="CPU 2")
     plt.plot(time_plt,cpu_tot[:,4],'y-',linewidth=2,label="CPU 3")
-    plt.legend() 
+    plt.legend()
     #plot formatting
     plt.grid(color='0.7', linestyle='-', linewidth=1)
     plt.xlabel("time [sec]")
     plt.ylabel("% cpu")
     plt.title("Total processes: %i  Duration: %i seconds" % (a,(time_plt[-1]-time_plt[0])))
-   
+
     plt.show()

@@ -1,3 +1,9 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 #include <unistd.h>
 #include <iostream>
 #include <iomanip>

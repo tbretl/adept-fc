@@ -1,3 +1,9 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 #include <zcm/zcm-cpp.hpp>
 #include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"

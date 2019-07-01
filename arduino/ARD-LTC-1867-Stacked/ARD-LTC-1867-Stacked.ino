@@ -1,3 +1,9 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
 #include <SPI.h>
 #include <Wire.h>
 #include <Ard1863.h>
@@ -35,7 +41,7 @@ unsigned int data[16];
 
 void setup() {
 
-  //Set up serial at XXX bps 
+  //Set up serial at XXX bps
   SerialConsole.begin(230400);
   while(!SerialConsole);
 
@@ -51,7 +57,7 @@ void setup() {
 
   lastgpsppstime = micros();
   numsamples = 0;
-  
+
   // The GPS_PPS signal is low when off, so we use INPUT and not INPUT_PULLUP as the mode.
   pinMode(interruptPin, INPUT);
 
@@ -68,39 +74,39 @@ void setlastppstime() {
 void loop() {
   unsigned long time_gpspps = micros() - lastgpsppstime;
   if (time_gpspps >= (numsamples * sampleperiod)) {
-    // sample all the channels and send data over serial 
+    // sample all the channels and send data over serial
     SerialConsole.print(time_gpspps);
     SerialConsole.print(",");
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_0P, UNIPOLAR));
     SerialConsole.print(",");
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_1P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_2P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_3P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_4P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_5P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_6P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_top.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_7P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_0P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_1P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_2P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_3P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_4P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_5P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_6P, UNIPOLAR));
-    SerialConsole.print(','); 
+    SerialConsole.print(',');
     SerialConsole.print(ard186xboard_bot.ltc186xReadAndChangeChannel(LTC186X_CHAN_SINGLE_7P, UNIPOLAR));
     SerialConsole.print("\n");
 
