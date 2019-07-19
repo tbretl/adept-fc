@@ -11,14 +11,14 @@ all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor red_flag
 
 demos: subber demo udp_send udp_receive
 
-red_flag: $(SRC)/red_flag.cpp 
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/red_flag.cpp -o $(BIN)/red_flag 
+red_flag: $(SRC)/red_flag_main.cpp 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/red_flag_main.cpp -o $(BIN)/red_flag 
 
-adc: $(SRC)/adc.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc.cpp $(SRC)/rs232.c -o $(BIN)/adc
+adc: $(SRC)/adc_main.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/adc_main.cpp $(SRC)/rs232.c -o $(BIN)/adc
 
-vnins: $(SRC)/vnins.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/vnins.cpp $(SRC)/rs232.c -o $(BIN)/vnins
+vnins: $(SRC)/vnins_main.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/vnins_main.cpp $(SRC)/rs232.c -o $(BIN)/vnins
 
 subber: $(TST)/subber.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(TST)/subber.cpp -o $(BIN)/subber
@@ -41,11 +41,11 @@ adept_fc: $(SRC)/adept_fc_main.cpp
 autopilot: $(SRC)/autopilot_main.cpp 
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot 
 
-hitl: $(SRC)/interface.cpp 
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(SRC)/interface.cpp -o $(BIN)/hitl 
+hitl: $(SRC)/interface_main.cpp 
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(SRC)/interface_main.cpp -o $(BIN)/hitl 
 
-monitor: $(SRC)/monitor.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor.cpp -o $(BIN)/monitor
+monitor: $(SRC)/monitor_main.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/monitor_main.cpp -o $(BIN)/monitor
 
 udp_receive: $(TST)/udp_receive.cpp 
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(TST)/udp_receive.cpp -o $(BIN)/udp_receive 

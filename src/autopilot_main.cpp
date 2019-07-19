@@ -47,7 +47,7 @@ double get_gps_time(Handler* adchandle)
     double adc_gps = adchandle->adc.time_gps;
     int64_t adc_time = adchandle->adc.time_rpi;
     int64_t rpi_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    return  adc_gps + (rpi_time - adc_time)/1000000;
+    return  adc_gps + (rpi_time - adc_time)/1000000.0;
 }
 
 
