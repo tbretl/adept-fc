@@ -55,7 +55,7 @@ class Handler
                         std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
                     }
                 }
-                if(log_buffer << "\n"){
+                if(log_buffer << std::endl){
                 }else{
                     std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
                 }
@@ -78,7 +78,7 @@ class Handler
                         std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
                     }
                 }
-                if(log_buffer << "\n"){
+                if(log_buffer << std::endl){
                 }else{
                     std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
                 }
@@ -102,7 +102,7 @@ class Handler
                         std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
                     }
                 }
-                if(log_buffer << "\n"){
+                if(log_buffer << std::endl){
                 }else{
                     std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
                 }
@@ -125,7 +125,7 @@ class Handler
                         std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
                     }
                 }
-                if(log_buffer << "\n"){
+                if(log_buffer << std::endl){
                 }else {
                     std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
                 }
@@ -141,7 +141,7 @@ class Handler
                               << (int)msg->tracking << " " << (int)msg->gpsfix << " " << (int)msg->error <<  " "
                               << msg->roll << " " << msg->pitch << " " << msg->yaw << " " << std::setprecision(10) << msg->latitude << " "
                               << msg->longitude << std::setprecision(6) << " " << msg->altitude << " " << msg->vx << " " << msg->vy << " "
-                              << msg->vz << " " << msg->attuncertainty << " " << msg->posuncertainty << " " << msg->veluncertainty << "\n"){
+                              << msg->vz << " " << msg->attuncertainty << " " << msg->posuncertainty << " " << msg->veluncertainty << std::endl){
                 }else{
                     std::cout << "SCRIBE ERROR: message buffer overflow on vnins." << std::endl;
                 }
@@ -187,9 +187,6 @@ int main(int argc, char *argv[])
     seqFile >> fileNum;
     seqFile.close();
     fileNum++;
-    std::ofstream seqFile2 ("config_files/sequence.dat");
-    seqFile2 << fileNum;
-    seqFile2.close();
 
     sprintf(file_rc,"FlightLog_%i_rc.dat",fileNum);
     sprintf(file_pwm,"FlightLog_%i_pwm.dat",fileNum);

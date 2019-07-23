@@ -8,6 +8,12 @@ else
     mkfifo $pipe 
 fi
 
+#read in the file number 
+file_num=$(<config_files/sequence.dat)
+num=$((file_num + 1))
+
+
 #This will save all terminal outputs to a log file:
-tee outlog.dat < $pipe & 
+file_name="outlog_$num.dat" 
+tee $file_name < $pipe & 
 sudo ./bin/adept_fc > $pipe

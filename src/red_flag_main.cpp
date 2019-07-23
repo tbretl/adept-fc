@@ -68,6 +68,17 @@ bool proc_exist(const std::string PID) {
     return false;
 }
 
+string get_temp(){
+    string temperature;
+    FILE *stream;
+    int max_buffer = 25;
+    char buffer[max_buffer];
+    stream = popen("vcgencmd measure_temp 2>&1","r");
+    if(fgets(buffer, max_buffer, stream) != NULL) temperature.append(buffer);
+    pclose(stream);
+    return temperature;
+}
+
 float get_cpu(){
     size_t times_1[10],times_2[10];
     std::ifstream cpu_stream;
@@ -144,12 +155,12 @@ int main(int argc, char* argv[])
     zcm.start();
 
     //sequencing file numbers:
-    std::ifstream seqFile ("config_files/sequence_red.dat", std::ifstream::in);
+    std::ifstream seqFile ("config_files/sequence.dat", std::ifstream::in);
     int fileNum;
     seqFile >> fileNum;
     seqFile.close();
     fileNum++;
-    std::ofstream seqFile2 ("config_files/sequence_red.dat");
+    std::ofstream seqFile2 ("config_files/sequence.dat");
     seqFile2 << fileNum;
     seqFile2.close();
     //setup log file
@@ -166,8 +177,7 @@ int main(int argc, char* argv[])
         double time_now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         //get cpu load
         red_msg.cpu = get_cpu();
-        logfile_red << std::setprecision(14) << time_now << std::setprecision(6) <<  " CPU%: " << red_msg.cpu << std::endl;
-
+        logfile_red << std::setprecision(14) << time_now << std::setprecision(6) <<  " CPU%: " << red_msg.cpu << " " << get_temp() << std::endl;
         //check each module PID status
         for (int i=0; i<6; i++){
             red_msg.pid_status[i]=1;
