@@ -62,6 +62,8 @@ pid_t run_process(const char* path){
 
 int main(int argc, char *argv[])
 {
+    std::ofstream file{"running"};
+
     zcm::ZCM zcm {"ipc"};
 
     //subscribe to channels

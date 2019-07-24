@@ -5,6 +5,7 @@ This repository has the code that will run onboard the ADEPT-FC aircraft, to tes
 # Building the software
 1. install dependencies (zcm, Navio2) - instructions in `notes` directory.
 2. build the software `make all`.
+3. copy `config_files/rc.local` into `etc/rc.local` 
 
 # Starting the software
 1. Type `./run.sh`.

@@ -171,6 +171,7 @@ int main(int argc, char* argv[])
                         break;
                     }
                 }
+                std::remove("running");
                 std::cout << "\nGoodbye.\n\n" ;
 
             }

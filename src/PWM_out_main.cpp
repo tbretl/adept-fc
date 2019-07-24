@@ -156,6 +156,8 @@ double get_gps_time(Handler* adchandle)
 
 int main(int argc, char *argv[])
 {
+
+
     //load configuration variables
     string dump;
     int mapping[11] = {0,1,2,3,3,3,3,3,3,3,3};
@@ -321,6 +323,14 @@ int main(int argc, char *argv[])
     handlerObject.last_rc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     sens_handler.last_adc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     sens_handler.last_vnins_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+    //check for an emergency startup
+    std::ifstream f("emergency_startup");
+    if (f.good()){
+        handlerObject.stat.armed = 1;
+        std::cout << "Armed on emergency startup" << std::endl;
+    }
+
 
     while (!handlerObject.stat.should_exit)
     {
