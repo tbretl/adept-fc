@@ -199,6 +199,7 @@ int main()
     int result;
 
     std::cout << "ADC started" << std::endl;
+    int64_t last_rpi_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     while(!handlerObject.stat.should_exit)
     {
@@ -238,14 +239,16 @@ int main()
                 if (handlerObject.vn200.time_gpspps < msg.time_gpspps) {
                     msg.time_gps = lastppstime + adc_time_gpspps/1000000 - 1;
                 } else {
-                    msg.time_gps = lastppstime + adc_time_gpspps/1000000;
+                    msg.time_gps = lastppstime + adc_time_gpspps/1000000 + 1;
                 }
 
-            } else {
-                std::cout << "ADC: WARNING: error in computing adc_gps_time" << std::endl;
+            } else { // compute using difference from last RPI time
+                std::cout << "ADC: WARNING: error in computing adc_gps_time: rpi- " << rpi_time <<  std::endl;
+                msg.time_gps = msg.time_gps + (last_rpi_time-rpi_time);
             }
             //add the RPI time
             msg.time_rpi = rpi_time;
+            last_rpi_time = rpi_time;
             //publish ADC data
             zcm.publish("ADC_DATA", &msg);
             //loop timing
