@@ -128,7 +128,8 @@ public:
 
     void handle_receive(const boost::system::error_code& error, size_t bytes_transferred) {
         if (error) {
-            std::cout << "Receive failed: " << error.message() << "\n";
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " Receive failed: " << error.message() << "\n";
             return;
         }
         std::string incoming_msg = std::string(recv_buffer.begin(), recv_buffer.begin()+bytes_transferred);
@@ -172,7 +173,8 @@ public:
             vn200->vy = (float) std::stod(in_data[5],nullptr);
             vn200->vz = (float) std::stod(in_data[6],nullptr);
         } else {
-            std::cout << "ERROR: bad UDP message received [hitl]." << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " ERROR: bad UDP message received [hitl]." << std::endl;
         }
         return;
     }

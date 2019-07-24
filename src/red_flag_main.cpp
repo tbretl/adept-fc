@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
             red_msg.pid_status[i]=1;
             if (!PIDs[i].empty()){
                 if (!proc_exist(PIDs[i])){
-                    std::cout << "WARNING: " << proc_names[name_inds[i]] << " is no longer running." << std::endl;
+                    std::cout << std::setprecision(14) << time_now << " WARNING: " << proc_names[name_inds[i]] << " is no longer running." << std::endl;
                     logfile_red << std::setprecision(14) << time_now << std::setprecision(6) << " WARNING: " << proc_names[name_inds[i]] << " is no longer running." << std::endl;
                     red_msg.pid_status[i] = 0;
                 }

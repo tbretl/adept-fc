@@ -14,6 +14,7 @@
 #include <zcm/zcm-cpp.hpp>
 #include <fstream>
 #include <iomanip>
+#include <chrono>
 //message types:
 #include "vnins_data_t.hpp"
 #include "adc_data_t.hpp"
@@ -46,18 +47,21 @@ class Handler
                 can_write = 0;
                 if(log_buffer << std::setprecision(14) << msg->time_gps << std::setprecision(6) <<" "){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
                 }
                 for (int i=0;i<8;i++)
                 {
                     if(log_buffer << msg->rc_chan[i] << " "){
                     }else{
-                        std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
+                        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                        " SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
                     }
                 }
                 if(log_buffer << std::endl){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on rc_in." << std::endl;
                 }
                 can_write = 1;
             }
@@ -69,18 +73,21 @@ class Handler
                 can_write =0;
                 if(log_buffer << std::setprecision(14) << msg->time_gps << std::setprecision(6) <<" "){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
                 }
                 for (int i=0;i<11;i++)
                 {
                     if(log_buffer << msg->pwm_out[i] << " "){
                     }else{
-                        std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
+                        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                        " SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
                     }
                 }
                 if(log_buffer << std::endl){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on pwm." << std::endl;
                 }
                 can_write = 1;
             }
@@ -93,18 +100,21 @@ class Handler
                 if(log_buffer << std::setprecision(14) << msg->time_gps << std::setprecision(6) << " "
                               << msg->da << " " << msg->de << " " << msg->dr << " "){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
                 }
                 for (int i=0;i<8;i++)
                 {
                     if(log_buffer << msg->dt[i] << " "){
                     }else{
-                        std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
+                        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                        " SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
                     }
                 }
                 if(log_buffer << std::endl){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on actuators." << std::endl;
                 }
                 can_write = 1;
             }
@@ -116,18 +126,21 @@ class Handler
                 can_write = 0;
                 if(log_buffer << msg->time_gpspps << " " << std::setprecision(14) << msg->time_rpi << " " << msg->time_gps << std::setprecision(6)){
                 }else {
-                    std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on adc." << std::endl;
                 }
                 for (int i=0; i<16; i++)
                 {
                     if(log_buffer << " " << msg->data[i]){
                     }else {
-                        std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
+                        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                        " SCRIBE ERROR: message buffer overflow on adc." << std::endl;
                     }
                 }
                 if(log_buffer << std::endl){
                 }else {
-                    std::cout << "SCRIBE ERROR: message buffer overflow on adc." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on adc." << std::endl;
                 }
                 can_write = 1;
             }
@@ -143,7 +156,8 @@ class Handler
                               << msg->longitude << std::setprecision(6) << " " << msg->altitude << " " << msg->vx << " " << msg->vy << " "
                               << msg->vz << " " << msg->attuncertainty << " " << msg->posuncertainty << " " << msg->veluncertainty << std::endl){
                 }else{
-                    std::cout << "SCRIBE ERROR: message buffer overflow on vnins." << std::endl;
+                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " SCRIBE ERROR: message buffer overflow on vnins." << std::endl;
                 }
                 can_write = 1;
             }

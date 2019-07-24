@@ -100,7 +100,8 @@ int main()
     if (check_apm())
     {
         return 1;
-        std::cout << "RC_IN: failed to initialize rc input." << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " RC_IN: failed to initialize rc input." << std::endl;
     }
     auto rcin = get_rcin();
     rcin->initialize();
@@ -136,7 +137,8 @@ int main()
                 //log an error message
                 if (err_on)
                 {
-                    std::cout << "RC_IN: error: RC read fail" << std::endl;
+                    std::cout <<  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                    " RC_IN: error: RC read fail" << std::endl;
                 }
             }
 

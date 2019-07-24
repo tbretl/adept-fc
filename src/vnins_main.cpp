@@ -66,7 +66,8 @@ int flush(unsigned int timeout_ms = 500)
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
-            std::cout << "error - poll returned " << len << " in flush" << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - poll returned " << len << " in flush" << std::endl;
             return 1;
         } else if (len == 0)
         {
@@ -91,11 +92,13 @@ int readline(unsigned char* buf, int maxlen)
         len = RS232_PollComport(COMPORT, &c, 1);
         if (len < 0)
         {
-            std::cout << "error - poll returned code " << len << " in readline" << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - poll returned code " << len << " in readline" << std::endl;
             return -1;
         } else if (len > 1)
         {
-            std::cout << "error - read " << len << " > 1 bytes in readline" << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - read " << len << " > 1 bytes in readline" << std::endl;
             return -1;
         } else if (len == 1)
         {
@@ -106,7 +109,8 @@ int readline(unsigned char* buf, int maxlen)
                 return nc;
             } else if (nc >= maxlen)
             {
-                std::cout << "error - read " << nc << " bytes with no end of line" << std::endl;
+                std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                " error - read " << nc << " bytes with no end of line" << std::endl;
                 return -1;
             }
         }
@@ -119,14 +123,16 @@ bool is_valid_line(unsigned char* line)
     unsigned int len = strlen((char*) line);
     if (len == 0)
     {
-        std::cout << "error: line has zero length\n" << line << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " error: line has zero length\n" << line << std::endl;
         return false;
     }
 
     // it starts with '$'
     if (line[0] != '$')
     {
-        std::cout << "error: line starts with " << line[0] << " and not with $\n" << line << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " error: line starts with " << line[0] << " and not with $\n" << line << std::endl;
         return false;
     }
 
@@ -145,7 +151,8 @@ bool is_valid_line(unsigned char* line)
     }
     if (! has_asterix)
     {
-        std::cout << "error: line contains no *\n" << line << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " error: line contains no *\n" << line << std::endl;
         return false;
     }
 
@@ -154,7 +161,8 @@ bool is_valid_line(unsigned char* line)
     unsigned long b = (unsigned long) cs8;
     if (a != b)
     {
-        std::cout << "error: line checksum does not match (" << a << "," << b << ")\n" << line << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " error: line checksum does not match (" << a << "," << b << ")\n" << line << std::endl;
         return false;
     }
 
@@ -168,7 +176,8 @@ int parseline(unsigned char* line, vnins_data_t *msg)
     int len = strlen((char*) line);
     if (len != len_expected)
     {
-        std::cout << "error: line has length "<< len << ", should be " << len_expected << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " error: line has length "<< len << ", should be " << len_expected << std::endl;
         return 1;
     }
 
@@ -253,7 +262,8 @@ bool writecommand(std::string &s) {
     // send command
     int result = RS232_SendBuf(COMPORT, (unsigned char*) s.c_str(), s.size());
     if (result < 0) {
-        std::cout << "WARNING: error ("
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " WARNING: error ("
                   << result
                   << ") on sending command "
                   << s << std::endl;
@@ -264,7 +274,8 @@ bool writecommand(std::string &s) {
     unsigned char line[BUFFER_LENGTH];
     result = readline(line, BUFFER_LENGTH);
     if (result < 0) {
-        std::cout << "WARNING: error ("
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " WARNING: error ("
                   << result
                   << ") on responding to command "
                   << s << std::endl;
@@ -286,7 +297,8 @@ bool writecommand(std::string &s) {
     if (strcmp(field, "VNERR") == 0) {
         field = strtok(NULL, ",");
         field = strtok(field, "*");
-        std::cout << "WARNING: error (VNERR,"
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << "WARNING: error (VNERR,"
                   << field
                   << ") in response to command "
                   << s << std::endl;
@@ -310,7 +322,8 @@ bool getprotocol() {
 
     std::string s = "VNRRG,30";
     bool result = writecommand(s);
-    std::cout << "VN-200 communication protocol: " << s << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+     " VN-200 communication protocol: " << s << std::endl;
     return result;
 }
 
@@ -353,7 +366,8 @@ bool setoutputfrequency(int rate=40) {
         }
     }
     if (! acceptable) {
-        std::cout << "WARNING: unacceptable rate " << rate << " in setoutputfrequency" << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " WARNING: unacceptable rate " << rate << " in setoutputfrequency" << std::endl;
         return false;
     }
 
@@ -383,7 +397,8 @@ int main()
     // open serial port
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
     {
-        std::cout << "error while opening port" << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " error while opening port" << std::endl;
         return 1;
     }
 
@@ -426,7 +441,8 @@ int main()
         result = readline(line, BUFFER_LENGTH);
         if (result < 0)
         {
-            std::cout << "WARNING: error while reading from port: " << result << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " WARNING: error while reading from port: " << result << std::endl;
             continue;
         }
 

@@ -131,7 +131,8 @@ int main(int argc, char* argv[])
         //get user input:
         std::cout <<"\n\n\nInput: <target> <action> (\"help !\" for options):" << std::endl;
         std::cin >> user_data[0] >> user_data[1];
-        std::cout << ">>" << user_data[0] << " " << user_data[1] << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " >>" << user_data[0] << " " << user_data[1] << std::endl;
 
 
         if (!user_data[0].compare("help"))

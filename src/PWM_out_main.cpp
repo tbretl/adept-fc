@@ -275,7 +275,8 @@ int main(int argc, char *argv[])
     }
 
     if (getuid()) {
-        std::cout << "Not root. Please launch with Sudo." << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " Not root. Please launch with Sudo." << std::endl;
     }
 
     for (int i=0;i<num_outputs; i++)
@@ -368,7 +369,8 @@ int main(int argc, char *argv[])
         } else {
             handlerObject.mode_emergency = 1;
             if (message_thrown[1] == false){
-                std::cout << "WARNING: Mode emergency detected. Switching to manual flight mode." << std::endl;
+                std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                " WARNING: Mode emergency detected. Switching to manual flight mode." << std::endl;
                 message_thrown[1] = true;
             }
         }
@@ -378,7 +380,8 @@ int main(int argc, char *argv[])
         } else {
             handlerObject.rc_emergency = 1;
             if (message_thrown[0] == false) {
-                std::cout << "WARNING: RC emergency detected. Switching to disarm." << std::endl;
+                std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                " WARNING: RC emergency detected. Switching to disarm." << std::endl;
                 message_thrown[0] = true;
             }
         }

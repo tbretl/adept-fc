@@ -65,7 +65,8 @@ int flush(unsigned int timeout_ms = 500)
         len = RS232_PollComport(COMPORT, &c, 1);
         if ((len < 0) || (len > 1))
         {
-            std::cout << "ADC: error - poll returned " << len << " in flush" << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " ADC: error - poll returned " << len << " in flush" << std::endl;
             return 1;
         } else if (len == 0)
         {
@@ -90,11 +91,13 @@ int readline(unsigned char* buf, int maxlen)
         len = RS232_PollComport(COMPORT, &c, 1);
         if (len < 0)
         {
-            std::cout << "ADC: error - poll returned code " << len << " in readline" << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " ADC: error - poll returned code " << len << " in readline" << std::endl;
             return -1;
         } else if (len > 1)
         {
-            std::cout << "ADC: error - read " << len << " > 1 bytes in readline" << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " ADC: error - read " << len << " > 1 bytes in readline" << std::endl;
             return -1;
         } else if (len == 1)
         {
@@ -105,7 +108,8 @@ int readline(unsigned char* buf, int maxlen)
                 return nc;
             } else if (nc >= maxlen)
             {
-                std::cout << "ADC: error - read " << nc << " bytes with no end of line" << std::endl;
+                std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+                " ADC: error - read " << nc << " bytes with no end of line" << std::endl;
                 return -1;
             }
         }
@@ -118,7 +122,8 @@ bool is_valid_line(unsigned char* line)
     unsigned int len = strlen((char*) line);
     if (len == 0)
     {
-        std::cout << "ADC: error: line has zero length\n" << line << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " ADC: error: line has zero length\n" << line << std::endl;
         return false;
     }
 
@@ -144,14 +149,16 @@ int parseline(unsigned char* line, adc_data_t *msg)
     char* field;
     field = strtok((char*) line, ",");
     if (field == NULL) {
-        std::cout << "ADC: error: line contains no commas" << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " ADC: error: line contains no commas" << std::endl;
         return 1;
     }
     msg->time_gpspps = (long long) strtoul(field, NULL, 10);
     for (int i=0; i<16; ++i) {
         field = strtok(NULL, ",");
         if (field == NULL) {
-            std::cout << "ADC: error: in parseline at data field " << i << std::endl;
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " ADC: error: in parseline at data field " << i << std::endl;
             return 1;
         }
         msg->data[i] = strtod(field, NULL);
@@ -165,7 +172,8 @@ int main()
     // open serial port
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
     {
-        std::cout << "ADC: error while opening port" << std::endl;
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " ADC: error while opening port" << std::endl;
         return 1;
     }
 
@@ -214,7 +222,7 @@ int main()
         if (result < 0)
         {
             //log an error message:
-            std::cout << "ADC: WARNING: error while reading from port: " << result << std::endl;
+            std::cout << rpi_time << "ADC: WARNING: error while reading from port: " << result << std::endl;
             continue;
         }
 
