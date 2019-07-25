@@ -264,6 +264,17 @@ int main(int argc, char* argv[])
             {
                 std::cout << "Running pre-flight checks..." << std::endl;
                 //data checks
+                std::cout << "Checking for GPS lock...(timout in 10 seconds)" << std::endl;
+                auto start_time = std::chrono::steady_clock::now();
+                while (!((int)handlerObject.vn200.tracking && (int)handlerObject.vn200.gpsfix)){
+                    auto current_time = std::chrono::steady_clock::now();
+                    unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+                    if (time_ms >=10000){
+                        std::cout << "FAILURE: No GPS lock." << std::endl;
+                        break;
+                    }
+                }
+
                 std::cout << "\n\nDisplaying sensor data: \nVN-200:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
@@ -273,6 +284,82 @@ int main(int argc, char* argv[])
                               << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";
                     usleep(500000);
                 }
+
+                //analog sensors check:
+                std::cout << "\n\n\nAnalog sensor check: " << std::endl << "WARNING: UNPLUG MOTOR BATTERIES!!!" << std::endl;
+                std::cout << "Type 'yes' to continue: ";
+                string answer;
+                std::cin >> answer;
+                std::cout << "WARNING: Arming PWM outputs!!!" << std::endl;
+                //arm pwms
+                sys_status.armed = 1;
+                std::cout << "PWM outputs armed." << std::endl;
+                zcm.publish("STATUS",&sys_status);
+                //do tests
+                std::cout << "Move sticks to lower left corner and hold for 5 seconds" << std::endl;
+                int analog_lims[5] = {0,400000,0,0,400000};
+                int analog_exit = 0;
+                start_time = std::chrono::steady_clock::now();
+                while(analog_exit==0){
+                    if (handlerObject.adc.data[8] > analog_lims[0]){ //r_ail
+                        analog_lims[0] = handlerObject.adc.data[8];
+                    }
+                    if (handlerObject.adc.data[9] < analog_lims[1]){ //l_ail
+                        analog_lims[1] = handlerObject.adc.data[9];
+                    }
+                    if (handlerObject.adc.data[10] > analog_lims[2]){ //r_ele
+                        analog_lims[2] = handlerObject.adc.data[10];
+                    }
+                    if (handlerObject.adc.data[11] > analog_lims[3]){ //l_ele
+                        analog_lims[3] = handlerObject.adc.data[11];
+                    }
+                    if (handlerObject.adc.data[12] < analog_lims[4]){ //rudder
+                        analog_lims[4] = handlerObject.adc.data[12];
+                    }
+                    auto current_time = std::chrono::steady_clock::now();
+                    unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+                    if (time_ms > 5000) {analog_exit = 1;}
+                }
+                std::cout << std::endl <<  std::endl;
+                if (analog_lims[0] > 40000){std::cout << "Right aileron: PASS" << std::endl;} else {std::cout << "Right aileron: FAIL" << std::endl;}
+                if (analog_lims[1] < 25000){std::cout << "Left aileron: PASS" << std::endl;} else {std::cout << "Left aileron: FAIL" << std::endl;}
+                if (analog_lims[2] > 25000){std::cout << "Right elevator: PASS" << std::endl;} else {std::cout << "Right elevator: FAIL" << std::endl;}
+                if (analog_lims[3] > 25000){std::cout << "Left elevator: PASS" << std::endl;} else {std::cout << "Left elevator: FAIL" << std::endl;}
+                if (analog_lims[4] < 30000){std::cout << "Rudder: PASS" << std::endl;} else {std::cout << "Rudder: FAIL" << std::endl;}
+                //disarm again
+                sys_status.armed = 0;
+                zcm.publish("STATUS",&sys_status);
+                std::cout << "\nPWM outputs disarmed." << std::endl;
+                //check the pressure transducers
+                std::cout << "\n\nGently blow into the 5-hole probe for 5 seconds" << std::endl;
+                int probe_lims[5] = {40000,40000,40000,40000,40000};
+                analog_exit = 0;
+                start_time = std::chrono::steady_clock::now();
+                while(analog_exit==0){
+                    if (handlerObject.adc.data[0] < probe_lims[0]){ //r_ail
+                        probe_lims[0] = handlerObject.adc.data[0];
+                    }
+                    if (handlerObject.adc.data[1] < probe_lims[1]){ //l_ail
+                        probe_lims[1] = handlerObject.adc.data[1];
+                    }
+                    if (handlerObject.adc.data[2] < probe_lims[2]){ //r_ele
+                        probe_lims[2] = handlerObject.adc.data[2];
+                    }
+                    if (handlerObject.adc.data[3] < probe_lims[3]){ //l_ele
+                        probe_lims[3] = handlerObject.adc.data[3];
+                    }
+                    if (handlerObject.adc.data[4] < probe_lims[4]){ //rudder
+                        probe_lims[4] = handlerObject.adc.data[4];
+                    }
+                    auto current_time = std::chrono::steady_clock::now();
+                    unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
+                    if (time_ms > 10000) {analog_exit = 1;}
+                }
+                std::cout << std::endl << std::endl;
+                for (int i=0; i<5; i++){
+                    if(probe_lims[i]< 38000){std::cout << "Transducer #" << i << ": PASS" << std::endl;} else {std::cout << "Transducer #" << i << ": FAIL" << std::endl;}
+                }
+                //display sample data
                 std::cout << "\nADC data:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
