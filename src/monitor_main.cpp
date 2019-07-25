@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
     zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
     zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
     zcm.subscribe("STATUS7",&Handler::read_stat,&h7);
-    zcm.subscribe("RED_FLAG",&Handler::read_red,&hred);
+    //zcm.subscribe("RED_FLAG",&Handler::read_red,&hred);
 
     //structures to publish:
     status_t sys_status;
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 
     zcm.start();
     zcm.publish("STATUS",&sys_status);
-
+    zcm.publish("STATUS_red",&sys_status);
     while (!exit_flag)
     {
         usleep(500000);
@@ -158,15 +158,27 @@ int main(int argc, char* argv[])
                 std::cout << "Exiting all modules." << std::endl;
                 sys_status.should_exit = 1;
                 exit_flag = 1;
+                //kill the red_flag process first so it doesn't reboot everything
+                zcm.publish("STATUS_red",&sys_status);
+                auto start = std::chrono::steady_clock::now();
+                while (!h7.stat.module_status==0){
+                    auto current_time = std::chrono::steady_clock::now();
+                    unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start).count();
+                    if(time_ms > 2000){
+                        std::cout << "Timeout on red_flag shutdown" << std::endl;
+                        break;
+                    }
+
+                }
                 zcm.publish("STATUS",&sys_status);
                 //wait for confirmation from modules:
                 auto start_time = std::chrono::steady_clock::now();
                 while (!(h0.stat.module_status==0 && h1.stat.module_status==0 && h2.stat.module_status==0
                       && h3.stat.module_status==0 && h4.stat.module_status==0 && h5.stat.module_status==0
-                      && h6.stat.module_status==0 && h7.stat.module_status == 0)){
+                      && h6.stat.module_status==0)){
                     auto current_time = std::chrono::steady_clock::now();
                     unsigned int time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
-                    if (time_ms >= 1000) {
+                    if (time_ms >= 2000) {
                         std::cout << "Timeout on shutdown...check for hung processes." << std::endl;
                         break;
                     }

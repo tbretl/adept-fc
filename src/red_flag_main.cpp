@@ -111,10 +111,28 @@ float get_cpu(){
     return 100.0*(total_time - idle_time)/total_time;
 }
 
+pid_t run_process(const char* path){
+
+    pid_t child_pid;
+
+    child_pid = fork ();
+
+    if (child_pid != 0){
+        //parent
+        return child_pid;
+    }
+    else {
+        execl (path, path, NULL);
+        std::cout << "an error occurred in execl" << std::endl;
+        abort ();
+    }
+
+}
+
 int main(int argc, char* argv[])
 {
     //store PIDs of module processes
-    std::string proc_names[] = {"rc_in","hitl","vnins","adc","autopilot","scribe","pwm_out"};
+    std::string proc_names[] = {"bin/rc_in","bin/hitl","bin/vnins","bin/adc","bin/autopilot","bin/scribe","bin/pwm_out"};
     std::stringstream pid_list(argv[1]);
     std::string PIDs[6];
     std::string dump;
@@ -134,16 +152,9 @@ int main(int argc, char* argv[])
 
     zcm::ZCM zcm {"ipc"};
     //subscribe to incoming channels:
-    Handler handlerObject,h0,h1,h2,h3,h4,h5,h6;
+    Handler handlerObject;
     //module status channels:
-    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
-    zcm.subscribe("STATUS0",&Handler::read_stat,&h0);
-    zcm.subscribe("STATUS1",&Handler::read_stat,&h1);
-    zcm.subscribe("STATUS2",&Handler::read_stat,&h2);
-    zcm.subscribe("STATUS3",&Handler::read_stat,&h3);
-    zcm.subscribe("STATUS4",&Handler::read_stat,&h4);
-    zcm.subscribe("STATUS5",&Handler::read_stat,&h5);
-    zcm.subscribe("STATUS6",&Handler::read_stat,&h6);
+    zcm.subscribe("STATUS_red",&Handler::read_stat,&handlerObject);
 
     //structures to publish:
     status_t module_stat;
@@ -186,10 +197,17 @@ int main(int argc, char* argv[])
                     std::cout << std::setprecision(14) << time_now << " WARNING: " << proc_names[name_inds[i]] << " is no longer running." << std::endl;
                     logfile_red << std::setprecision(14) << time_now << std::setprecision(6) << " WARNING: " << proc_names[name_inds[i]] << " is no longer running." << std::endl;
                     red_msg.pid_status[i] = 0;
+                    //reboot the process:
+                    std::ostringstream pid_new;
+                    if (!proc_names[name_inds[i]].compare("bin/pwm_out")){ //signify emergency startup - arm pwm on start
+                        std::ofstream file{"emergency_startup"};
+                    }
+                    pid_new << run_process(proc_names[name_inds[i]].c_str());
+                    PIDs[i] = pid_new.str();
                 }
             }
         }
-        zcm.publish("RED_FLAG",&red_msg);
+        //zcm.publish("RED_FLAG",&red_msg);
     }
 
     logfile_red.close();

@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        usleep(500000); //without this, initialization of multiple channels fails
+        usleep(50000); //without this, initialization of multiple channels fails
     }
 
     //set disarm pwm values
