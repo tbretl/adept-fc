@@ -15,12 +15,15 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <assert.h>
 
 #define COMPORT			    22 		// '/dev/ttyAMA0'
 #define CURRENT_BAUDRATE	230400  // the baudrate you have
 #define BAUDRATE            230400  // the baudrate you want
 #define BUFFER_LENGTH 	    255
-#define MESSAGE_LENGTH      154
+#define MESSAGE_LENGTH      96
+#define SIZEOF_FLOAT        4       // number of bytes in float
+#define SIZEOF_DOUBLE       8       // number of bytes in double
 
 // Constants for communication protocol control (p80 of VN-200 user manual)
 enum class SerialCount { NONE, SYNCIN_COUNT, SYNCIN_TIME, SYNCOUT_COUNT, GPS_PPS };
@@ -83,7 +86,154 @@ int flush(unsigned int timeout_ms = 500)
     }
 }
 
-int readline(unsigned char* buf, int maxlen)
+int readbyte(unsigned char* c) {
+    // blocks until one byte is read
+    size_t len;
+    while (true) {
+        len = RS232_PollComport(COMPORT, c, 1);
+        if (len < 0) {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - poll returned code " << len << " in readbyte" << std::endl;
+            return 1;
+        } else if (len > 1) {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - read " << len << " > 1 bytes in readbyte" << std::endl;
+            return 1;
+        } else if (len == 1) {
+            return 0;
+        }
+    }
+}
+
+int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
+    // message has 96 bytes:
+    //
+    //  header has 4 bytes
+    //  payload has 90 bytes
+    //  crc (16-bit) has 2 bytes
+    //
+    
+    unsigned char c;
+    
+    // read first byte
+    if (readbyte(&c)) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error - could not read byte 0 in readline" << std::endl;
+        return 1;
+    }
+    buf[0] = c;
+    
+    // verify first byte is sync
+    uint8_t sync = buf[0];
+    if (sync != 0xFA) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error - non-sync byte 0 ("
+                  << std::setfill('0')         // output has form "0X" and not "X"
+                  << std::setw(2)              // output has two characters
+                  << std::hex                  // convert anything after this to hex
+                  << (unsigned int) sync       // cast before converting
+                  << ") in readline" << std::endl;
+        return 1;
+    }
+    
+    // read all other bytes
+    int nc = 1;
+    unsigned short cs16 = 0;
+    while (nc < len) {
+        if (readbyte(&c)) {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error - could not read byte " << nc << " in readline" << std::endl;
+            return 1;
+        }
+        
+        // compute 16-bit checksum as we go
+        cs16 = (unsigned char)(cs16 >> 8) | (cs16 << 8);
+        cs16 ^= c;
+        cs16 ^= (unsigned char)(cs16 & 0xff) >> 4;
+        cs16 ^= cs16 << 12;
+        cs16 ^= (cs16 & 0x00ff) << 5;
+        
+        buf[nc] = c;
+        nc++;
+    }
+    
+    // verify zero checksum
+    if (cs16 != 0) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error - bad checksum (" << cs16 << ") in readline for "
+                  << nc << " bytes" << std::endl;
+        return 1;
+    }
+    
+    // verify group
+    uint8_t group = buf[1];
+    if (group != 0x01) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error - bad group ("
+                  << std::setfill('0')         // output has form "0X" and not "X"
+                  << std::setw(2)              // output has two characters
+                  << std::hex                  // convert anything after this to hex
+                  << (unsigned int) group      // cast before converting
+                  << ") in readline" << std::endl;
+        return 1;
+    }
+    
+    // verify field
+    uint16_t field;
+    memcpy(&field,              &buf[2],    2);
+    if (field != 0x51EA) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error - bad field ("
+                  << std::setfill('0')         // output has form "0X" and not "X"
+                  << std::setw(4)              // output has four characters
+                  << std::hex                  // convert anything after this to hex
+                  << (unsigned int) field      // cast before converting
+                  << ") in readline"
+                  << std::endl;
+        return 1;
+    }
+    
+    // parse line
+    uint64_t timegps;
+    memcpy(&timegps,            &buf[4],    8);
+    msg->time = timegps / 1000000000;
+    memcpy(&(msg->yaw),         &buf[12],   SIZEOF_FLOAT);
+    memcpy(&(msg->pitch),       &buf[16],   SIZEOF_FLOAT);
+    memcpy(&(msg->roll),        &buf[20],   SIZEOF_FLOAT);
+    memcpy(&(msg->wx),          &buf[24],   SIZEOF_FLOAT);
+    memcpy(&(msg->wy),          &buf[28],   SIZEOF_FLOAT);
+    memcpy(&(msg->wz),          &buf[32],   SIZEOF_FLOAT);
+    memcpy(&(msg->latitude),    &buf[36],   SIZEOF_DOUBLE);
+    memcpy(&(msg->longitude),   &buf[44],   SIZEOF_DOUBLE);
+    memcpy(&(msg->altitude),    &buf[52],   SIZEOF_DOUBLE);
+    memcpy(&(msg->vn),          &buf[60],   SIZEOF_FLOAT);
+    memcpy(&(msg->ve),          &buf[64],   SIZEOF_FLOAT);
+    memcpy(&(msg->vd),          &buf[68],   SIZEOF_FLOAT);
+    memcpy(&(msg->ax),          &buf[72],   SIZEOF_FLOAT);
+    memcpy(&(msg->ay),          &buf[76],   SIZEOF_FLOAT);
+    memcpy(&(msg->az),          &buf[80],   SIZEOF_FLOAT);
+    uint16_t insstatus;
+    memcpy(&insstatus,          &buf[84],   2);
+    //
+    // FIXME: check the result of this code with a working GPS antenna
+    //
+    bool bits[16];
+    for (int i=0; i<16; ++i)
+    {
+        bits[15 - i] = (insstatus & 1);
+        insstatus >>= 1;
+    }
+    msg->tracking = (bits[0] && (! bits[1]));
+    msg->gpsfix = bits[2];
+    msg->error = (bits[3] || bits[4] || bits[5] || bits[6]);
+    //
+    memcpy(&(msg->time_gpspps), &buf[86],   8);
+    
+    // return with success
+    return 0;
+}
+
+int readline_ascii(unsigned char* buf, int maxlen)
 {
     unsigned char c;
     int nc = 0;
@@ -118,7 +268,7 @@ int readline(unsigned char* buf, int maxlen)
     }
 }
 
-bool is_valid_line(unsigned char* line)
+bool is_valid_line_ascii(unsigned char* line)
 {
     // it has non-zero length
     unsigned int len = strlen((char*) line);
@@ -170,72 +320,6 @@ bool is_valid_line(unsigned char* line)
     return true;
 }
 
-int parseline(unsigned char* line, vnins_data_t *msg)
-{
-    // Check that line has correct length for VNINS
-    const int len_expected = MESSAGE_LENGTH;
-    int len = strlen((char*) line);
-    if (len != len_expected)
-    {
-        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
-        " error: line has length "<< len << ", should be " << len_expected << std::endl;
-        return 1;
-    }
-
-    // Terminate line at *
-    line[len_expected - 5] = '\0';
-
-    // Get each field
-    char* field;
-    field = strtok((char*) line + 1, ",");
-    field = strtok(NULL, ",");
-    msg->time = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->week = (long long) strtoul(field, NULL, 10);
-    field = strtok(NULL, ",");
-    unsigned long tmp = strtoul(field, NULL, 16);
-    bool bits[16];
-    for (int i=0; i<16; ++i)
-    {
-        bits[i] = (tmp & 1);
-        tmp >>= 1;
-    }
-    msg->tracking = (bits[0] && (! bits[1]));
-    msg->gpsfix = bits[2];
-    msg->error = (bits[3] || bits[4] || bits[5] || bits[6]);
-    field = strtok(NULL, ",");
-    msg->yaw = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->pitch = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->roll = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->latitude = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->longitude = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->altitude = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->vx = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->vy = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->vz = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->attuncertainty = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->posuncertainty = strtod(field, NULL);
-    field = strtok(NULL, ",");
-    msg->veluncertainty = strtod(field, NULL);
-    field = strtok(NULL, ",T");
-    // it is important to force base 10 in this conversion, because
-    // the time is most likely padded with leading zeros, which causes
-    // a default interpretation as octal
-    msg->time_gpspps = (long long) strtoul(field, NULL, 10);
-
-    return 0;
-}
-
 bool writecommand(std::string &s) {
     // compute 8-bit checksum with a range-based for loop
     unsigned char cs8 = 0;
@@ -273,7 +357,7 @@ bool writecommand(std::string &s) {
 
     // get response
     unsigned char line[BUFFER_LENGTH];
-    result = readline(line, BUFFER_LENGTH);
+    result = readline_ascii(line, BUFFER_LENGTH);
     if (result < 0) {
         std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
                   << " WARNING: error ("
@@ -284,7 +368,7 @@ bool writecommand(std::string &s) {
     }
 
     // check if response is valid
-    if (! is_valid_line(line)) {
+    if (! is_valid_line_ascii(line)) {
         return false;
     }
 
@@ -315,67 +399,9 @@ bool async(bool on) {
     return writecommand(s);
 }
 
-bool getprotocol() {
-    // The default communicaton protocol (at factory settings) is:
-    //
-    //  $VNRRG,30,0,0,0,0,1,0,1*6C
-    //
-
-    std::string s = "VNRRG,30";
-    bool result = writecommand(s);
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
-     " VN-200 communication protocol: " << s << std::endl;
-    return result;
-}
-
-bool setprotocol(
-    SerialCount serialcount=SerialCount::GPS_PPS,
-    SerialState serialstate=SerialState::OFF,
-    SPICount spicount=SPICount::NONE,
-    SPIStatus spistatus=SPIStatus::OFF,
-    SerialChecksum serialchecksum=SerialChecksum::CS_8,
-    SPIChecksum spichecksum=SPIChecksum::OFF,
-    ErrorMode errormode=ErrorMode::SEND
-) {
-    std::string s = "VNWRG,30";
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(serialcount));
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(serialstate));
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(spicount));
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(spistatus));
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(serialchecksum));
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(spichecksum));
-    s += ",";
-    s += std::to_string(static_cast<unsigned char>(errormode));
-
-    return writecommand(s);
-}
-
-bool setoutputfrequency(int rate=40) {
-    const int nrates = 11;
-    const int rates[nrates] = {1, 2, 4, 5, 10, 20, 25, 40, 50, 100, 200};
-
-    bool acceptable = false;
-    for (int i=0; i<nrates; ++i) {
-        if (rate == rates[i]) {
-            acceptable = true;
-        }
-    }
-    if (! acceptable) {
-        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
-        " WARNING: unacceptable rate " << rate << " in setoutputfrequency" << std::endl;
-        return false;
-    }
-
-    std::string s = "VNWRG,07";
-    s += ",";
-    s += std::to_string(rate);
-
+bool async_ascii(bool on) {
+    std::string s = "VNWRG,06,";
+    s += (on ? "1" : "0");
     return writecommand(s);
 }
 
@@ -402,22 +428,75 @@ bool setbaudrate(int rate) {
     return writecommand(s);
 }
 
-void config() {
+bool setmessage() {
+    // We want these data fields from the common group (Section 4.4):
+    //
+    // name (bit offset)
+    //
+    // TimeGps (1)
+    // Ypr (3)
+    // AngularRate (5)
+    // Position (6) - LLA
+    // Velocity (7) - NED
+    // Accel (8) - Body
+    // InsStatus (12)
+    //
+    // Compare to the data fields in the "INS Solution - LLA" that we
+    // had been using (Section 9.2.1).
+    //
+    // To get this, we use the following message (see Section 4.2.4):
+    //
+    //  header          VN          ASCII message header
+    //  command         WRG         write register command
+    //  register ID     75          register 75 (first output message)
+    //  asyncmode       2           output on second serial port
+    //  rate divisor    8           if imurate is 800 Hz, output rate is 800 / 8 = 100 Hz
+    //  outputgroup     01          groups = 0x01 (binary group 1 enabled)
+    //  groupfield 1    51EA        binary: 0b0101000111101010
+    //                                  bit 1  - timegps                - 8 bytes
+    //                                  bit 3  - ypr                    - 12 bytes
+    //                                  bit 5  - angularrate            - 12 bytes
+    //                                  bit 6  - position (LLA)         - 24 bytes
+    //                                  bit 7  - velocity (NED)         - 12 bytes
+    //                                  bit 8  - acceleration (body)    - 12 bytes
+    //                                  bit 12 - insstatus              - 2 bytes
+    //                                  bit 14 - gpspps                 - 8 bytes
+    //  + checksum + endline
+    
+    std::string s = "VNWRG,75,2,8,01,51EA";
+    return writecommand(s);
+}
+
+int config() {
     // turn off asynchronous outputs
     async(false);
-
-    // set communication protocol
-    setprotocol();
-
-    // set output frequency (will fail if baud rate does not support the desired frequency)
-    setoutputfrequency(100);
-
+    
+    // flush serial port
+    RS232_flushRXTX(COMPORT);
+    if (flush() != 0)
+    {
+        return 1;
+    }
+    
+    // turn off serial ASCII outputs
+    async_ascii(false);
+    
+    // set user-configurable binary output
+    setmessage();
+    
     // turn on asynchronous outputs
     async(true);
+    
+    // return success
+    return 0;
 }
 
 int main()
 {
+    // confirm sizes of types
+    assert(sizeof(float) == SIZEOF_FLOAT);
+    assert(sizeof(double) == SIZEOF_DOUBLE);
+    
     // handle change in baudrate if necessary
     if (CURRENT_BAUDRATE != BAUDRATE)
     {
@@ -465,17 +544,14 @@ int main()
         " error while opening port" << std::endl;
         return 1;
     }
-
-    // flush serial port
-    RS232_flushRXTX(COMPORT);
-    if (flush() != 0)
-    {
+    
+    // config
+    if (config() != 0) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                  << " error in config()" << std::endl;
         return 1;
     }
-
-    // configure
-    config();
-
+    
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
 
@@ -494,35 +570,29 @@ int main()
     zcm.start();
 
     unsigned char line[BUFFER_LENGTH];
-    int result;
-
+    
     std::cout << "VN-200 started" << std::endl;
-
+    
     while(!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS1",&module_stat);
-
-        result = readline(line, BUFFER_LENGTH);
-        if (result < 0)
-        {
-            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
-            " WARNING: error while reading from port: " << result << std::endl;
-            continue;
-        }
-
-        if (! is_valid_line(line))
-        {
-            continue;
-        }
-
-        if (parseline(line, &msg) == 0)
-        {
+        
+        if (readline_binary(line, MESSAGE_LENGTH, &msg) == 0) {
             zcm.publish("VNINS_DATA", &msg);
+        } else {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                      << " WARNING: error while reading from port, attempting reset" << std::endl;
+            // turn off asynchronous outputs
+            async(false);
+            // turn on asynchronous outputs
+            async(true);
         }
-
-        //loop timing
-        usleep(1000); //1000 hz
+        
+        usleep(1000);   // allows a max rate of 1000 Hz
     }
+    
+    // turn off asynchronous outputs
+    async(false);
 
     // close serial port
     RS232_CloseComport(COMPORT);

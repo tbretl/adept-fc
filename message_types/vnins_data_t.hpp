@@ -11,12 +11,16 @@
 
 
 
+/**
+ * Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+ *
+ * Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+ *
+ */
 class vnins_data_t
 {
     public:
         double     time;
-
-        int64_t    week;
 
         int8_t     tracking;
 
@@ -30,23 +34,29 @@ class vnins_data_t
 
         float      roll;
 
+        float      wx;
+
+        float      wy;
+
+        float      wz;
+
         double     latitude;
 
         double     longitude;
 
         double     altitude;
 
-        float      vx;
+        float      vn;
 
-        float      vy;
+        float      ve;
 
-        float      vz;
+        float      vd;
 
-        float      attuncertainty;
+        float      ax;
 
-        float      posuncertainty;
+        float      ay;
 
-        float      veluncertainty;
+        float      az;
 
         int64_t    time_gpspps;
 
@@ -157,9 +167,6 @@ int vnins_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) con
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->time, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->week, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
     thislen = __boolean_encode_array(buf, offset + pos, maxlen - pos, &this->tracking, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
@@ -178,6 +185,15 @@ int vnins_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) con
     thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->roll, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->wx, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->wy, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->wz, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->latitude, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
@@ -187,22 +203,22 @@ int vnins_data_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) con
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->altitude, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->vx, 1);
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->vn, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->vy, 1);
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->ve, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->vz, 1);
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->vd, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->attuncertainty, 1);
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->ax, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->posuncertainty, 1);
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->ay, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->veluncertainty, 1);
+    thislen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->az, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     thislen = __int64_t_encode_array(buf, offset + pos, maxlen - pos, &this->time_gpspps, 1);
@@ -217,9 +233,6 @@ int vnins_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxle
     int thislen;
 
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->time, 1);
-    if(thislen < 0) return thislen; else pos += thislen;
-
-    thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->week, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     thislen = __boolean_decode_array(buf, offset + pos, maxlen - pos, &this->tracking, 1);
@@ -240,6 +253,15 @@ int vnins_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxle
     thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->roll, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->wx, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->wy, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->wz, 1);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->latitude, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
@@ -249,22 +271,22 @@ int vnins_data_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxle
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->altitude, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->vx, 1);
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->vn, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->vy, 1);
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->ve, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->vz, 1);
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->vd, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->attuncertainty, 1);
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->ax, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->posuncertainty, 1);
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->ay, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
-    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->veluncertainty, 1);
+    thislen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->az, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
     thislen = __int64_t_decode_array(buf, offset + pos, maxlen - pos, &this->time_gpspps, 1);
@@ -277,10 +299,12 @@ uint32_t vnins_data_t::_getEncodedSizeNoHash() const
 {
     uint32_t enc_size = 0;
     enc_size += __double_encoded_array_size(NULL, 1);
-    enc_size += __int64_t_encoded_array_size(NULL, 1);
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __boolean_encoded_array_size(NULL, 1);
     enc_size += __boolean_encoded_array_size(NULL, 1);
+    enc_size += __float_encoded_array_size(NULL, 1);
+    enc_size += __float_encoded_array_size(NULL, 1);
+    enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
@@ -299,7 +323,7 @@ uint32_t vnins_data_t::_getEncodedSizeNoHash() const
 
 uint64_t vnins_data_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0x51743327d2fa1d2bLL;
+    uint64_t hash = (uint64_t)0x523412776c3188ecLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

@@ -39,15 +39,16 @@ class VNINSHandler {
         void print() {
 	    std::cout << "messages received: " << this->count << std::endl;
 	    std::cout << "most recent message: " << std::endl;
-	    std::cout << " week: " << data.week << ", time: " << std::setprecision(14) << data.time << std::setprecision(6) << std::endl;
+	    std::cout << " time: " << std::setprecision(14) << data.time << std::setprecision(6) << std::endl;
 	    std::cout << " tracking: " << this->tracking();
 	    std::cout << ", gpsfix: " << this->gpsfix();
 	    std::cout << ", error: " << this->error() << std::endl;
 	    std::cout << " (yaw, pitch, roll) = (" << data.yaw << ", " << data.pitch << ", " << data.roll << ")" << std::endl;
+	    std::cout << " (wx, wy, wz) = (" << data.wx << ", " << data.wy << ", " << data.wz << ")" << std::endl;
 	    std::cout << " (lat, lon, alt) = (" << data.latitude << ", " << data.longitude << ", " << data.altitude << ")" << std::endl;
-	    std::cout << " (vx, vy, vz) = (" << data.vx << ", " << data.vy << ", " << data.vz << ")" << std::endl;
-	    std::cout << " (au, pu, vu) = (" << data.attuncertainty << ", " << data.posuncertainty << ", " << data.veluncertainty << ")" << std::endl;
-	    std::cout << " time_gpspps (microseconds): " << data.time_gpspps << std::endl;
+	    std::cout << " (vn, ve, vd) = (" << data.vn << ", " << data.ve << ", " << data.vd << ")" << std::endl;
+	    std::cout << " (ax, ay, az) = (" << data.ax << ", " << data.ay << ", " << data.az << ")" << std::endl;
+	    std::cout << " time_gpspps (nanoseconds): " << data.time_gpspps << std::endl;
 	    this->count = 0;
 	}
 };

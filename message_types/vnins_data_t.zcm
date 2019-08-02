@@ -6,22 +6,24 @@
 
 struct vnins_data_t
 {
-	double time;
-    int64_t week;
+    double time;
     boolean tracking;
     boolean gpsfix;
     boolean error;
     float yaw;          // degrees
     float pitch;        // degrees
     float roll;         // degrees
+    float wx;
+    float wy;
+    float wz;
     double latitude;    // degrees
     double longitude;   // degrees
     double altitude;
-    float vx;
-    float vy;
-    float vz;
-    float attuncertainty;
-    float posuncertainty;
-    float veluncertainty;
-    int64_t time_gpspps;    // microseconds since GPS_PPS (note - user manual is WRONG - it's micro, not nano)
+    float vn;
+    float ve;
+    float vd;
+    float ax;
+    float ay;
+    float az;
+    int64_t time_gpspps;    // nanoseconds since GPS_PPS
 }
