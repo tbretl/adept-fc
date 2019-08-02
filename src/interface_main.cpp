@@ -21,7 +21,7 @@
 //message types:
 #include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"
-#include "actuators_t.hpp"
+#include "pwm_t.hpp"
 #include "status_t.hpp"
 
 #define UDP_PORT 1337
@@ -38,7 +38,7 @@ class Handler
 
 
         //zcm
-        actuators_t acts;
+        pwm_t pwm_out;
         status_t stat;
         //UDP
         boost::asio::io_service io_service;
@@ -48,7 +48,7 @@ class Handler
         Handler(const string their_IP)
             : socket(io_service, udp::endpoint(udp::v4(), 0))
         {
-            memset(&acts, 0, sizeof(acts));
+            memset(&pwm_out, 0, sizeof(pwm_out));
             memset(&stat, 0, sizeof(stat));
             udp::resolver resolver(io_service);
             udp::resolver::query query(udp::v4(), their_IP, UDP_OUT);
@@ -60,14 +60,15 @@ class Handler
             socket.close();
         }
 
-        void read_acts(const zcm::ReceiveBuffer* rbuf,const string& chan,const actuators_t *msg)
+        void read_pwm(const zcm::ReceiveBuffer* rbuf,const string& chan,const pwm_t *msg)
         {
-            acts = *msg;
+            int num_outputs = 11; // TODO: Read this from a common file
+            pwm_out = *msg;
             std::ostringstream data_out;
-            data_out << "!," << msg->da << "," << msg->de << "," << msg->dr << ",";
-            for (int i=0;i<8;i++)
+            data_out << "!,";
+            for (int i=0;i<num_outputs;i++)
             {
-                data_out << msg->dt[i] << ",";
+                data_out << msg->pwm_out[i] << ",";
             }
             data_out << "!";
             string out_msg = data_out.str();
@@ -93,17 +94,17 @@ public:
     vnins_data_t vnins_msg;
     status_t module_stat;
     zcm::ZCM zcm {"ipc"};
-    Handler handlerObject,act_handler;
+    Handler handlerObject,pwm_handler;
 
     Client(const string my_IP,const string their_IP)
-        : handlerObject(their_IP), act_handler(their_IP)
+        : handlerObject(their_IP), pwm_handler(their_IP)
     {
         //zcm
         memset(&adc_msg, 0, sizeof(adc_msg));
         memset(&vnins_msg, 0, sizeof(vnins_msg));
         memset(&module_stat,0,sizeof(module_stat));
 
-        zcm.subscribe("ACTUATORS",&Handler::read_acts,&act_handler);
+        zcm.subscribe("PWM_OUT",&Handler::read_pwm,&pwm_handler);
         zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
         module_stat.module_status = 1;//module running
         zcm.start();
