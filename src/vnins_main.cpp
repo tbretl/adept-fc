@@ -572,7 +572,7 @@ int main()
     unsigned char line[BUFFER_LENGTH];
     
     std::cout << "VN-200 started" << std::endl;
-
+    
     while(!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS1",&module_stat);
@@ -590,6 +590,9 @@ int main()
         
         usleep(1000);   // allows a max rate of 1000 Hz
     }
+    
+    // turn off asynchronous outputs
+    async(false);
 
     // close serial port
     RS232_CloseComport(COMPORT);
