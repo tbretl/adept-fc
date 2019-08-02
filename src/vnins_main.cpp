@@ -83,6 +83,166 @@ int flush(unsigned int timeout_ms = 500)
     }
 }
 
+bool readbyte(unsigned char* c) {
+    // blocks until one byte is read
+    size_t len;
+    while (true) {
+        len = RS232_PollComport(COMPORT, c, 1);
+        if (len < 0) {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - poll returned code " << len << " in readbyte" << std::endl;
+            return false;
+        } else if (len > 1) {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error - read " << len << " > 1 bytes in readbyte" << std::endl;
+            return false;
+        } else if (len == 1) {
+            return true;
+        }
+    }
+}
+
+int readline_binary(unsigned char* buf, int maxlen) {
+    // message has 88 bytes:
+    //
+    //  header has 1 + 1 + 2 = 4 bytes
+    //  payload has 82 bytes
+    //  crc has 2 bytes
+    //
+    
+    unsigned char c;
+    int nc = 0;
+    //size_t len;
+    unsigned short cs16 = 0;
+    while (nc < 88) {
+        if (!readbyte(&c)) {
+            return -1;
+        }
+        
+        if ((nc == 0) && (c != 0xFA)) {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                      << " error - serial binary byte " << nc << " is " << c << " not 0xFA" << std::endl;
+            return -1;
+        }
+        
+        /**
+        if ((nc == 1) && (c != 0x00)) {
+                std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
+                          << " error - serial binary byte " << nc << " is " << c << " not 0x00" << std::endl;
+                return -1;
+            }
+        }
+        **/
+        
+        
+        
+        if (nc != 0) {
+            cs16 = (unsigned char)(cs16 >> 8) | (cs16 << 8);
+            cs16 ^= c;
+            cs16 ^= (unsigned char)(cs16 & 0xff) >> 4;
+            cs16 ^= cs16 << 12;
+            cs16 ^= (cs16 & 0x00ff) << 5;
+        }
+        
+        
+        
+        std::cout << "  " << nc << " : " << cs16 << std::endl;
+        
+        buf[nc] = c;
+        nc++;
+    }
+    
+    
+    
+    //std::stringstream s;
+    //s << buf;
+    
+    //                                  bit 1  - timegps                - 8 bytes
+    //                                  bit 3  - ypr                    - 12 bytes
+    //                                  bit 5  - angularrate            - 12 bytes
+    //                                  bit 6  - position (LLA)         - 24 bytes
+    //                                  bit 7  - velocity (NED)         - 12 bytes
+    //                                  bit 8  - acceleration (body)    - 12 bytes
+    //                                  bit 12 - insstatus              - 2 bytes
+    
+    uint8_t sync;
+    uint8_t groups;
+    uint16_t field;
+    uint64_t timegps;
+    float yaw;
+    float pitch;
+    float roll;
+    float ratex;
+    float ratey;
+    float ratez;
+    double lat;
+    double lon;
+    double alt;
+    float vn;
+    float ve;
+    float vd;
+    float ax;
+    float ay;
+    float az;
+    uint16_t insstatus;
+    uint16_t crc;
+    
+    memcpy(&yaw, &buf[12], sizeof(yaw));
+    memcpy(&pitch, &buf[16], sizeof(pitch));
+    memcpy(&roll, &buf[20], sizeof(roll));
+    
+    /**
+    s >> sync >> groups >> field
+      >> timegps
+      >> yaw >> pitch >> roll
+      >> ratex >> ratey >> ratez
+      >> lat >> lon >> alt
+      >> vn >> ve >> vd
+      >> ax >> ay >> az
+      >> insstatus
+      >> crc;
+    
+    for (int i=0; i<8; i++) {
+        int k = 7 - i;
+        std::cout << ((sync & (1 << k)) >> k);
+    }
+    std::cout << std::endl;
+    
+    for (int i=0; i<8; i++) {
+        int k = 7 - i;
+        std::cout << ((groups & (1 << k)) >> k);
+    }
+    std::cout << std::endl;
+    
+    for (int i=0; i<16; i++) {
+        int k = 15 - i;
+        std::cout << ((field & (1 << k)) >> k);
+    }
+    std::cout << std::endl;
+    
+    for (int i=0; i<8; i++) {
+        int k = 7 - i;
+        std::cout << ((buf[2] & (1 << k)) >> k);
+    }
+    std::cout << std::endl;
+    
+    for (int i=0; i<8; i++) {
+        int k = 7 - i;
+        std::cout << ((buf[3] & (1 << k)) >> k);
+    }
+    std::cout << std::endl;
+    * **/
+    
+    
+    
+    //std::cout << (sync == 0xFA) << " : "
+    //          << (groups == 0x01) << " : "
+    //          << (field == 0x11EA) << " : "
+    std::cout << yaw << ", " << pitch << ", " << roll << std::endl;
+    
+    return 1;
+}
+
 int readline(unsigned char* buf, int maxlen)
 {
     unsigned char c;
@@ -118,6 +278,10 @@ int readline(unsigned char* buf, int maxlen)
     }
 }
 
+void parse_binary_line(unsigned char* line) {
+    std::cout << "binary: " << strlen((char*) line) << " bytes" << std::endl;
+}
+
 bool is_valid_line(unsigned char* line)
 {
     // it has non-zero length
@@ -134,6 +298,7 @@ bool is_valid_line(unsigned char* line)
     {
         std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
         " error: line starts with " << line[0] << " and not with $\n" << line << std::endl;
+        parse_binary_line(line);
         return false;
     }
 
@@ -402,10 +567,65 @@ bool setbaudrate(int rate) {
     return writecommand(s);
 }
 
+bool setmessage() {
+    // We want these data fields from the common group (Section 4.4):
+    //
+    // name (bit offset)
+    //
+    // TimeGps (1)
+    // Ypr (3)
+    // AngularRate (5)
+    // Position (6) - LLA
+    // Velocity (7) - NED
+    // Accel (8) - Body
+    // InsStatus (12)
+    //
+    // Compare to the data fields in the "INS Solution - LLA" that we
+    // had been using (Section 9.2.1).
+    //
+    // To get this, we use the following message (see Section 4.2.4):
+    //
+    //  header          VN          ASCII message header
+    //  command         WRG         write register command
+    //  register ID     75          register 75 (first output message)
+    //  asyncmode       2           output on second serial port
+    //  rate divisor    16          if imurate is 800 Hz, output rate is 800 / 16 = 50 Hz
+    //  outputgroup     01          groups = 0x01 (binary group 1 enabled)
+    //  groupfield 1    11EA        binary: 0b1000111101010
+    //                                  bit 1  - timegps                - 8 bytes
+    //                                  bit 3  - ypr                    - 12 bytes
+    //                                  bit 5  - angularrate            - 12 bytes
+    //                                  bit 6  - position (LLA)         - 24 bytes
+    //                                  bit 7  - velocity (NED)         - 12 bytes
+    //                                  bit 8  - acceleration (body)    - 12 bytes
+    //                                  bit 12 - insstatus              - 2 bytes
+    //  + checksum + endline
+    
+    std::string s = "VNWRG,75,2,16,01,11EA";
+    //std::string s = "VNWRG,75,2,16,01,0029";
+    bool result = writecommand(s);
+    std::cout << s << std::endl;
+    return result;
+    //return writecommand(s);
+}
+
 void config() {
+    // FIXME
+    // turn off serial ASCII outputs
+    std::string s = "VNWRG,06,0";
+    writecommand(s);
+    
+    // set message
+    setmessage();
+    return;
+    
+    
     // turn off asynchronous outputs
     async(false);
-
+    
+    // set message
+    setmessage();
+    
     // set communication protocol
     setprotocol();
 
@@ -465,6 +685,8 @@ int main()
         " error while opening port" << std::endl;
         return 1;
     }
+    
+    async(false);
 
     // flush serial port
     RS232_flushRXTX(COMPORT);
@@ -472,9 +694,11 @@ int main()
     {
         return 1;
     }
-
+    
     // configure
     config();
+    
+    async(true);
 
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
@@ -501,7 +725,11 @@ int main()
     while(!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS1",&module_stat);
-
+        
+        result = readline_binary(line, BUFFER_LENGTH);
+        usleep(1000);
+        continue;
+        
         result = readline(line, BUFFER_LENGTH);
         if (result < 0)
         {
