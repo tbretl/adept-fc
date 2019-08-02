@@ -21,7 +21,7 @@
 #define CURRENT_BAUDRATE	230400  // the baudrate you have
 #define BAUDRATE            230400  // the baudrate you want
 #define BUFFER_LENGTH 	    255
-#define MESSAGE_LENGTH      96 //154
+#define MESSAGE_LENGTH      96
 #define SIZEOF_FLOAT        4       // number of bytes in float
 #define SIZEOF_DOUBLE       8       // number of bytes in double
 
