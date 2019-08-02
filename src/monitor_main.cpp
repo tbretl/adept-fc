@@ -290,10 +290,10 @@ int main(int argc, char* argv[])
                 std::cout << "\n\nDisplaying sensor data: \nVN-200:\n" << std::endl;
                 for (int i=0; i<5; i++)
                 {
-                    std::cout <<  std::setprecision(14) << handlerObject.vn200.time << std::setprecision(6) << " " << handlerObject.vn200.week << " " << (int)handlerObject.vn200.tracking << " " << (int)handlerObject.vn200.gpsfix << " " << (int)handlerObject.vn200.error <<  " "
-                              << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.latitude << " "
-                              << handlerObject.vn200.longitude << " " << handlerObject.vn200.altitude << " " << handlerObject.vn200.vx << " " << handlerObject.vn200.vy << " "
-                              << handlerObject.vn200.vz << " " << handlerObject.vn200.attuncertainty << " " << handlerObject.vn200.posuncertainty << " " << handlerObject.vn200.veluncertainty << "\n";
+                    std::cout <<  std::setprecision(14) << handlerObject.vn200.time << std::setprecision(6) << " " << " " << (int)handlerObject.vn200.tracking << " " << (int)handlerObject.vn200.gpsfix << " " << (int)handlerObject.vn200.error <<  " "
+                              << handlerObject.vn200.pitch << " " << handlerObject.vn200.roll << " " << handlerObject.vn200.yaw << " " << handlerObject.vn200.wx << " " << handlerObject.vn200.wy << " " << handlerObject.vn200.wz << " " << handlerObject.vn200.latitude << " "
+                              << handlerObject.vn200.longitude << " " << handlerObject.vn200.altitude << " " << handlerObject.vn200.vn << " " << handlerObject.vn200.ve << " "
+                              << handlerObject.vn200.vd << " " << handlerObject.vn200.ax << " " << handlerObject.vn200.ay << " " << handlerObject.vn200.az << "\n";
                     usleep(500000);
                 }
 
