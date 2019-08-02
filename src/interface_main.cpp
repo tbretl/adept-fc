@@ -169,9 +169,9 @@ public:
             vn200->latitude = std::stod(in_data[10],nullptr);
             vn200->longitude = std::stod(in_data[11],nullptr);
             vn200->altitude = std::stod(in_data[12],nullptr);
-            vn200->vx = (float) std::stod(in_data[4],nullptr);
-            vn200->vy = (float) std::stod(in_data[5],nullptr);
-            vn200->vz = (float) std::stod(in_data[6],nullptr);
+            vn200->vn = (float) std::stod(in_data[4],nullptr);
+            vn200->ve = (float) std::stod(in_data[5],nullptr);
+            vn200->vd = (float) std::stod(in_data[6],nullptr);
         } else {
             std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
             " ERROR: bad UDP message received [hitl]." << std::endl;
