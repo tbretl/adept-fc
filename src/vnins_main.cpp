@@ -16,10 +16,11 @@
 #include <iomanip>
 #include <chrono>
 
-#define COMPORT			22 		// '/dev/ttyAMA0'
-#define BAUDRATE		115200
-#define BUFFER_LENGTH 	255
-#define MESSAGE_LENGTH  154
+#define COMPORT			    22 		// '/dev/ttyAMA0'
+#define CURRENT_BAUDRATE	230400  // the baudrate you have
+#define BAUDRATE            230400  // the baudrate you want
+#define BUFFER_LENGTH 	    255
+#define MESSAGE_LENGTH      154
 
 // Constants for communication protocol control (p80 of VN-200 user manual)
 enum class SerialCount { NONE, SYNCIN_COUNT, SYNCIN_TIME, SYNCOUT_COUNT, GPS_PPS };
@@ -378,6 +379,29 @@ bool setoutputfrequency(int rate=40) {
     return writecommand(s);
 }
 
+bool setbaudrate(int rate) {
+    const int nrates = 9;
+    const int rates[nrates] = {9600, 19200, 38400, 57600, 115200, 128000, 230400, 460800, 921600};
+
+    bool acceptable = false;
+    for (int i=0; i<nrates; ++i) {
+        if (rate == rates[i]) {
+            acceptable = true;
+        }
+    }
+    if (! acceptable) {
+        std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+        " WARNING: unacceptable rate " << rate << " in setbaudrate" << std::endl;
+        return false;
+    }
+    
+    std::string s = "VNWRG,05";
+    s += ",";
+    s += std::to_string(rate);
+    
+    return writecommand(s);
+}
+
 void config() {
     // turn off asynchronous outputs
     async(false);
@@ -386,7 +410,7 @@ void config() {
     setprotocol();
 
     // set output frequency (will fail if baud rate does not support the desired frequency)
-    setoutputfrequency();
+    setoutputfrequency(100);
 
     // turn on asynchronous outputs
     async(true);
@@ -394,6 +418,46 @@ void config() {
 
 int main()
 {
+    // handle change in baudrate if necessary
+    if (CURRENT_BAUDRATE != BAUDRATE)
+    {
+        // open serial port
+        if (RS232_OpenComport(COMPORT, CURRENT_BAUDRATE, "8N1"))
+        {
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " error while opening port" << std::endl;
+            return 1;
+        }
+        
+        // flush serial port
+        RS232_flushRXTX(COMPORT);
+        if (flush() != 0)
+        {
+            return 1;
+        }
+        
+        // turn off asynchronous outputs
+        async(false);
+        
+        // change baudrate
+        if (setbaudrate(BAUDRATE)) {
+            std::cout << "\n===============================================================\n"
+                      << "WARNING: baudrate changed from "
+                      << CURRENT_BAUDRATE << " to " << BAUDRATE << ", "
+                      << "so you MUST remember to set\n\n"
+                      << "#define CURRENT_BAUDRATE	" << BAUDRATE << "  // the baudrate you have\n\n"
+                      << "in vnins_main.cpp and rebuild (also push to master!)\n"
+                      << "===============================================================\n"
+                      << std::endl;
+        }
+        
+        // turn on asynchronous outputs
+        async(true);
+        
+        // close serial port
+        RS232_CloseComport(COMPORT);
+    }
+    
     // open serial port
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
     {
@@ -457,7 +521,7 @@ int main()
         }
 
         //loop timing
-        usleep(10000); //100 hz
+        usleep(1000); //1000 hz
     }
 
     // close serial port
