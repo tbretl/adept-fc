@@ -150,11 +150,11 @@ class Handler
         {
             if (can_buff == 1){
                 can_write = 0;
-                if(log_buffer << std::setprecision(6) << msg->time_gpspps << " " << std::setprecision(14) << msg->time << std::setprecision(6) << " " << msg->week << " "
+                if(log_buffer << std::setprecision(6) << msg->time_gpspps << " " << std::setprecision(14) << msg->time << std::setprecision(6) << " "
                               << (int)msg->tracking << " " << (int)msg->gpsfix << " " << (int)msg->error <<  " "
-                              << msg->roll << " " << msg->pitch << " " << msg->yaw << " " << std::setprecision(10) << msg->latitude << " "
-                              << msg->longitude << std::setprecision(6) << " " << msg->altitude << " " << msg->vx << " " << msg->vy << " "
-                              << msg->vz << " " << msg->attuncertainty << " " << msg->posuncertainty << " " << msg->veluncertainty << std::endl){
+                              << msg->roll << " " << msg->pitch << " " << msg->yaw << " " << msg->wx << " " << msg->wy << " " << msg->wz << " " << std::setprecision(10) << msg->latitude << " "
+                              << msg->longitude << std::setprecision(6) << " " << msg->altitude << " " << msg->vn << " " << msg->ve << " "
+                              << msg->vd << " " << msg->ax << " " << msg->ay << " " << msg->az << std::endl){
                 }else{
                     std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
                     " SCRIBE ERROR: message buffer overflow on vnins." << std::endl;
