@@ -1,4 +1,5 @@
 Note: you must have the latest Raspbian distribution from Emlid installed. 
+    -Version installed at the creation of these instructions: 20190227 (http://files.emlid.com/images/emlid-raspbian-20190227.img.xz)
 
 # Installing the Navio2 device driver library
 1. Clone the Navio2 [git repo](https://github.com/emlid/Navio2.git) into the Pi's home directory. 
