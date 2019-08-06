@@ -13,7 +13,7 @@ This repository has the code that will run onboard the ADEPT-FC aircraft, to tes
 2. This will print outputs to the terminal and to the file `outlog.dat` (usefull for flights when the terminal isn't attached).
 
 # Using the monitor app
-1. Once all the modules are booted, type `help` to see a list of options in the monitor app.
+1. Once all the modules are booted, type `help me` to see a list of options in the monitor app.
 2. Type 'monitor check' to perform pre-flight checks.
 3. Must type `pwm arm` for outputs to be armed, and for logging to begin.
 4. Once satisfied, disconnect from the software by typing `monitor exit`.
