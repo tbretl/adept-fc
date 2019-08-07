@@ -28,7 +28,7 @@ volatile unsigned long lastgpsppstime;
 volatile int numsamples;
 
 // sample rate in Hz
-const int samplerate = 40;
+const int samplerate = 100;
 
 // sample period in microseconds
 const unsigned long sampleperiod = 1000000 / samplerate;
