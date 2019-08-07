@@ -220,6 +220,18 @@ int main(int argc, char *argv[])
     logfile_adc.open(file_adc,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
     logfile_vn200.open(file_vn200,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
 
+    //write headers
+    logfile_vn200 << "gps_pps[ns] gps_time[s] gps_tracking gps_fix gps_error roll[deg] pitch[deg] yaw[deg] wx[rad/s] wy[rad/s] wz[rad/s]"
+                     "lat[deg] lon[deg] alt[m] vn[m/s] ve[m/s] vd[m/s] ax[m/s2] ay[m/s2] az[m/s2]" << std::endl;
+
+    logfile_adc << "pps[us] rpi_time[s] gps_time[s] uCH0 uCH1 uCH2 uCH3 uCH4 uCH5 uCH6 uCH7 dCH0 dCH1 dCH2 dCH3 dCH4 dCH5 dCH6 dCH7" << std::endl;
+
+    logfile_acts << "gps_time[s] da[] de[] dr[] dt1[] dt2[] dt3[] dt4[] dt5[] dt6[] dt7[] dt8[]" << std::endl;
+
+    logfile_pwm << "gps_time[s] pwm0 pwm1 pwm2 pwm3 pwm4 pwm5 pwm6 pwm7 pwm8 pwm9 pwm10" << std::endl;
+
+    logfile_rc << "gps_time[s] CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8" << std:: endl;
+
     //initialize zcm
     zcm::ZCM zcm {"ipc"};
 

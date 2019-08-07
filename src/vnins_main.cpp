@@ -112,9 +112,9 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
     //  payload has 90 bytes
     //  crc (16-bit) has 2 bytes
     //
-    
+
     unsigned char c;
-    
+
     // read first byte
     if (readbyte(&c)) {
         std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
@@ -122,7 +122,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
         return 1;
     }
     buf[0] = c;
-    
+
     // verify first byte is sync
     uint8_t sync = buf[0];
     if (sync != 0xFA) {
@@ -135,7 +135,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
                   << ") in readline" << std::endl;
         return 1;
     }
-    
+
     // read all other bytes
     int nc = 1;
     unsigned short cs16 = 0;
@@ -145,18 +145,18 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
                   << " error - could not read byte " << nc << " in readline" << std::endl;
             return 1;
         }
-        
+
         // compute 16-bit checksum as we go
         cs16 = (unsigned char)(cs16 >> 8) | (cs16 << 8);
         cs16 ^= c;
         cs16 ^= (unsigned char)(cs16 & 0xff) >> 4;
         cs16 ^= cs16 << 12;
         cs16 ^= (cs16 & 0x00ff) << 5;
-        
+
         buf[nc] = c;
         nc++;
     }
-    
+
     // verify zero checksum
     if (cs16 != 0) {
         std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
@@ -164,7 +164,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
                   << nc << " bytes" << std::endl;
         return 1;
     }
-    
+
     // verify group
     uint8_t group = buf[1];
     if (group != 0x01) {
@@ -177,7 +177,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
                   << ") in readline" << std::endl;
         return 1;
     }
-    
+
     // verify field
     uint16_t field;
     memcpy(&field,              &buf[2],    2);
@@ -192,7 +192,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
                   << std::endl;
         return 1;
     }
-    
+
     // parse line
     uint64_t timegps;
     memcpy(&timegps,            &buf[4],    8);
@@ -228,7 +228,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
     msg->error = (bits[3] || bits[4] || bits[5] || bits[6]);
     //
     memcpy(&(msg->time_gpspps), &buf[86],   8);
-    
+
     // return with success
     return 0;
 }
@@ -241,6 +241,7 @@ int readline_ascii(unsigned char* buf, int maxlen)
     while (true)
     {
         len = RS232_PollComport(COMPORT, &c, 1);
+
         if (len < 0)
         {
             std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
@@ -420,11 +421,11 @@ bool setbaudrate(int rate) {
         " WARNING: unacceptable rate " << rate << " in setbaudrate" << std::endl;
         return false;
     }
-    
+
     std::string s = "VNWRG,05";
     s += ",";
     s += std::to_string(rate);
-    
+
     return writecommand(s);
 }
 
@@ -462,7 +463,7 @@ bool setmessage() {
     //                                  bit 12 - insstatus              - 2 bytes
     //                                  bit 14 - gpspps                 - 8 bytes
     //  + checksum + endline
-    
+
     std::string s = "VNWRG,75,2,8,01,51EA";
     return writecommand(s);
 }
@@ -470,23 +471,23 @@ bool setmessage() {
 int config() {
     // turn off asynchronous outputs
     async(false);
-    
+
     // flush serial port
     RS232_flushRXTX(COMPORT);
     if (flush() != 0)
     {
         return 1;
     }
-    
+
     // turn off serial ASCII outputs
     async_ascii(false);
-    
+
     // set user-configurable binary output
     setmessage();
-    
+
     // turn on asynchronous outputs
     async(true);
-    
+
     // return success
     return 0;
 }
@@ -496,7 +497,7 @@ int main()
     // confirm sizes of types
     assert(sizeof(float) == SIZEOF_FLOAT);
     assert(sizeof(double) == SIZEOF_DOUBLE);
-    
+
     // handle change in baudrate if necessary
     if (CURRENT_BAUDRATE != BAUDRATE)
     {
@@ -507,17 +508,17 @@ int main()
             " error while opening port" << std::endl;
             return 1;
         }
-        
+
         // flush serial port
         RS232_flushRXTX(COMPORT);
         if (flush() != 0)
         {
             return 1;
         }
-        
+
         // turn off asynchronous outputs
         async(false);
-        
+
         // change baudrate
         if (setbaudrate(BAUDRATE)) {
             std::cout << "\n===============================================================\n"
@@ -529,14 +530,14 @@ int main()
                       << "===============================================================\n"
                       << std::endl;
         }
-        
+
         // turn on asynchronous outputs
         async(true);
-        
+
         // close serial port
         RS232_CloseComport(COMPORT);
     }
-    
+
     // open serial port
     if (RS232_OpenComport(COMPORT, BAUDRATE, "8N1"))
     {
@@ -544,14 +545,13 @@ int main()
         " error while opening port" << std::endl;
         return 1;
     }
-    
     // config
     if (config() != 0) {
         std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()
                   << " error in config()" << std::endl;
         return 1;
     }
-    
+
     // initialize zcm
     zcm::ZCM zcm {"ipc"};
 
@@ -570,13 +570,13 @@ int main()
     zcm.start();
 
     unsigned char line[BUFFER_LENGTH];
-    
+
     std::cout << "VN-200 started" << std::endl;
-    
+
     while(!handlerObject.stat.should_exit)
     {
         zcm.publish("STATUS1",&module_stat);
-        
+
         if (readline_binary(line, MESSAGE_LENGTH, &msg) == 0) {
             zcm.publish("VNINS_DATA", &msg);
         } else {
@@ -587,10 +587,10 @@ int main()
             // turn on asynchronous outputs
             async(true);
         }
-        
+
         usleep(1000);   // allows a max rate of 1000 Hz
     }
-    
+
     // turn off asynchronous outputs
     async(false);
 

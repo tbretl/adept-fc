@@ -173,6 +173,10 @@ public:
             vn200->vn = (float) std::stod(in_data[4],nullptr);
             vn200->ve = (float) std::stod(in_data[5],nullptr);
             vn200->vd = (float) std::stod(in_data[6],nullptr);
+            //TODO:
+            // fill in the rest of the VN200 fields
+            // fill in ADC fields as well
+            // These items will come into play with the autopilot
         } else {
             std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
             " ERROR: bad UDP message received [hitl]." << std::endl;

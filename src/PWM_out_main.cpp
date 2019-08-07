@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
     zcm.subscribe("ADC_DATA",&Handler::read_adc,&sens_handler);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&sens_handler);
 
-    //for bublishing stat of this module
+    //for publishing stat of this module
     status_t module_stat;
     memset(&module_stat,0,sizeof(module_stat));
     module_stat.module_status = 1;//module running
@@ -445,6 +445,5 @@ int main(int argc, char *argv[])
 
     zcm.stop();
     std::cout << "pwm_out module exiting..." << std::endl;
-    //pass a message back to monitor as well (feature to add)
     return 0;
 }

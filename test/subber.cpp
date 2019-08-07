@@ -69,9 +69,9 @@ class ADCHandler {
 	    double lastppstime = std::floor(vnins_gps_time);
 	    double adc_time_gpspps = ((double) data.time_gpspps) / 1000000;
 	    double adc_gps_time = 0;
-	    if (std::abs(vnins_time_gpspps - data.time_gpspps) < 500000) {
+	    if (std::abs(vnins_time_gpspps/1000 - data.time_gpspps) < 500000) {
 		adc_gps_time = lastppstime + adc_time_gpspps;
-	    } else if (std::abs(vnins_time_gpspps - data.time_gpspps) < 1500000) {
+	    } else if (std::abs(vnins_time_gpspps/1000 - data.time_gpspps) < 1500000) {
 		adc_gps_time = lastppstime + adc_time_gpspps - 1;
 	    } else {
 		std::cout << "WARNING: error in computing adc_gps_time" << std::endl;

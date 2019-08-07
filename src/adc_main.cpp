@@ -234,7 +234,7 @@ int main()
         if (parseline(line, &msg) == 0)
         {
             //compute ADC time_gps
-            double vn_gps_time_pps = handlerObject.vn200.time_gpspps;
+            double vn_gps_time_pps = handlerObject.vn200.time_gpspps/1000; //convert from nanoseconds to microseconds
             double lastppstime = std::floor(handlerObject.vn200.time);
             double adc_time_gpspps = (double) msg.time_gpspps;
 
@@ -251,7 +251,7 @@ int main()
                 }
 
             } else { // compute using difference from last RPI time
-                std::cout << rpi_time << " ADC: WARNING: error in computing adc_gps_time." <<  std::endl;
+                //std::cout << rpi_time << " ADC: WARNING: error in computing adc_gps_time." <<  std::endl;
                 msg.time_gps = msg.time_gps + (last_rpi_time-rpi_time);
             }
             //add the RPI time
