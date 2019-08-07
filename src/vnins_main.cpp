@@ -529,6 +529,9 @@ int main()
                       << "in vnins_main.cpp and rebuild (also push to master!)\n"
                       << "===============================================================\n"
                       << std::endl;
+            //save changes
+            std::string s = "VNWNV";
+            writecommand(s);
         }
 
         // turn on asynchronous outputs

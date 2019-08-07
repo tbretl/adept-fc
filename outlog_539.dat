@@ -9,35 +9,22 @@ red_flag started
 
 
 Input: <target> <action> ("help !" for options):
-11011197748 >>pwm arm
+51611148 >>pwm arm
 pwm outputs armed.
 logging started...
 
 
 
 Input: <target> <action> ("help !" for options):
-11014613761 >>pwm disarm
-pwm outputs disarmed.
-logging stopped.
-
-
-
-Input: <target> <action> ("help !" for options):
-11017270687 >>ls ls
-
-
-
-Input: <target> <action> ("help !" for options):
-11018136579 ADC: error: in parseline at data field 10
-11018598526 >>all exit
+54162796 >>all exit
 Exiting all modules.
 red_flag exiting...
-vn200 module exiting...
 autopilot module exiting...
-adc module exiting...
-pwm_out module exiting...
 rc_in module exiting...
+adc module exiting...
+vn200 module exiting...
 scribe module exiting...
+pwm_out module exiting...
 
 Goodbye.
 
