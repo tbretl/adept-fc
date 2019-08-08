@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 
     //write headers
     logfile_vn200 << "gps_pps[ns] gps_time[s] gps_tracking gps_fix gps_error roll[deg] pitch[deg] yaw[deg] wx[rad/s] wy[rad/s] wz[rad/s]"
-                     "lat[deg] lon[deg] alt[m] vn[m/s] ve[m/s] vd[m/s] ax[m/s2] ay[m/s2] az[m/s2]" << std::endl;
+                     " lat[deg] lon[deg] alt[m] vn[m/s] ve[m/s] vd[m/s] ax[m/s2] ay[m/s2] az[m/s2]" << std::endl;
 
     logfile_adc << "pps[us] rpi_time[s] gps_time[s] uCH0 uCH1 uCH2 uCH3 uCH4 uCH5 uCH6 uCH7 dCH0 dCH1 dCH2 dCH3 dCH4 dCH5 dCH6 dCH7" << std::endl;
 
