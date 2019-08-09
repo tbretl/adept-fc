@@ -150,7 +150,7 @@ class Handler
         {
             if (can_buff == 1){
                 can_write = 0;
-                if(log_buffer << std::setprecision(6) << msg->time_gpspps << " " << std::setprecision(14) << msg->time << std::setprecision(6) << " "
+                if(log_buffer << std::setprecision(9) << msg->time_gpspps << " " << std::setprecision(14) << msg->time << std::setprecision(6) << " "
                               << (int)msg->tracking << " " << (int)msg->gpsfix << " " << (int)msg->error <<  " "
                               << msg->roll << " " << msg->pitch << " " << msg->yaw << " " << msg->wx << " " << msg->wy << " " << msg->wz << " " << std::setprecision(10) << msg->latitude << " "
                               << msg->longitude << std::setprecision(6) << " " << msg->altitude << " " << msg->vn << " " << msg->ve << " "
