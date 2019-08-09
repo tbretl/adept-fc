@@ -26,4 +26,5 @@ struct vnins_data_t
     float ay;
     float az;
     int64_t time_gpspps;    // nanoseconds since GPS_PPS
+    int64_t time_rpi; //raspberry pi clock in microseconds
 }

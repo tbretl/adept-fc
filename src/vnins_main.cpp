@@ -112,7 +112,9 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
     //  payload has 90 bytes
     //  crc (16-bit) has 2 bytes
     //
-
+    
+    //get RPI time 
+    msg->time_rpi = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count(); 	
     unsigned char c;
 
     // read first byte
@@ -214,9 +216,6 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
     memcpy(&(msg->az),          &buf[80],   SIZEOF_FLOAT);
     uint16_t insstatus;
     memcpy(&insstatus,          &buf[84],   2);
-    //
-    // FIXME: check the result of this code with a working GPS antenna
-    //
     bool bits[16];
     for (int i=0; i<16; ++i)
     {
