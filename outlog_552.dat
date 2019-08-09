@@ -1,0 +1,37 @@
+rc_in started
+VN-200 started
+ADC started
+autopilot started
+scribe started
+pwm_out started
+red_flag started
+
+
+
+Input: <target> <action> ("help !" for options):
+5020058393 >>pwm arm
+pwm outputs armed.
+logging started...
+
+
+
+Input: <target> <action> ("help !" for options):
+5023330251 >>pwm disarm
+pwm outputs disarmed.
+logging stopped.
+
+
+
+Input: <target> <action> ("help !" for options):
+5025530256 >>all exit
+Exiting all modules.
+red_flag exiting...
+rc_in module exiting...
+scribe module exiting...
+pwm_out module exiting...
+autopilot module exiting...
+adc module exiting...
+vn200 module exiting...
+
+Goodbye.
+

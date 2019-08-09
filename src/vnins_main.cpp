@@ -196,7 +196,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
     // parse line
     uint64_t timegps;
     memcpy(&timegps,            &buf[4],    8);
-    msg->time = timegps / 1000000000;
+    msg->time = timegps / 1000000000.0;
     memcpy(&(msg->yaw),         &buf[12],   SIZEOF_FLOAT);
     memcpy(&(msg->pitch),       &buf[16],   SIZEOF_FLOAT);
     memcpy(&(msg->roll),        &buf[20],   SIZEOF_FLOAT);
@@ -220,7 +220,7 @@ int readline_binary(unsigned char* buf, int len, vnins_data_t *msg) {
     bool bits[16];
     for (int i=0; i<16; ++i)
     {
-        bits[15 - i] = (insstatus & 1);
+        bits[i] = (insstatus & 1);
         insstatus >>= 1;
     }
     msg->tracking = (bits[0] && (! bits[1]));
