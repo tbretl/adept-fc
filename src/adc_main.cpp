@@ -161,7 +161,14 @@ int parseline(unsigned char* line, adc_data_t *msg)
             " ADC: error: in parseline at data field " << i << std::endl;
             return 1;
         }
-        msg->data[i] = strtod(field, NULL);
+        
+	msg->data[i] = strtod(field, NULL);
+	
+	if (msg->data[i] > 70000) { 
+            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+            " ADC: error: bit value is too high on channel " << i << std::endl;
+	    return 1; 
+	} 
     }
 
     return 0;
@@ -245,7 +252,7 @@ int main()
             //add the RPI time
             msg.time_rpi = rpi_time;
             //publish ADC data
-            if (adc_time_gpspps < 1000010){ //prevent bad PPS read from ruining time history
+            if (adc_time_gpspps < 1000010){ //prevent bad PPS or ADC read from being logged
 	    	zcm.publish("ADC_DATA", &msg);
 	    }
             //loop timing
