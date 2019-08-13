@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
     sens_handler.last_vnins_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     //check for an emergency startup
-    std::ifstream f("emergency_startup");
+    std::ifstream f("/home/pi/adept-fc/emergency_startup");
     if (f.good()){
         handlerObject.stat.armed = 1;
         std::cout << "Armed on emergency startup" << std::endl;

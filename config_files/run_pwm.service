@@ -1,0 +1,9 @@
+[Unit]
+Description=Reboot ADEPT-FC
+After=multi-user.target
+
+[Service]
+ExecStart=/home/pi/adept-fc/config_files/critical_run_2.sh 
+
+[Install]
+WantedBy=multi-user.target

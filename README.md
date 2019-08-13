@@ -5,8 +5,12 @@ This repository has the code that will run onboard the ADEPT-FC aircraft, to tes
 # Building the software
 1. install dependencies (zcm, Navio2) - instructions in `notes` directory.
 2. if this is the first build, create an empty bin directory by typing 'mkdir bin'.
-2. build the software `make all`.
-3. copy `config_files/rc.local` into `etc/rc.local` 
+3. build the software `make all`.
+4. copy `config_files/run_rc.service` and `config_files/run_pwm.service` into `/lib/systemd/system/`
+5. run `sudo systemctl daemon-reload` 
+6. run `sudo systemctl enable run_rc.service` and `sudo systemctl enable run_pwm.service` 
+(steps 4-6 deal with emergency reboot of flight critical systems in the event of a RPI reboot mid-flight)  
+7. reboot 
 
 # Starting the software
 1. Type `sudo ./run.sh`.
