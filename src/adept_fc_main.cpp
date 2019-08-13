@@ -49,6 +49,7 @@ pid_t run_process(const char* path){
 
     if (child_pid != 0){
         //parent
+	signal(SIGCHLD,SIG_IGN); 
         return child_pid;
     }
     else {
@@ -192,6 +193,7 @@ int main(int argc, char *argv[])
     if (child_pid != 0){
         //parent
         //launch system monitor, consume this thread:
+	signal(SIGCHLD,SIG_IGN); 
         execl ("bin/monitor", "bin/monitor",NULL);
     }
     else {

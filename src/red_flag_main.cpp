@@ -16,6 +16,7 @@
 #include <string.h>
 #include <iomanip>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <dirent.h>
 #include "zcm/zcm-cpp.hpp"
 //message types:
@@ -119,9 +120,10 @@ pid_t run_process(const char* path){
 
     if (child_pid != 0){
         //parent
+	signal(SIGCHLD,SIG_IGN);
         return child_pid;
     }
-    else {
+    else { 
         execl (path, path, NULL);
         std::cout << "an error occurred in execl" << std::endl;
         abort ();
