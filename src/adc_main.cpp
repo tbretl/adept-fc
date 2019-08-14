@@ -196,6 +196,7 @@ int main()
 
     //subscribe
     Handler handlerObject;
+    vnins_data_t local_vnins; 
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
     zcm.subscribe("VNINS_DATA",&Handler::read_vn200,&handlerObject);
 
@@ -214,7 +215,7 @@ int main()
     int result;
 
     std::cout << "ADC started" << std::endl;
-    double gps_sec_prev = 0; 
+    double prev_gps = 0;    
     while(!handlerObject.stat.should_exit)
     {
 
@@ -222,8 +223,9 @@ int main()
 
         result = readline(line, BUFFER_LENGTH);
 
-        //get local RPI time as a reference for other modules:
+        //get most recent time conditions: 
         int64_t rpi_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+	local_vnins = handlerObject.vn200; 	
 
         if (result < 0)
         {
@@ -240,23 +242,20 @@ int main()
         if (parseline(line, &msg) == 0)
         {
             //compute ADC time_gps
-            double vn_time_rpi = handlerObject.vn200.time_rpi;
-            double lastppstime = std::floor(handlerObject.vn200.time + (rpi_time - vn_time_rpi)/1000000.0);
-            double adc_time_gpspps = (double) msg.time_gpspps;
-	    if (adc_time_gpspps > 500000){
-	    	lastppstime = gps_sec_prev; 
-	    }	    
-	    gps_sec_prev = lastppstime; 
-            msg.time_gps = lastppstime + adc_time_gpspps/1000000;
-
-            //add the RPI time
+            double lastppstime = std::floor(local_vnins.time + (rpi_time - local_vnins.time_rpi)/1000000.0);
+            if (msg.time_gpspps > 900000 && lastppstime > prev_gps) {
+	        lastppstime = prev_gps; 
+	    }
+	    msg.time_gps = lastppstime + msg.time_gpspps/1000000.0;
+	    prev_gps = lastppstime; 
+	    //add the RPI time
             msg.time_rpi = rpi_time;
             //publish ADC data
-            if (adc_time_gpspps < 1000010){ //prevent bad PPS or ADC read from being logged
+            if (msg.time_gpspps < 1000010){ //prevent bad PPS or ADC read from being logged
 	    	zcm.publish("ADC_DATA", &msg);
 	    }
             //loop timing
-            usleep(10000);
+            usleep(2500);
         }
     }
 
