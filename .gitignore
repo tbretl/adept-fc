@@ -265,6 +265,7 @@ dmypy.json
 *.cbp
 *.layout
 Flight*
+sequence.dat
 
 ### Library folder (for external dependencies)
 /lib
