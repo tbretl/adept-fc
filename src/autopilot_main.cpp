@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
     zcm.subscribe("ADC_DATA",&Handler::read_adc,&handlerObject);
 
-    //for bublishing stat of this module
+    //for publishing stat of this module
     status_t module_stat;
     memset(&module_stat,0,sizeof(module_stat));
     module_stat.module_status = 1;//module running
