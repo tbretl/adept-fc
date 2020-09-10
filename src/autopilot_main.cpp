@@ -175,6 +175,7 @@ int main(int argc, char *argv[])
         float rho = 1.1425;                                   // in kg/m^3
         float V = sqrt((2 * (Pt - Ps)) / (rho));              // in m/s
 
+        // INS data
         float yaw = vnins.yaw;        // in degrees
         float pitch = vnins.pitch;    // in degrees
         float roll = vnins.roll;      // in degrees
