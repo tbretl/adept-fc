@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
     float k_lat[2][5] = { {1.1324, 0.16596, -0.075796, 0.57311, 0.90946},  {0.22587, 0.011704, -0.2124, 0.0059284, -0.16631} };
 
     // Trim conditions
-    float V_0 = 30; // m/s
-    float alpha_0 = 0; // rad
+    float V_0 = 30.5755; // m/s
+    float alpha_0 = 0.0178; // rad
     float q_0 = 0; // rad/s
     float theta_0 = 0; // rad
     float beta_0 = 0; // rad
@@ -150,17 +150,17 @@ int main(int argc, char *argv[])
     float psi_0 = 0; // rad
 
     // Input trim values
-    float de_0 = 0.0; //percent actuation [-1.0, 1.0]
-    float da_0 = 0.0; //percent actuation [-1.0, 1.0]
-    float dr_0 = 0.0; //percent actuation [-1.0, 1.0]
-    float dt_0_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_1_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_2_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_3_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_4_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_5_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_6_0 = 0.0; //percent throttle [0.0, 1.0]
-    float dt_7_0 = 0.0; //percent throttle [0.0, 1.0]
+    float de_0 = -0.0832; // rad
+    float da_0 = 0; // rad
+    float dr_0 = 0; // rad
+    float dt_0_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_1_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_2_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_3_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_4_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_5_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_6_0 = 0; //percent throttle [0.0, 1.0]
+    float dt_7_0 = 0; //percent throttle [0.0, 1.0]
 
     // Declare all other values used
     float P1;
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
         cpt = evaluate_poly(cpt_c, C_alpha, C_beta); // unitless
         Pt = (P1 - cpt * (P1 - P_avg)) * 6894.76; // in Pa
         Ps = (P_avg - cps * (P1 - P_avg)) * 6894.76; // in Pa
-        rho = 1.1425; // in kg/m^3
+        rho = 1.1666; // in kg/m^3
         V = sqrt((2.0 * (Pt - Ps)) / (rho)); // in m/s
 
         // INS data
