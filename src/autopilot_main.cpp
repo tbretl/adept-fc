@@ -129,10 +129,10 @@ int main(int argc, char *argv[])
     float rud_c[5] = { 1212.7197, -0.17556, 9.2592e-06, -2.1584e-10, 1.8988e-15 }; // To degrees
 
     // Conversion constants for the converted adc data
-    float alpha_c[21] = { 0.14923, -13.9738, -0.47878, -0.81364, -0.35622, -0.068444, 0.25439, 0.15764, 0.56846, 0.1074, 0.004642, -0.001176, 0.12197, 0.067263, 0.010847, -0.0021979, -0.013264, 0.01506, 0.001978, -0.0045936, 0.0017014 };
-    float beta_c[21] = { -0.023385, 0.054318, 13.7456, 0.026516, 0.80759, 0.22348, 0.14394, -0.7424, -0.035833, -0.26609, 0.023261, -0.080187, -0.028077, -0.024876, -0.002183, 0.00034037, 0.0094684, -0.017756, 0.012607, 0.016329, -0.0074097 };
+    float alpha_c[15] = { 0.14417, -14.0401, -0.48222, -0.82991, -0.39334, -0.065129, 0.29331, 0.10864, 0.57212, 0.12463, 0.022992, 0.029209, 0.089836, 0.057237, 0.016901 };
+    float beta_c[15] = { -0.045676, 0.090171, 13.8048, 0.002027, 0.94476, 0.29254, 0.12192, -0.66955, -0.020875, -0.33687, 0.023934, -0.10505, -0.019041, -0.054968, -0.018293 };
     float cps_c[21] = { 0.59235, -0.0032055, -0.0045759, -0.098045, 0.010147, -0.0977, -0.015851, -0.0024914, -0.022443, -0.0037574, -0.0042317, -0.0039405, 0.01926, -0.0014971, -0.0014967, -0.0007027, -0.0010546, 0.0041895, 6.6051e-05, 0.00048148, -0.00022731 };
-    float cpt_c[21] = { -0.21685, 0.02875, 0.011455, -0.11873, -0.046709, -0.11643, 0.0059041, -0.0044851, 0.0085611, 0.0011521, -0.0017282, 0.0058674, 0.0096475, 0.0052426, -0.0020061, -0.00079832, 0.00095876, 0.0007281, 0.0020926, -0.0008775, -0.0001821 };
+    float cpt_c[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
 
     // Controller constants
     float k_lon[2][4] = { {0.0044319, 0.3739, -0.10855, -0.37623},  {0.002028, -0.037446, -0.03146, -0.050771} };
@@ -148,6 +148,48 @@ int main(int argc, char *argv[])
     float r_0 = 0; // rad/s
     float phi_0 = 0; // rad
     float psi_0 = 0; // rad
+
+    // State limits
+    float V_min = 0; // Minimum acceptable value. Any values lower are considered improper readings.
+    float V_max = 50; // Maximum acceptable value. Any values higher are considered improper readings.
+    float alpha_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
+    float alpha_max = 0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
+    float q_min = -0.5236; // Minimum acceptable value. Any values lower are considered improper readings.
+    float q_max = 0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
+    float theta_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
+    float theta_max = 1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
+    float beta_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
+    float beta_max = 0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
+    float p_min = -0.5236; // Minimum acceptable value. Any values lower are considered improper readings.
+    float p_max = 0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
+    float r_min = -0.5236; // Minimum acceptable value. Any values lower are considered improper readings.
+    float r_max = 0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
+    float phi_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
+    float phi_max = 1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
+    float psi_min = -3.1416; // Minimum acceptable value. Any values lower are considered improper readings.
+    float psi_max = 3.1416; // Maximum acceptable value. Any values higher are considered improper readings.
+
+    // Input limits
+    float de_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
+    float de_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
+    float da_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
+    float da_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
+    float dr_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
+    float dr_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
+    float dt_min = 0; // Minimum acceptable value. Any values lower will be rounded to min.
+    float dt_max = 1; // Maximum acceptable value. Any values higher will be rounded to max.
+
+    // Previous states
+    bool is_first_loop = true;
+    float V_prev = 0.0; // m/s
+    float alpha_prev = 0.0; // rad
+    float q_prev = 0.0; // rad/s
+    float theta_prev = 0.0; // rad
+    float beta_prev = 0.0; // rad
+    float p_prev = 0.0; // rad/s
+    float r_prev = 0.0; // rad/s
+    float phi_prev = 0.0; // rad
+    float psi_prev = 0.0; // rad
 
     // Input trim values
     float de_0 = -0.0832; // rad
@@ -227,6 +269,22 @@ int main(int argc, char *argv[])
         l_ele = l_ele_c[0] * pow(l_ele, 0) + l_ele_c[1] * pow(l_ele, 1) + l_ele_c[2] * pow(l_ele, 2) + l_ele_c[3] * pow(l_ele, 3) + l_ele_c[4] * pow(l_ele, 4); // in degrees
         rud = rud_c[0] * pow(rud, 0) + rud_c[1] * pow(rud, 1) + rud_c[2] * pow(rud, 2) + rud_c[3] * pow(rud, 3) + rud_c[4] * pow(rud, 4); // in degrees
 
+        // Collect previous state values
+        if (!is_first_loop) {
+            V_prev = V; // m/s
+            alpha_prev = alpha; // rad
+            q_prev = wy; // rad/s
+            theta_prev = pitch; // rad
+            beta_prev = beta; // rad
+            p_prev = wx; // rad/s
+            r_prev = wz; // rad/s
+            phi_prev = roll; // rad
+            psi_prev = yaw; // rad
+        }
+        else {
+            is_first_loop = false;
+        }
+
         // Conversion of converted adc data to state data
         P_avg = (P2 + P3 + P4 + P5) * 0.25; // in dPSI
         C_alpha = (P4 - P5) / (P1 - P_avg); // unitless
@@ -248,6 +306,17 @@ int main(int argc, char *argv[])
         wy = vnins.wy; // in rad/s (pitch rate)
         wz = vnins.wz; // in rad/s (yaw rate)
 
+        // Bad state rejection
+        V = (V < V_min || V > V_max) ? V_prev : V;
+        alpha = (alpha < alpha_min || alpha > alpha_max) ? alpha_prev : alpha;
+        q = (q < q_min || q > q_max) ? q_prev : q;
+        theta = (theta < theta_min || theta > theta_max) ? theta_prev : theta;
+        beta = (beta < beta_min || beta > beta_max) ? beta_prev : beta;
+        p = (p < p_min || p > p_max) ? p_prev : p;
+        r = (r < r_min || r > r_max) ? r_prev : r;
+        phi = (phi < phi_min || phi > phi_max) ? phi_prev : phi;
+        psi = (psi < psi_min || psi > psi_max) ? psi_prev : psi;
+
         // Calculate states
         lon_states = { V - V_0, alpha - alpha_0, wy - q_0, pitch - theta_0 }; // lon state (x - x0)
         lat_states = { beta - beta_0, wx - p_0, wz - r_0, roll - phi_0, yaw - psi_0 }; // lat state (x - x0)
@@ -259,6 +328,16 @@ int main(int argc, char *argv[])
         // Calculate lat inputs based on lat state (u-u0) = -K_lat * (x - x0)
         u_lat_0 = -1.0 * k_lat[0][0] * lat_states[0] + -1.0 * k_lat[0][1] * lat_states[1] + -1.0 * k_lat[0][2] * lat_states[2] + -1.0 * k_lat[0][3] * lat_states[3] + -1.0 * k_lat[0][4] * lat_states[4]; // u[0] - u[0]_0 for the lat sys
         u_lat_1 = -1.0 * k_lat[1][0] * lat_states[0] + -1.0 * k_lat[1][1] * lat_states[1] + -1.0 * k_lat[1][2] * lat_states[2] + -1.0 * k_lat[1][3] * lat_states[3] + -1.0 * k_lat[1][4] * lat_states[4]; // u[1] - u[1]_0 for the lat sys
+
+        // Place actuator values in expected range
+        u_lon_0 = (u_lon_0 < de_min) ? de_min : u_lon_0;
+        u_lon_0 = (u_lon_0 > de_max) ? de_max : u_lon_0;
+        u_lat_0 = (u_lat_0 < da_min) ? da_min : u_lat_0;
+        u_lat_0 = (u_lat_0 > da_max) ? da_max : u_lat_0;
+        u_lat_1 = (u_lat_1 < dr_min) ? dr_min : u_lat_1;
+        u_lat_1 = (u_lat_1 > dr_max) ? dr_max : u_lat_1;
+        u_lon_1 = (u_lon_1 < dt_min) ? dt_min : u_lon_1;
+        u_lon_1 = (u_lon_1 > dt_max) ? dt_max : u_lon_1;
 
         //assign actuator values
         acts.de = u_lon_0 + de_0;
@@ -280,7 +359,7 @@ int main(int argc, char *argv[])
         zcm.publish("ACTUATORS", &acts);
 
     }
-
+    
     //_________________________________END_PASTE_HERE_________________________________//
 
     module_stat.module_status = 0;
