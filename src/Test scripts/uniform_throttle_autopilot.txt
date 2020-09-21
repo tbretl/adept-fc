@@ -158,7 +158,7 @@ while (!handlerObject.stat.should_exit)
     cpt = evaluate_poly(cpt_c, C_alpha, C_beta); // unitless
     Pt = (P1 - cpt * (P1 - P_avg)) * 6894.76; // in Pa
     Ps = (P_avg - cps * (P1 - P_avg)) * 6894.76; // in Pa
-    rho = 1.666; // in kg/m^3
+    rho = 1.1666; // in kg/m^3
     V = sqrt((2.0 * (Pt - Ps)) / (rho)); // in m/s
  
     // INS data
