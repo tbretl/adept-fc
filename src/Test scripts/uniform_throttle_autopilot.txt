@@ -111,6 +111,9 @@ float roll;
 float wx;
 float wy;
 float wz;
+float de_percent;
+float da_percent;
+float dr_percent;
 float lon_states[4];
 float lat_states[5];
 float u_lon_0;
@@ -201,10 +204,15 @@ while (!handlerObject.stat.should_exit)
     u_lon_1 = ((u_lon_1 + dt_0_0) < dt_min) ? (dt_min - dt_0_0) : u_lon_1; // Assumes all thrust equilibrium inputs are identical
     u_lon_1 = ((u_lon_1 + dt_0_0) > dt_max) ? (dt_max - dt_0_0) : u_lon_1; // Assumes all thrust equilibrium inputs are identical
  
+    //convert actuator values from physical parameters to % of range (throttles are already in this form)
+    de_percent = ((u_lon_0 + de_0) - de_min) / (de_max - de_min); // unitless with min possible input = 0 and max possible input = 1
+    da_percent = ((u_lat_0 + da_0) - da_min) / (da_max - da_min); // unitless with min possible input = 0 and max possible input = 1
+    dr_percent = ((u_lat_1 + dr_0) - dr_min) / (dr_max - dr_min); // unitless with min possible input = 0 and max possible input = 1
+ 
     //assign actuator values
-    acts.de = u_lon_0 + de_0;
-    acts.da = u_lat_0 + da_0;
-    acts.dr = u_lat_1 + dr_0;
+    acts.de = de_percent;
+    acts.da = da_percent;
+    acts.dr = dr_percent;
     acts.dt[0] = u_lon_1 + dt_0_0;
     acts.dt[1] = u_lon_1 + dt_1_0;
     acts.dt[2] = u_lon_1 + dt_2_0;
