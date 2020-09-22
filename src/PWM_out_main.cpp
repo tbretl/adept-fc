@@ -35,6 +35,7 @@ class Handler
         status_t stat;
         adc_data_t adc;
         vnins_data_t vnins;
+
         double acts[11]={0};
         int mode_emergency = 0;
         int rc_emergency = 0;
@@ -100,7 +101,7 @@ int output_scaling(const int& in_val, const double& s_min, const double& s_max, 
     return (s_min + (s_max-s_min)/(in_max-in_min)*(in_val-in_min));
 }
 
-//lookup table function
+//lookup table function (multisine overlay)
 void get_ctrl(int T_Lim, double current_time, double *time_vect, double *ele, double *ail, double *rud, double thr[][8], double ctr_out[11])
 {
 
@@ -177,6 +178,8 @@ int main(int argc, char *argv[])
     int gain_chan = 6;
     std::ifstream config_stream;
 
+    // TODO Update this function
+    // This function determines the scaling for PWM conversion
     for(int i=3;i<11;i++)
     {
         surface_min[i] = (float)rc_min;
@@ -411,7 +414,10 @@ int main(int argc, char *argv[])
             {
                 for (int i=0; i<num_outputs; i++)
                 {
-                    pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.acts[i],servo_min,servo_max,surface_min[i],surface_max[i]);
+                    // pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.acts[i],servo_min,servo_max,surface_min[i],surface_max[i]);
+                    // Removed the multisine overlay
+                    // Allow rc to overlay autopilot inputs (check this)
+                    pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]], servo_min, servo_max, rc_min, rc_max) + output_scaling(handlerObject.acts[i],servo_min,servo_max,0.0,1.0);
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
