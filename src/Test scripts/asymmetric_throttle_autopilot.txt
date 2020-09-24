@@ -111,6 +111,11 @@ float roll;
 float wx;
 float wy;
 float wz;
+float q;
+float theta;
+float p;
+float r;
+float phi;
 float de_percent;
 float da_percent;
 float dr_percent;
@@ -131,16 +136,16 @@ while (!handlerObject.stat.should_exit)
     zcm.publish("STATUS4",&module_stat);
  
     // Raw data from adc
-    P1 = (float)adc.data[0]; // uCH0 --> uncalibrated P1 for 5 hole probe
-    P2 = (float)adc.data[1]; // uCH1 --> uncalibrated P2 for 5 hole probe
-    P3 = (float)adc.data[2]; // uCH2 --> uncalibrated P3 for 5 hole probe
-    P4 = (float)adc.data[3]; // uCH3 --> uncalibrated P4 for 5 hole probe
-    P5 = (float)adc.data[4]; // uCH4 --> uncalibrated P5 for 5 hole probe
-    r_ail = (float)adc.data[8]; // dCH0 --> uncalibrated right aileron position
-    l_ail = (float)adc.data[9]; // dCH1 --> uncalibrated left aileron position 
-    r_ele = (float)adc.data[10]; // dCH2 --> uncalibrated right elevator position
-    l_ele = (float)adc.data[11]; // dCH3 --> uncalibrated left elevator position 
-    rud = (float)adc.data[12]; // dCH4 --> uncalibrated rudder position
+    P1 = (float)handlerObject.adc.data[0]; // uCH0 --> uncalibrated P1 for 5 hole probe
+    P2 = (float)handlerObject.adc.data[1]; // uCH1 --> uncalibrated P2 for 5 hole probe
+    P3 = (float)handlerObject.adc.data[2]; // uCH2 --> uncalibrated P3 for 5 hole probe
+    P4 = (float)handlerObject.adc.data[3]; // uCH3 --> uncalibrated P4 for 5 hole probe
+    P5 = (float)handlerObject.adc.data[4]; // uCH4 --> uncalibrated P5 for 5 hole probe
+    r_ail = (float)handlerObject.adc.data[8]; // dCH0 --> uncalibrated right aileron position
+    l_ail = (float)handlerObject.adc.data[9]; // dCH1 --> uncalibrated left aileron position 
+    r_ele = (float)handlerObject.adc.data[10]; // dCH2 --> uncalibrated right elevator position
+    l_ele = (float)handlerObject.adc.data[11]; // dCH3 --> uncalibrated left elevator position 
+    rud = (float)handlerObject.adc.data[12]; // dCH4 --> uncalibrated rudder position
  
     // Conversion of raw adc data
     P1 = P1_c[0] * pow(P1, 0) + P1_c[1] * pow(P1, 1); // in dPSI
@@ -158,22 +163,22 @@ while (!handlerObject.stat.should_exit)
     P_avg = (P2 + P3 + P4 + P5) *0.25; // in dPSI
     C_alpha = (P4 - P5) / (P1 - P_avg); // unitless
     C_beta = (P3 - P2) / (P1 - P_avg); // unitless
-    alpha = 0.01745329251 * evaluate_poly(alpha_c, C_alpha, C_beta); // in rad
-    beta = 0.01745329251 * evaluate_poly(beta_c, C_alpha, C_beta); // in rad
-    cps = evaluate_poly(cps_c, C_alpha, C_beta); // unitless
-    cpt = evaluate_poly(cpt_c, C_alpha, C_beta); // unitless
+    alpha = 0.01745329251 * evaluate_poly(alpha_c, sizeof(alpha_c), C_alpha, C_beta); // in rad
+    beta = 0.01745329251 * evaluate_poly(beta_c, sizeof(beta_c), C_alpha, C_beta); // in rad
+    cps = evaluate_poly(cps_c, sizeof(cps_c), C_alpha, C_beta); // unitless
+    cpt = evaluate_poly(cpt_c, sizeof(cpt_c) C_alpha, C_beta); // unitless
     Pt = (P1 - cpt * (P1 - P_avg)) * 6894.76; // in Pa
     Ps = (P_avg - cps * (P1 - P_avg)) * 6894.76; // in Pa
     rho = 1.1666; // in kg/m^3
     V = sqrt((2.0 * (Pt - Ps)) / (rho)); // in m/s
  
     // INS data
-    yaw = 0.01745329251 * vnins.yaw; // in rad
-    pitch = 0.01745329251 * vnins.pitch; // in rad
-    roll = 0.01745329251 * vnins.roll; // in rad
-    wx = vnins.wx; // in rad/s (roll rate)
-    wy = vnins.wy; // in rad/s (pitch rate)
-    wz = vnins.wz; // in rad/s (yaw rate)
+    yaw = 0.01745329251 * objectHandler.vnins.yaw; // in rad
+    pitch = 0.01745329251 * objectHandler.vnins.pitch; // in rad
+    roll = 0.01745329251 * objectHandler.vnins.roll; // in rad
+    wx = objectHandler.vnins.wx; // in rad/s (roll rate)
+    wy = objectHandler.vnins.wy; // in rad/s (pitch rate)
+    wz = objectHandler.vnins.wz; // in rad/s (yaw rate)
  
     // Bad state rejection
     V = (V < V_min || V > V_max) ? V_prev : V;
@@ -186,8 +191,15 @@ while (!handlerObject.stat.should_exit)
     phi = (phi < phi_min || phi > phi_max) ? phi_prev : phi;
  
     // Calculate states
-    lon_states = { V - V_0, alpha - alpha_0, wy - q_0, pitch - theta_0}; // lon state (x - x0)
-    lat_states = { beta - beta_0, wx - p_0, wz - r_0, roll - phi_0, yaw - psi_0}; // lat state (x - x0)
+    lon_states[0] = V - V_0
+    lon_states[1] = alpha - alpha_0
+    lon_states[2] = wy - q_0
+    lon_states[3] = pitch - theta_0
+    lat_states[0] = beta - beta_0
+    lat_states[1] = wx - p_0
+    lat_states[2] = wz - r_0
+    lat_states[3] = roll - phi_0
+    lat_states[4] = yaw - psi_0
  
     // Calculate lon inputs based on lon state (u-u0) = -K_lon * (x - x0)
     u_lon_0 = -1.0 * k_lon[0][0] * lon_states[0] + -1.0 * k_lon[0][1] * lon_states[1] + -1.0 * k_lon[0][2] * lon_states[2] + -1.0 * k_lon[0][3] * lon_states[3]; // u[0] - u[0]_0 for the lon sys
