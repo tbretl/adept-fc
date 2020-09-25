@@ -61,7 +61,7 @@ double get_gps_time(Handler* adchandle)
 }
 
 float evaluate_poly(float coeffs[], size_t size, float X, float Y) {
-    int order = int(size)
+    int order = int(size);
     int curr_x = 0;
     int curr_y = 0;
     int x_order = 0;
