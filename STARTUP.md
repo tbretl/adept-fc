@@ -107,10 +107,17 @@ Updated: 09/24/2020 13:08 CST*
 - Login: pi
 
 - Password: Ri2e$mmk3
-- cd adept-fc/
-- git branch
-- git checkout autopilot_dev
-- git fetch
-- git pull
-- make all
-- ./run.sh
+- `cd adept-fc/`
+- `git branch`
+- `git checkout autopilot_dev`
+- `git fetch`
+- `git pull`
+- `make all`
+- `cp config_files/run_rc.service /lib/systemd/system/`
+- `cp config_files/run_pwm.service /lib/systemd/system/`
+- `sudo systemctl daemon-reload`
+- `sudo systemctl enable run_rc.service`
+- `sudo systemctl enable run_pwm.service`
+- `sudo reboot`
+- `cd adept-fc/`
+- `sudo ./run.sh`
