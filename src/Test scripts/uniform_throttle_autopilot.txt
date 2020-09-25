@@ -163,19 +163,19 @@ while (!handlerObject.stat.should_exit)
     alpha = 0.01745329251 * evaluate_poly(alpha_c, sizeof(alpha_c), C_alpha, C_beta); // in rad
     beta = 0.01745329251 * evaluate_poly(beta_c, sizeof(beta_c), C_alpha, C_beta); // in rad
     cps = evaluate_poly(cps_c, sizeof(cps_c), C_alpha, C_beta); // unitless
-    cpt = evaluate_poly(cpt_c, sizeof(cpt_c) C_alpha, C_beta); // unitless
+    cpt = evaluate_poly(cpt_c, sizeof(cpt_c), C_alpha, C_beta); // unitless
     Pt = (P1 - cpt * (P1 - P_avg)) * 6894.76; // in Pa
     Ps = (P_avg - cps * (P1 - P_avg)) * 6894.76; // in Pa
     rho = 1.1666; // in kg/m^3
     V = sqrt((2.0 * (Pt - Ps)) / (rho)); // in m/s
  
     // INS data
-    yaw = 0.01745329251 * objectHandler.vnins.yaw; // in rad
-    pitch = 0.01745329251 * objectHandler.vnins.pitch; // in rad
-    roll = 0.01745329251 * objectHandler.vnins.roll; // in rad
-    wx = objectHandler.vnins.wx; // in rad/s (roll rate)
-    wy = objectHandler.vnins.wy; // in rad/s (pitch rate)
-    wz = objectHandler.vnins.wz; // in rad/s (yaw rate)
+    yaw = 0.01745329251 * handlerObject.vnins.yaw; // in rad
+    pitch = 0.01745329251 * handlerObject.vnins.pitch; // in rad
+    roll = 0.01745329251 * handlerObject.vnins.roll; // in rad
+    wx = handlerObject.vnins.wx; // in rad/s (roll rate)
+    wy = handlerObject.vnins.wy; // in rad/s (pitch rate)
+    wz = handlerObject.vnins.wz; // in rad/s (yaw rate)
  
     // Bad state rejection
     V = (V < V_min || V > V_max) ? V_prev : V;
@@ -188,15 +188,15 @@ while (!handlerObject.stat.should_exit)
     phi = (phi < phi_min || phi > phi_max) ? phi_prev : phi;
  
     // Calculate states
-    lon_states[0] = V - V_0
-    lon_states[1] = alpha - alpha_0
-    lon_states[2] = wy - q_0
-    lon_states[3] = pitch - theta_0
-    lat_states[0] = beta - beta_0
-    lat_states[1] = wx - p_0
-    lat_states[2] = wz - r_0
-    lat_states[3] = roll - phi_0
-    lat_states[4] = yaw - psi_0
+    lon_states[0] = V - V_0;
+    lon_states[1] = alpha - alpha_0;
+    lon_states[2] = wy - q_0;
+    lon_states[3] = pitch - theta_0;
+    lat_states[0] = beta - beta_0;
+    lat_states[1] = wx - p_0;
+    lat_states[2] = wz - r_0;
+    lat_states[3] = roll - phi_0;
+    lat_states[4] = yaw - psi_0;
  
     // Calculate lon inputs based on lon state (u-u0) = -K_lon * (x - x0)
     u_lon_0 = -1.0 * k_lon[0][0] * lon_states[0] + -1.0 * k_lon[0][1] * lon_states[1] + -1.0 * k_lon[0][2] * lon_states[2] + -1.0 * k_lon[0][3] * lon_states[3]; // u[0] - u[0]_0 for the lon sys
