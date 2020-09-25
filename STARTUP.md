@@ -104,6 +104,13 @@ Updated: 09/24/2020 13:08 CST*
 ## Sub-Procedure 4: Interfacing
 
 ### Procedure
-- Login:
+- Login: pi
 
-- Password:
+- Password: Ri2e$mmk3
+- cd adept-fc/
+- git branch
+- git checkout autopilot_dev
+- git fetch
+- git pull
+- make all
+- ./run.sh
