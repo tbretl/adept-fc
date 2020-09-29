@@ -92,6 +92,7 @@ float evaluate_poly(float coeffs[], size_t size, float X, float Y) {
 int main(int argc, char *argv[])
 {
     //_________________________________START_PASTE_HERE_________________________________//
+   std::cout << "Creating variables..." << std::endl;
 
    // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
    float P1_c[2] = { -0.19188, 4.8261e-06 }; // To dPSI
@@ -219,6 +220,8 @@ int main(int argc, char *argv[])
    float u_lon_1;
    float u_lat_0;
    float u_lat_1;
+
+   std::cout << "Initializing ZCM..." << std::endl;
 
    //initialize zcm
     zcm::ZCM zcm {"ipc"};
@@ -359,7 +362,8 @@ int main(int argc, char *argv[])
        beta_prev = beta; // rad
        p_prev = wx; // rad/s
        r_prev = wz; // rad/s
-       phi_prev = roll; // rad
+       phi_prev = roll; // rad/s
+       usleep(10000);
 
        //timestamp the values:
        acts.time_gps = get_gps_time(&adc_handler);
