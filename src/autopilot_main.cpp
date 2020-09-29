@@ -46,7 +46,7 @@ class Handler
             stat = *msg;
         }
 
-        void read_vnins(const zcm::ReceiveBuffer* rbuf, const string& chan, const vnins_data_t *msg)
+        void read_vnins(const zcm::ReceiveBuffer* rbuf,const string& chan,const vnins_data_t *msg)
         {
             vnins = *msg;
         }
@@ -91,29 +91,6 @@ float evaluate_poly(float coeffs[], size_t size, float X, float Y) {
 
 int main(int argc, char *argv[])
 {
-    //initialize zcm
-    zcm::ZCM zcm {"ipc"};
-
-    //initialize message objects
-    actuators_t acts;
-    memset(&acts, 0, sizeof(acts));
-
-    //subscribe to incoming channels:
-    Handler handlerObject;
-    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
-    zcm.subscribe("ADC_DATA",&Handler::read_adc,&handlerObject);
-    zcm.subscribe("VNINS_DATA", &Handler::read_vnins, &handlerObject);
-
-    //for publishing stat of this module
-    status_t module_stat;
-    memset(&module_stat,0,sizeof(module_stat));
-    module_stat.module_status = 1;//module running
-
-    //run zcm as a separate thread:
-    zcm.start();
-
-    std::cout << "autopilot started" << std::endl;
-
     //_________________________________START_PASTE_HERE_________________________________//
 
    // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
@@ -243,6 +220,29 @@ int main(int argc, char *argv[])
    float u_lat_0;
    float u_lat_1;
 
+   //initialize zcm
+    zcm::ZCM zcm {"ipc"};
+
+    //initialize message objects
+    actuators_t acts;
+    memset(&acts, 0, sizeof(acts));
+
+    //subscribe to incoming channels:
+    Handler handlerObject,vnins_handler,adc_handler;
+    zcm.subscribe("STATUS",&Handler::read_stat,&handlerObject);
+    zcm.subscribe("ADC_DATA",&Handler::read_adc,&adc_handler);
+    zcm.subscribe("VNINS_DATA",&Handler::read_vnins,&vnins_handler);
+
+    //for publishing stat of this module
+    status_t module_stat;
+    memset(&module_stat,0,sizeof(module_stat));
+    module_stat.module_status = 1;//module running
+
+    //run zcm as a separate thread:
+    zcm.start();
+
+    std::cout << "autopilot started" << std::endl;
+
    //control loop:
    while (!handlerObject.stat.should_exit)
    {
@@ -250,16 +250,16 @@ int main(int argc, char *argv[])
        zcm.publish("STATUS4",&module_stat);
 
        // Raw data from adc
-       P1 = (float)handlerObject.adc.data[0]; // uCH0 --> uncalibrated P1 for 5 hole probe
-       P2 = (float)handlerObject.adc.data[1]; // uCH1 --> uncalibrated P2 for 5 hole probe
-       P3 = (float)handlerObject.adc.data[2]; // uCH2 --> uncalibrated P3 for 5 hole probe
-       P4 = (float)handlerObject.adc.data[3]; // uCH3 --> uncalibrated P4 for 5 hole probe
-       P5 = (float)handlerObject.adc.data[4]; // uCH4 --> uncalibrated P5 for 5 hole probe
-       r_ail = (float)handlerObject.adc.data[8]; // dCH0 --> uncalibrated right aileron position
-       l_ail = (float)handlerObject.adc.data[9]; // dCH1 --> uncalibrated left aileron position
-       r_ele = (float)handlerObject.adc.data[10]; // dCH2 --> uncalibrated right elevator position
-       l_ele = (float)handlerObject.adc.data[11]; // dCH3 --> uncalibrated left elevator position
-       rud = (float)handlerObject.adc.data[12]; // dCH4 --> uncalibrated rudder position
+       P1 = (float)adc_handler.adc.data[0]; // uCH0 --> uncalibrated P1 for 5 hole probe
+       P2 = (float)adc_handler.adc.data[1]; // uCH1 --> uncalibrated P2 for 5 hole probe
+       P3 = (float)adc_handler.adc.data[2]; // uCH2 --> uncalibrated P3 for 5 hole probe
+       P4 = (float)adc_handler.adc.data[3]; // uCH3 --> uncalibrated P4 for 5 hole probe
+       P5 = (float)adc_handler.adc.data[4]; // uCH4 --> uncalibrated P5 for 5 hole probe
+       r_ail = (float)adc_handler.adc.data[8]; // dCH0 --> uncalibrated right aileron position
+       l_ail = (float)adc_handler.adc.data[9]; // dCH1 --> uncalibrated left aileron position
+       r_ele = (float)adc_handler.adc.data[10]; // dCH2 --> uncalibrated right elevator position
+       l_ele = (float)adc_handler.adc.data[11]; // dCH3 --> uncalibrated left elevator position
+       rud = (float)adc_handler.adc.data[12]; // dCH4 --> uncalibrated rudder position
 
        // Conversion of raw adc data
        P1 = P1_c[0] * pow(P1, 0) + P1_c[1] * pow(P1, 1); // in dPSI
@@ -287,12 +287,12 @@ int main(int argc, char *argv[])
        V = sqrt((2.0 * (Pt - Ps)) / (rho)); // in m/s
 
        // INS data
-       yaw = 0.01745329251 * handlerObject.vnins.yaw; // in rad
-       pitch = 0.01745329251 * handlerObject.vnins.pitch; // in rad
-       roll = 0.01745329251 * handlerObject.vnins.roll; // in rad
-       wx = handlerObject.vnins.wx; // in rad/s (roll rate)
-       wy = handlerObject.vnins.wy; // in rad/s (pitch rate)
-       wz = handlerObject.vnins.wz; // in rad/s (yaw rate)
+       yaw = 0.01745329251 * vnins_handler.vnins.yaw; // in rad
+       pitch = 0.01745329251 * vnins_handler.vnins.pitch; // in rad
+       roll = 0.01745329251 * vnins_handler.vnins.roll; // in rad
+       wx = vnins_handler.vnins.wx; // in rad/s (roll rate)
+       wy = vnins_handler.vnins.wy; // in rad/s (pitch rate)
+       wz = vnins_handler.vnins.wz; // in rad/s (yaw rate)
 
        // Bad state rejection
        V = (V < V_min || V > V_max) ? V_prev : V;
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
        phi_prev = roll; // rad
 
        //timestamp the values:
-       acts.time_gps = get_gps_time(&handlerObject);
+       acts.time_gps = get_gps_time(&adc_handler);
 
        //publish the actuator values:
        zcm.publish("ACTUATORS", &acts);
