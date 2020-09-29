@@ -46,7 +46,7 @@ class Handler
             stat = *msg;
         }
 
-        void read_vnins(const zcm::ReceiveBuffer* rbuf, const string& chan, const vnins_data_t* msg)
+        void read_vnins(const zcm::ReceiveBuffer* rbuf, const string& chan, const vnins_data_t *msg)
         {
             vnins = *msg;
         }
