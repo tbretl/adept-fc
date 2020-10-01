@@ -18,7 +18,6 @@
 #include "vnins_data_t.hpp"
 
 using std::string;
-using namespace std;
 
 class Handler
 {
@@ -92,6 +91,7 @@ float evaluate_poly(float coeffs[], size_t size, float X, float Y) {
 int main(int argc, char *argv[])
 {
     //_________________________________START_PASTE_HERE_________________________________//
+   std::cout << "Starting autopilot..." << std::endl;
    std::cout << "Creating variables..." << std::endl;
 
    // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
@@ -341,6 +341,16 @@ int main(int argc, char *argv[])
        da_percent = ((u_lat_0 + da_0) - da_min) / (da_max - da_min); // unitless with min possible input = 0 and max possible input = 1
        dr_percent = ((u_lat_1 + dr_0) - dr_min) / (dr_max - dr_min); // unitless with min possible input = 0 and max possible input = 1
 
+       // Collect previous state values
+       V_prev = V; // m/s
+       alpha_prev = alpha; // rad
+       q_prev = wy; // rad/s
+       theta_prev = pitch; // rad
+       beta_prev = beta; // rad
+       p_prev = wx; // rad/s
+       r_prev = wz; // rad/s
+       phi_prev = roll; // rad/s
+
        //assign actuator values
        acts.de = de_percent;
        acts.da = da_percent;
@@ -353,21 +363,10 @@ int main(int argc, char *argv[])
        acts.dt[5] = u_lon_1 + dt_5_0;
        acts.dt[6] = u_lon_1 + dt_6_0;
        acts.dt[7] = u_lon_1 + dt_7_0;
-
-       // Collect previous state values
-       V_prev = V; // m/s
-       alpha_prev = alpha; // rad
-       q_prev = wy; // rad/s
-       theta_prev = pitch; // rad
-       beta_prev = beta; // rad
-       p_prev = wx; // rad/s
-       r_prev = wz; // rad/s
-       phi_prev = roll; // rad/s
        usleep(10000);
 
        //timestamp the values:
        acts.time_gps = get_gps_time(&adc_handler);
-
        //publish the actuator values:
        zcm.publish("ACTUATORS", &acts);
 
