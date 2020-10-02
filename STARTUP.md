@@ -113,11 +113,11 @@ Updated: 09/24/2020 13:08 CST*
 - `git fetch`
 - `git pull`
 - `make all`
-- `cp config_files/run_rc.service /lib/systemd/system/`
-- `cp config_files/run_pwm.service /lib/systemd/system/`
-- `sudo systemctl daemon-reload`
-- `sudo systemctl enable run_rc.service`
-- `sudo systemctl enable run_pwm.service`
-- `sudo reboot`
-- `cd adept-fc/`
+- Ensure SC is fully forward
 - `sudo ./run.sh`
+- `pwm arm`
+- Begin autopilot test by moving SC fully backward
+- End autopilot test by moving SC fully forward
+- `pwm disarm`
+- `all exit`
+- Shut down system
