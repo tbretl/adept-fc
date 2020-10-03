@@ -233,11 +233,11 @@ int main(int argc, char *argv[])
        zcm.publish("STATUS4",&module_stat);
 
        // Conversion of raw adc data to pressure data
-       P1 = P1_c[0]  + P1_c[1] * (float)handlerObject.adc.data[0]; // in dPSI
-       P2 = P2_c[0]  + P2_c[1] * (float)handlerObject.adc.data[1]; // in dPSI
-       P3 = P3_c[0]  + P3_c[1] * (float)handlerObject.adc.data[2]; // in dPSI
-       P4 = P4_c[0]  + P4_c[1] * (float)handlerObject.adc.data[3]; // in dPSI
-       P5 = P5_c[0]  + P5_c[1] * (float)handlerObject.adc.data[4]; // in dPSI
+       P1 = P1_c[0]  + P1_c[1] * (double)handlerObject.adc.data[0]; // in dPSI
+       P2 = P2_c[0]  + P2_c[1] * (double)handlerObject.adc.data[1]; // in dPSI
+       P3 = P3_c[0]  + P3_c[1] * (double)handlerObject.adc.data[2]; // in dPSI
+       P4 = P4_c[0]  + P4_c[1] * (double)handlerObject.adc.data[3]; // in dPSI
+       P5 = P5_c[0]  + P5_c[1] * (double)handlerObject.adc.data[4]; // in dPSI
 
 
        // Conversion of converted adc data to state data
