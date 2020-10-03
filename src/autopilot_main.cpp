@@ -67,7 +67,7 @@ float evaluate_poly(float coeffs[], size_t size, float X, float Y) {
     int y_order = 0;
     float evaluation = 0.0;
 
-    for (int i; i < order; i++) {
+    for (int i = 0; i < order; i++) {
         evaluation += coeffs[i] * pow(X, curr_x) * pow(Y, curr_y);
         if (curr_x == 0) {
             curr_x = x_order + 1;
