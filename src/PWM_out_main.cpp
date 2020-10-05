@@ -155,6 +155,7 @@ double get_gps_time(Handler* adchandle)
 }
 
 
+int curr_iteration = 0;
 int main(int argc, char *argv[])
 {
 
@@ -414,8 +415,24 @@ int main(int argc, char *argv[])
             {
                 for (int i=0; i<num_outputs; i++)
                 {
-                    pwm_comm.pwm_out[i] = output_scaling(handlerObject.acts[i],servo_min,servo_max,0.0,1.0);
-                    pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+		    	if (i==0){ //Aileron command
+				int command = (int) (1816.0 - 642.0 * (handlerObject.acts[i]));
+				pwm_comm.pwm_out[i] = command;
+
+			}
+			else if (i==1){ //Elevator command
+				int command = (int) (1259.0 + 515.0 * (handlerObject.acts[i]));
+				pwm_comm.pwm_out[i] = command;
+			}
+			else if (i==2){ //Rudder command	
+				int command = (int) (1136 + 810.0 * (handlerObject.acts[i]));
+				pwm_comm.pwm_out[i] = command;
+			}
+			else (){ //Thrust command
+				pwm_comm.pwm_out[i] = output_scaling(HandlerObject.acts[i], servo_min, servo_max, surface_min, surface_max)
+			}
+
+			pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                 }
             }
         }
@@ -440,6 +457,7 @@ int main(int argc, char *argv[])
         pwm_comm.time_gps = get_gps_time(&sens_handler);
         //publish pwm values for logging
         zcm.publish("PWM_OUT", &pwm_comm);
+	curr_iteration++;
         usleep(10000);
     }
 

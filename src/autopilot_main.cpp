@@ -105,9 +105,13 @@ int main(int argc, char *argv[])
     double cps_c[21] = { 0.59235, -0.0032055, -0.0045759, -0.098045, 0.010147, -0.0977, -0.015851, -0.0024914, -0.022443, -0.0037574, -0.0042317, -0.0039405, 0.01926, -0.0014971, -0.0014967, -0.0007027, -0.0010546, 0.0041895, 6.6051e-05, 0.00048148, -0.00022731 };
     double cpt_c[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
 
-    // Controller constants
+    // Wing Leveling Controller constants
     double k_lon[2][4] = { {0, 0, 0, 0},  {0, 0, 0, 0} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
     double k_lat[2][5] = { {0, 0.14855, 0, 0.4, 0},  {0, 0, 0, 0, 0} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
+
+    // Uniform controller constants
+    //double k_lon[2][4] = {  {0.0044319, 0.3739, -0.10855, -0.37623},  {0.002028, -0.037446, -0.03146, -0.050771} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
+    //double k_lat[2][5] = {  {1.1324, 0.16596, -0.075796, 0.57311, 0.90946},  {0.22587, 0.011704, -0.2124, 0.0059284, -0.16631} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
 
     // Trim conditions
     double V_0 = 30.5755; // m/s
@@ -144,8 +148,8 @@ int main(int argc, char *argv[])
     double de_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
     double da_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
     double da_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
-    double dr_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
-    double dr_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
+    double dr_min = -0.5236; // Minimum acceptable value. Any values lower will be rounded to min.
+    double dr_max = 0.5236; // Maximum acceptable value. Any values higher will be rounded to max.
     double dt_min = 0; // Minimum acceptable value. Any values lower will be rounded to min.
     double dt_max = 1; // Maximum acceptable value. Any values higher will be rounded to max.
 
@@ -203,6 +207,7 @@ int main(int argc, char *argv[])
     double u_lon_1;
     double u_lat_0;
     double u_lat_1;
+    int curr_iteration = 0;
 
     //initialize zcm
     zcm::ZCM zcm{ "ipc" };
@@ -253,7 +258,7 @@ int main(int argc, char *argv[])
 
         // If the pressure readings indicate imaginary velocity, assing the velocity as the previous good value
         if (Pt >= 0.0 || Ps >= 0.0 || Pt - Ps >= 0.0) {
-            std::cout << "Pressure readings rejected" << std::endl;
+            //std::cout << "Pressure readings rejected" << std::endl;
             V = V_prev;
         }
         else {
@@ -323,9 +328,9 @@ int main(int argc, char *argv[])
         phi_prev = roll; // rad
 
         //assign actuator values
-        acts.de = de_percent;
-        acts.da = da_percent;
-        acts.dr = dr_percent;
+        acts.de = de_percent; // 0% -> nose up
+        acts.da = da_percent; // 0% -> roll left
+        acts.dr = dr_percent; // 0% -> nose ?
         acts.dt[0] = u_lon_1 + dt_0_0;
         acts.dt[1] = u_lon_1 + dt_1_0;
         acts.dt[2] = u_lon_1 + dt_2_0;
@@ -335,6 +340,13 @@ int main(int argc, char *argv[])
         acts.dt[6] = u_lon_1 + dt_6_0;
         acts.dt[7] = u_lon_1 + dt_7_0;
         usleep(10000);
+
+	if (curr_iteration % 300 == 0){
+		std::cout<< "Elevator from AP = " << de_percent * 100 << "%" << std::endl;
+		std::cout<< "Aileron from AP = " << da_percent * 100 << "%" << std::endl;
+		std::cout<< "Rudder from AP = " << dr_percent * 100 << "%" << std::endl;
+	}
+	curr_iteration++;
 
         //timestamp the values:
         acts.time_gps = get_gps_time(&handlerObject);
