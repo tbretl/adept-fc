@@ -89,8 +89,8 @@ double evaluate_poly(double coeffs[], int size, double X, double Y) {
 
 int main(int argc, char *argv[])
 {
-
-   //_________________________________START_PASTE_HERE_________________________________//
+    
+    //_________________________________START_PASTE_HERE_________________________________//
 
     // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
     double P1_c[2] = { -0.19188, 4.8261e-06 }; // To dPSI
@@ -108,10 +108,6 @@ int main(int argc, char *argv[])
     // Wing Leveling Controller constants
     double k_lon[2][4] = { {0, 0, 0, 0},  {0, 0, 0, 0} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
     double k_lat[2][5] = { {0, 0.14855, 0, 0.4, 0},  {0, 0, 0, 0, 0} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
-
-    // Uniform controller constants
-    //double k_lon[2][4] = {  {0.0044319, 0.3739, -0.10855, -0.37623},  {0.002028, -0.037446, -0.03146, -0.050771} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
-    //double k_lat[2][5] = {  {1.1324, 0.16596, -0.075796, 0.57311, 0.90946},  {0.22587, 0.011704, -0.2124, 0.0059284, -0.16631} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
 
     // Trim conditions
     double V_0 = 30.5755; // m/s
@@ -142,16 +138,6 @@ int main(int argc, char *argv[])
     double r_max = 0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
     double phi_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
     double phi_max = 1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
-
-    // Input limits
-    double de_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
-    double de_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
-    double da_min = -0.7853; // Minimum acceptable value. Any values lower will be rounded to min.
-    double da_max = 0.7853; // Maximum acceptable value. Any values higher will be rounded to max.
-    double dr_min = -0.5236; // Minimum acceptable value. Any values lower will be rounded to min.
-    double dr_max = 0.5236; // Maximum acceptable value. Any values higher will be rounded to max.
-    double dt_min = 0; // Minimum acceptable value. Any values lower will be rounded to min.
-    double dt_max = 1; // Maximum acceptable value. Any values higher will be rounded to max.
 
     // Previous states
     double V_prev = 0.0; // m/s
@@ -198,16 +184,21 @@ int main(int argc, char *argv[])
     double wx;
     double wy;
     double wz;
-    double de_percent;
-    double da_percent;
-    double dr_percent;
     double lon_states[4];
     double lat_states[5];
     double u_lon_0;
     double u_lon_1;
     double u_lat_0;
     double u_lat_1;
-    int curr_iteration = 0;
+    double r_ail;
+    double l_ail;
+    double r_ele;
+    double l_ele;
+    double rud;
+    double elevator_angle_command;
+    double aileron_angle_command;
+    double rudder_angle_command;
+    int curr_iteration = 1;
 
     //initialize zcm
     zcm::ZCM zcm{ "ipc" };
@@ -244,6 +235,18 @@ int main(int argc, char *argv[])
         P3 = P3_c[0] + P3_c[1] * (double)handlerObject.adc.data[2]; // uCH2 --> P3 for 5 hole probe
         P4 = P4_c[0] + P4_c[1] * (double)handlerObject.adc.data[3]; // uCH3 --> P4 for 5 hole probe
         P5 = P5_c[0] + P5_c[1] * (double)handlerObject.adc.data[4]; // uCH4 --> P5 for 5 hole probe
+        r_ail = (double)handlerObject.adc.data[8];  // dCH0 -> r_ail
+	l_ail = (double)handlerObject.adc.data[9];  // dCH1 -> l_ail
+	r_ele = (double)handlerObject.adc.data[10]; // dCH2 -> r_ele 
+	l_ele = (double)handlerObject.adc.data[11]; // dCH2 -> l_ele
+	rud =   (double)handlerObject.adc.data[12]; // dCH3 -> rud
+
+	// Convert control surface data to radian values
+	r_ail = pow(r_ail,7)*4.8223e-28 + pow(r_ail,6)*-9.3369e-23 + pow(r_ail,5)*7.6526e-18 + pow(r_ail,4)*-3.4398e-13 + pow(r_ail,3)*9.1555e-9 + pow(r_ail,2)*-1.4428e-4 + r_ail*1.2474 - 4.5882e3; // in deg
+	l_ail = pow(l_ail,4)*-1.7482e-16 + pow(l_ail,3)*1.3728e-11 + pow(l_ail,2)*-4.0790e-7 + l_ail*0.0045 + 4.0069; // in deg
+	r_ele = pow(r_ele,3)*-1.8360e-12 + pow(r_ele,2)*6.0969e-8 + r_ele*-0.0019 + 34.3486; // in deg
+	l_ele = pow(l_ele,4)*-4.1426e-16 + pow(l_ele,3)*3.9725e-11 + pow(l_ele,2)*-1.4238e-6 + l_ele*0.0196 - 68.4075; // in deg
+	rud = pow(rud,4)*1.8988e-15 + pow(rud,3)*-2.1584e-10 + pow(rud,2)*9.2592e-6 + rud*-0.1756 + 1.2127e3; // in deg
 
         // Conversion of converted adc data to state data
         P_avg = (P2 + P3 + P4 + P5) * 0.25; // in dPSI
@@ -302,21 +305,6 @@ int main(int argc, char *argv[])
         u_lat_0 = -1.0 * k_lat[0][0] * lat_states[0] + -1.0 * k_lat[0][1] * lat_states[1] + -1.0 * k_lat[0][2] * lat_states[2] + -1.0 * k_lat[0][3] * lat_states[3] + -1.0 * k_lat[0][4] * lat_states[4]; // u[0] - u[0]_0 for the lat sys
         u_lat_1 = -1.0 * k_lat[1][0] * lat_states[0] + -1.0 * k_lat[1][1] * lat_states[1] + -1.0 * k_lat[1][2] * lat_states[2] + -1.0 * k_lat[1][3] * lat_states[3] + -1.0 * k_lat[1][4] * lat_states[4]; // u[1] - u[1]_0 for the lat sys
 
-        // Place actuator values in expected range
-        u_lon_0 = ((u_lon_0 + de_0) < de_min) ? (de_min - de_0) : u_lon_0;
-        u_lon_0 = ((u_lon_0 + de_0) > de_max) ? (de_max - de_0) : u_lon_0;
-        u_lat_0 = ((u_lat_0 + da_0) < da_min) ? (da_min - da_0) : u_lat_0;
-        u_lat_0 = ((u_lat_0 + da_0) > da_max) ? (da_max - da_0) : u_lat_0;
-        u_lat_1 = ((u_lat_1 + dr_0) < dr_min) ? (dr_min - dr_0) : u_lat_1;
-        u_lat_1 = ((u_lat_1 + dr_0) > dr_max) ? (dr_max - dr_0) : u_lat_1;
-        u_lon_1 = ((u_lon_1 + dt_0_0) < dt_min) ? (dt_min - dt_0_0) : u_lon_1; // Assumes all thrust equilibrium inputs are identical
-        u_lon_1 = ((u_lon_1 + dt_0_0) > dt_max) ? (dt_max - dt_0_0) : u_lon_1; // Assumes all thrust equilibrium inputs are identical
-
-        //convert actuator values from physical parameters to % of range (throttles are already in this form)
-        de_percent = ((u_lon_0 + de_0) - de_min) / (de_max - de_min); // unitless with min possible input = 0 and max possible input = 1
-        da_percent = ((u_lat_0 + da_0) - da_min) / (da_max - da_min); // unitless with min possible input = 0 and max possible input = 1
-        dr_percent = ((u_lat_1 + dr_0) - dr_min) / (dr_max - dr_min); // unitless with min possible input = 0 and max possible input = 1
-
         // Collect previous state values
         V_prev = V; // m/s
         alpha_prev = alpha; // rad
@@ -327,10 +315,25 @@ int main(int argc, char *argv[])
         r_prev = wz; // rad/s
         phi_prev = roll; // rad
 
+	// Convert angle commands to PWM commands
+	elevator_angle_command = 57.29578*(u_lon_0 + de_0); // in degrees
+	elevator_angle_command = pow(elevator_angle_command,4)*-5.1386e-6 + pow(elevator_angle_command,3)*-1.9281e-4 + pow(elevator_angle_command,2)*0.0783 + elevator_angle_command*10.4587 + 1.5023e3; // in PWM
+	elevator_angle_command = elevator_angle_command > 1774.0 ? 1774.0 : elevator_angle_command;
+	elevator_angle_command = elevator_angle_command < 1226.0 ? 1226.0 : elevator_angle_command;
+	aileron_angle_command = 57.29578*(u_lat_0 + da_0); // in degrees
+	aileron_angle_command = pow(aileron_angle_command,4)*8.6261e-4 + pow(aileron_angle_command,3)*-0.0068 + pow(aileron_angle_command,2)*-0.0638 + aileron_angle_command*-17.4873 + 1.4620e3; // in PWM
+	aileron_angle_command = aileron_angle_command > 1826.0 ? 1826.0 : aileron_angle_command;
+	aileron_angle_command = aileron_angle_command < 1186.0 ? 1186.0 : aileron_angle_command;	
+	rudder_angle_command = 57.29578*(u_lat_1 + dr_0) - 5.0; // in degrees
+	rudder_angle_command = rudder_angle_command*-11.7637 + 1.4615e3; // in PWM
+	rudder_angle_command = rudder_angle_command > 1740.0 ? 1740.0 : rudder_angle_command;
+	rudder_angle_command = rudder_angle_command < 1085.0 ? 1085.0 : rudder_angle_command;
+
+
         //assign actuator values
-        acts.de = de_percent; // 0% -> nose up
-        acts.da = da_percent; // 0% -> roll left
-        acts.dr = dr_percent; // 0% -> nose ?
+        acts.de = (int)elevator_angle_command;
+        acts.da = (int)aileron_angle_command; 
+        acts.dr = (int)rudder_angle_command;
         acts.dt[0] = u_lon_1 + dt_0_0;
         acts.dt[1] = u_lon_1 + dt_1_0;
         acts.dt[2] = u_lon_1 + dt_2_0;
@@ -340,15 +343,26 @@ int main(int argc, char *argv[])
         acts.dt[6] = u_lon_1 + dt_6_0;
         acts.dt[7] = u_lon_1 + dt_7_0;
         usleep(10000);
-
-	if (curr_iteration % 300 == 0){
-		std::cout<< "Elevator from AP = " << de_percent * 100 << "%" << std::endl;
-		std::cout<< "Aileron from AP = " << da_percent * 100 << "%" << std::endl;
-		std::cout<< "Rudder from AP = " << dr_percent * 100 << "%" << std::endl;
+	
+	if (curr_iteration % 500 == 0){
+		std::cout<<std::endl<<std::endl;
+		
+		std::cout<< "Elevator command = " << (u_lon_0 + de_0)*57.325 << " deg" << std::endl;
+		std::cout<< "l_ele = " << l_ele << " deg" << std::endl;
+		std::cout<< "ele PWM = " << (int)elevator_angle_command << std::endl << std::endl;
+		
+		std::cout<< "Aileron command = " << (u_lat_0 + da_0)*57.325 << " deg" << std::endl;
+		std::cout<< "l_ail = " << l_ail << " deg" << std::endl;
+		std::cout<< "ail PWM = " << (int)aileron_angle_command << std::endl << std::endl;
+		
+		std::cout<< "Rudder command = " << (u_lat_1 + dr_0)*57.325 << " deg" << std::endl;
+		std::cout<< "rud = " << rud << " deg" << std::endl;
+		std::cout<< "rud PWM = " << (int)rudder_angle_command << std::endl << std::endl;
 	}
-	curr_iteration++;
 
-        //timestamp the values:
+	curr_iteration++;
+        
+	//timestamp the values:
         acts.time_gps = get_gps_time(&handlerObject);
 
         //publish the actuator values:

@@ -409,27 +409,19 @@ int main(int argc, char *argv[])
                 {
                     pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                     pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
-                }
+
+		}
             }
             else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
             {
                 for (int i=0; i<num_outputs; i++)
                 {
-		    	if (i==0){ //Aileron command
-				int command = (int) (1816.0 - 642.0 * (handlerObject.acts[i]));
-				pwm_comm.pwm_out[i] = command;
-
-			}
-			else if (i==1){ //Elevator command
-				int command = (int) (1259.0 + 515.0 * (handlerObject.acts[i]));
+			if (i!=0 && i!=1 && i!=2) { //Thrust command
+				int command = (int) (1085.0 + 819.0 * (handlerObject.acts[i]));
 				pwm_comm.pwm_out[i] = command;
 			}
-			else if (i==2){ //Rudder command	
-				int command = (int) (1136 + 810.0 * (handlerObject.acts[i]));
-				pwm_comm.pwm_out[i] = command;
-			}
-			else (){ //Thrust command
-				pwm_comm.pwm_out[i] = output_scaling(HandlerObject.acts[i], servo_min, servo_max, surface_min, surface_max)
+			else {
+				pwm_comm.pwm_out[i] = handlerObject.acts[i];
 			}
 
 			pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
