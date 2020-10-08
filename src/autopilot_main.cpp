@@ -11,7 +11,8 @@
 #include <zcm/zcm-cpp.hpp>
 #include <chrono>
 #include <math.h>
-//message types:
+
+// Message types
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 #include "adc_data_t.hpp"
@@ -19,365 +20,455 @@
 
 using std::string;
 
+// Class used to handle incoming ZCM messages
 class Handler
 {
-    public:
-        ~Handler() = default;
+public:
+~Handler() = default;
 
-        adc_data_t adc;
-        status_t stat;
-        vnins_data_t vnins;
+adc_data_t adc;
+status_t stat;
+vnins_data_t vnins;
 
-        Handler()
-        {
-            memset(&adc, 0, sizeof(adc));
-            memset(&stat, 0, sizeof(stat));
-            memset(&vnins, 0, sizeof(vnins));
-        }
-
-        void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
-        {
-            adc = *msg;
-        }
-
-        void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
-        {
-            stat = *msg;
-        }
-
-        void read_vnins(const zcm::ReceiveBuffer* rbuf,const string& chan,const vnins_data_t *msg)
-        {
-            vnins = *msg;
-        }
-};
-
-double get_gps_time(Handler* adchandle)
+Handler()
 {
-    double adc_gps = adchandle->adc.time_gps;
-    int64_t adc_time = adchandle->adc.time_rpi;
-    int64_t rpi_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    return  adc_gps + (rpi_time - adc_time)/1000000.0;
+        memset(&adc, 0, sizeof(adc));
+        memset(&stat, 0, sizeof(stat));
+        memset(&vnins, 0, sizeof(vnins));
 }
 
-double evaluate_poly(double coeffs[], int size, double X, double Y) {
-    int curr_x = 0;
-    int curr_y = 0;
-    int x_order = 0;
-    int y_order = 0;
-    double evaluation = 0.0;
+void read_adc(const zcm::ReceiveBuffer* rbuf,const string& chan,const adc_data_t *msg)
+{
+        adc = *msg;
+}
 
-    for (int i = 0; i < size; i++) {
-        evaluation += coeffs[i] * pow(X, curr_x) * pow(Y, curr_y);
-        if (curr_x == 0) {
-            curr_x = x_order + 1;
-            x_order = curr_x;
-        }
-        else {
-            curr_x = curr_x - 1;
-        }
-        if (curr_y == y_order) {
-            curr_y = 0;
-            y_order = y_order + 1;
-        }
-        else {
-            curr_y = curr_y + 1;
-        }
-    }
+void read_stat(const zcm::ReceiveBuffer* rbuf,const string& chan,const status_t *msg)
+{
+        stat = *msg;
+}
 
-    return evaluation;
+void read_vnins(const zcm::ReceiveBuffer* rbuf,const string& chan,const vnins_data_t *msg)
+{
+        vnins = *msg;
+}
+
+};
+
+// Used to gather GPS time from adc
+double get_gps_time(Handler* adchandle)
+{
+        double adc_gps = adchandle->adc.time_gps;
+        int64_t adc_time = adchandle->adc.time_rpi;
+        int64_t rpi_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        return adc_gps + (rpi_time - adc_time)/1000000.0;
+}
+
+// Evaluates an (n,m) degree polynomial over X and Y
+double evl_ply(double coeffs[], int size, double X, double Y)
+{
+        int curr_x = 0;
+        int curr_y = 0;
+        int x_order = 0;
+        int y_order = 0;
+        double evaluation = 0.0;
+
+        for (int i = 0; i < size; i++)
+        {
+                evaluation += coeffs[i] * pow(X, curr_x) * pow(Y, curr_y);
+                if (curr_x == 0)
+                {
+                        curr_x = x_order + 1;
+                        x_order = curr_x;
+                }
+                else
+                {
+                        curr_x = curr_x - 1;
+                }
+                if (curr_y == y_order)
+                {
+                        curr_y = 0;
+                        y_order = y_order + 1;
+                }
+                else
+                {
+                        curr_y = curr_y + 1;
+                }
+        }
+
+        return evaluation;
+}
+
+// Evaluates an n degree polynomial over X
+double evl_exp(double coeffs[], int size, double X)
+{
+        double evaluation = 0.0;
+
+        for (int i = 0; i < size; i++)
+        {
+                evaluation += coeffs[i] * pow(X, size - i - 1);
+        }
+
+        return evaluation;
 }
 
 int main(int argc, char *argv[])
 {
-    
-    //_________________________________START_PASTE_HERE_________________________________//
+        // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
+        double ps1_con[2] = { -0.19188, 4.8261e-06 }; // To dPSI
+        double ps2_con[2] = { -0.19142, 4.8269e-06 }; // To dPSI
+        double ps3_con[2] = { -0.19211, 4.8141e-06 }; // To dPSI
+        double ps4_con[2] = { -0.19283, 4.8152e-06 }; // To dPSI
+        double ps5_con[2] = { -0.19231, 4.8028e-06 }; // To dPSI
 
-    // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
-    double P1_c[2] = { -0.19188, 4.8261e-06 }; // To dPSI
-    double P2_c[2] = { -0.19142, 4.8269e-06 }; // To dPSI
-    double P3_c[2] = { -0.19211, 4.8141e-06 }; // To dPSI
-    double P4_c[2] = { -0.19283, 4.8152e-06 }; // To dPSI
-    double P5_c[2] = { -0.19231, 4.8028e-06 }; // To dPSI
+        // Conversion constants for ADC to control surface deflections
+        double rel_con[4] = { -1.8360e-12,  6.0969e-08, -0.00190000,  34.3486000 };
+        double lel_con[5] = { -4.1426e-16,  3.9725e-11, -1.4238e-06,  0.01960000, 68.407500 };
+        double ral_con[8] = {  4.8223e-28, -9.3369e-23,  7.6526e-18,  3.4398e-13, 9.1555e-9, -1.4428e-4, 1.2474000, 4588.2000 };
+        double lal_con[5] = { -1.7482e-16,  1.3728e-11, -4.0790e-07,  0.00450000, 4.0069000 };
+        double rud_con[5] = {  1.8988e-15, -2.1584e-10,  9.2592e-06, -0.17560000, 1212.7000 };
 
-    // Conversion constants for the converted adc data
-    double alpha_c[15] = { 0.14417, -14.0401, -0.48222, -0.82991, -0.39334, -0.065129, 0.29331, 0.10864, 0.57212, 0.12463, 0.022992, 0.029209, 0.089836, 0.057237, 0.016901 };
-    double beta_c[15] = { -0.045676, 0.090171, 13.8048, 0.002027, 0.94476, 0.29254, 0.12192, -0.66955, -0.020875, -0.33687, 0.023934, -0.10505, -0.019041, -0.054968, -0.018293 };
-    double cps_c[21] = { 0.59235, -0.0032055, -0.0045759, -0.098045, 0.010147, -0.0977, -0.015851, -0.0024914, -0.022443, -0.0037574, -0.0042317, -0.0039405, 0.01926, -0.0014971, -0.0014967, -0.0007027, -0.0010546, 0.0041895, 6.6051e-05, 0.00048148, -0.00022731 };
-    double cpt_c[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
+        // Conversion constants for deflection commands to PWM commands
+        double ele_PWM_con[5] = { -5.1386e-6, -1.9281e-4,  0.0783,  10.4587, 1.5023e3 };
+        double ail_PWM_con[5] = {  8.6261e-4, -0.0068000, -0.0638, -17.4873, 1.4620e3 };
+        double rud_PWM_con[2] = { -11.763700,  1.4615e03 };
 
-    // Wing Leveling Controller constants
-    double k_lon[2][4] = { {0, 0, 0, 0},  {0, 0, 0, 0} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
-    double k_lat[2][5] = { {0, 0.14855, 0, 0.4, 0},  {0, 0, 0, 0, 0} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
+        // Conversion constants for the converted adc data
+        double AoA_con[15] = {  0.14417, -14.0401, -0.48222, -0.82991, -0.39334, -0.06513,  0.29331,  0.10864,  0.57212,  0.12463,  0.022992,  0.02921,  0.08984,  0.057237,  0.016901 };
+        double bet_con[15] = { -0.04568,  0.09017,  13.8048,  0.00203,  0.94476,  0.29254,  0.12192, -0.66955, -0.02088, -0.33687,  0.023934, -0.10505, -0.01904, -0.054968, -0.018293 };
+        double cps_con[21] = {  0.59235, -0.00321, -0.00458, -0.09805,  0.01015, -0.09770, -0.01585, -0.00249, -0.02244, -0.00376, -0.004233, -0.00394,  0.01926, -0.001497, -0.0014977, -0.0007027, -0.0010546, 0.0041895, 6.6051e-05, 0.00048148, -0.00022731 };
+        double cpt_con[15] = { -0.21483,  0.03614,  0.00374, -0.12377, -0.03420, -0.11844,  0.00220,  0.00401,  0.00472,  0.00266,  0.000107,  0.00234,  0.00791,  0.003493, -0.001166 };
 
-    // Trim conditions
-    double V_0 = 30.5755; // m/s
-    double alpha_0 = 0.0178; // rad
-    double q_0 = 0; // rad/s
-    double theta_0 = 0; // rad
-    double beta_0 = 0; // rad
-    double p_0 = 0; // rad/s
-    double r_0 = 0; // rad/s
-    double phi_0 = 0; // rad
-    double psi_0 = 0; // rad
-    double rho = 1.1666; // in kg/m^3
+        // Wing Leveling Controller constants
+        double k_lon[2][4] = { {0.00000, 0.00000, 0.00000, 0.00000},  {0.00000, 0.00000, 0.00000, 0.00000} };// Longitudinal controller gains of form u_lon = -k_lon * x_lon
+        double k_lat[2][5] = { {0.00000, 0.14855, 0.00000, 0.40000, 0.00000},  {0.00000, 0.00000, 0.00000, 0.00000, 0.00000} };// Lateral controller gains of form u_lat = -k_lat * x_lat
 
-    // State limits
-    double V_min = 0; // Minimum acceptable value. Any values lower are considered improper readings.
-    double V_max = 60; // Maximum acceptable value. Any values higher are considered improper readings.
-    double alpha_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
-    double alpha_max = 0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
-    double q_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
-    double q_max = 0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
-    double theta_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
-    double theta_max = 1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
-    double beta_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
-    double beta_max = 0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
-    double p_min = -1.0471; // Minimum acceptable value. Any values lower are considered improper readings.
-    double p_max = 1.0471; // Maximum acceptable value. Any values higher are considered improper readings.
-    double r_min = -0.5236; // Minimum acceptable value. Any values lower are considered improper readings.
-    double r_max = 0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
-    double phi_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
-    double phi_max = 1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
+        // Trim conditions
+        double vel_trm = 30.576; // m/s
+        double AoA_trm = 0.0178; // rad
+        double wyy_trm = 0.0000; // rad/s
+        double pit_trm = 0.0000; // rad
+        double bet_trm = 0.0000; // rad
+        double wxx_trm = 0.0000; // rad/s
+        double wzz_trm = 0.0000; // rad/s
+        double rol_trm = 0.0000; // rad
+        double yaw_trm = 0.0000; // rad
+        double rho_trm = 1.1666; // in kg/m^3
 
-    // Previous states
-    double V_prev = 0.0; // m/s
-    double alpha_prev = 0.0; // rad
-    double q_prev = 0.0; // rad/s
-    double theta_prev = 0.0; // rad
-    double beta_prev = 0.0; // rad
-    double p_prev = 0.0; // rad/s
-    double r_prev = 0.0; // rad/s
-    double phi_prev = 0.0; // rad
+        // State limits
+        double vel_min =  0.0000; // Minimum acceptable value. Any values lower are considered improper readings.
+        double vel_max =  60.000; // Maximum acceptable value. Any values higher are considered improper readings.
+        double AoA_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
+        double AoA_max =  0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
+        double wyy_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
+        double wyy_max =  0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
+        double pit_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
+        double pit_max =  1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
+        double bet_min = -0.6108; // Minimum acceptable value. Any values lower are considered improper readings.
+        double bet_max =  0.6108; // Maximum acceptable value. Any values higher are considered improper readings.
+        double wxx_min = -1.0471; // Minimum acceptable value. Any values lower are considered improper readings.
+        double wxx_max =  1.0471; // Maximum acceptable value. Any values higher are considered improper readings.
+        double wzz_min = -0.5236; // Minimum acceptable value. Any values lower are considered improper readings.
+        double wzz_max =  0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
+        double yaw_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
+        double yaw_max =  1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
 
-    // Input trim values
-    double de_0 = -0.0832; // rad
-    double da_0 = 0; // rad
-    double dr_0 = 0; // rad
-    double dt_0_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_1_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_2_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_3_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_4_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_5_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_6_0 = 0.49188; //percent throttle [0.0, 1.0]
-    double dt_7_0 = 0.49188; //percent throttle [0.0, 1.0]
+        // Previous states
+        double vel_pre = 0.0; // m/s
+        double AoA_pre = 0.0; // rad
+        double wyy_pre = 0.0; // rad/s
+        double pit_pre = 0.0; // rad
+        double bet_pre = 0.0; // rad
+        double wxx_pre = 0.0; // rad/s
+        double wyy_pre = 0.0; // rad/s
+        double rol_pre = 0.0; // rad
 
-    // Declare all other values used
-    double P1;
-    double P2;
-    double P3;
-    double P4;
-    double P5;
-    double P_avg;
-    double C_alpha;
-    double C_beta;
-    double alpha;
-    double beta;
-    double cps;
-    double cpt;
-    double Pt;
-    double Ps;
-    double V;
-    double yaw;
-    double pitch;
-    double roll;
-    double wx;
-    double wy;
-    double wz;
-    double lon_states[4];
-    double lat_states[5];
-    double u_lon_0;
-    double u_lon_1;
-    double u_lat_0;
-    double u_lat_1;
-    double r_ail;
-    double l_ail;
-    double r_ele;
-    double l_ele;
-    double rud;
-    double elevator_angle_command;
-    double aileron_angle_command;
-    double rudder_angle_command;
-    int curr_iteration = 1;
+        // Input trim values
+        double ele_trm = -0.0832; // rad
+        double ail_trm =  0.0000; // rad
+        double rud_trm =  0.0000; // rad
+        double tr0_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr1_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr2_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr3_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr4_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr5_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr6_trm = 0.49188; //percent throttle [0.0, 1.0]
+        double tr7_trm = 0.49188; //percent throttle [0.0, 1.0]
 
-    //initialize zcm
-    zcm::ZCM zcm{ "ipc" };
+        // Input PWM limits
+        int ele_PWM_min = 1226;
+        int ele_PWM_max = 1774;
+        int ail_PWM_min = 1186;
+        int ail_PWM_max = 1826;
+        int rud_PWM_min = 1085;
+        int rud_PWM_max = 1740;
+        int thr_PWM_min = 1085;
+        int thr_PWM_max = 1904;
 
-    //initialize message objects
-    actuators_t acts;
-    memset(&acts, 0, sizeof(acts));
+        // Declare all other pressure values used
+        double ps1;
+        double ps2;
+        double ps3;
+        double ps4;
+        double ps5;
+        double pes_avg;
+        double pes_tot;
+        double pes_stc;
 
-    //subscribe to incoming channels:
-    Handler handlerObject;
-    zcm.subscribe("STATUS", &Handler::read_stat, &handlerObject);
-    zcm.subscribe("ADC_DATA", &Handler::read_adc, &handlerObject);
-    zcm.subscribe("VNINS_DATA", &Handler::read_vnins, &handlerObject);
+        // Declare all other values used in ADC transformation
+        double cof_AoA;
+        double cof_bet;
+        double cof_ptt;
+        double cof_pst;
 
-    //for publishing stat of this module
-    status_t module_stat;
-    memset(&module_stat, 0, sizeof(module_stat));
-    module_stat.module_status = 1;//module running
+        // Declare all other state values used
+        double AoA;
+        double bet;
+        double vel;
+        double yaw;
+        double pit;
+        double rol;
+        double wxx;
+        double wyy;
+        double wzz;
+        double lon_sts[4];
+        double lat_sts[5];
 
-    //run zcm as a separate thread:
-    zcm.start();
+        // Declare all other control surface values used
+        double ele_lft;
+        double ele_rgt;
+        double ail_lft;
+        double ail_rgt;
+        double rud;
 
-    std::cout << "autopilot started" << std::endl;
+        // Declare all other input values used
+        double lon_in0;
+        double lon_in1;
+        double lat_in0;
+        double lat_in1;
+        double ele_ang_cmd;
+        double ail_ang_cmd;
+        double rud_ang_cmd;
+        int ele_PWM_cmd;
+        int ail_PWM_cmd;
+        int rud_PWM_cmd;
+        int tr0_PWM_cmd;
+        int tr1_PWM_cmd;
+        int tr2_PWM_cmd;
+        int tr3_PWM_cmd;
+        int tr4_PWM_cmd;
+        int tr5_PWM_cmd;
+        int tr6_PWM_cmd;
+        int tr7_PWM_cmd;
 
-    //control loop:
-    while (!handlerObject.stat.should_exit)
-    {
-        //publish the status of this module
-        zcm.publish("STATUS4", &module_stat);
+        // Initialize an iterator
+        int cur_itr = 1;
 
-        // Raw data from adc
-        P1 = P1_c[0] + P1_c[1] * (double)handlerObject.adc.data[0]; // uCH0 --> P1 for 5 hole probe
-        P2 = P2_c[0] + P2_c[1] * (double)handlerObject.adc.data[1]; // uCH1 --> P2 for 5 hole probe
-        P3 = P3_c[0] + P3_c[1] * (double)handlerObject.adc.data[2]; // uCH2 --> P3 for 5 hole probe
-        P4 = P4_c[0] + P4_c[1] * (double)handlerObject.adc.data[3]; // uCH3 --> P4 for 5 hole probe
-        P5 = P5_c[0] + P5_c[1] * (double)handlerObject.adc.data[4]; // uCH4 --> P5 for 5 hole probe
-        r_ail = (double)handlerObject.adc.data[8];  // dCH0 -> r_ail
-	l_ail = (double)handlerObject.adc.data[9];  // dCH1 -> l_ail
-	r_ele = (double)handlerObject.adc.data[10]; // dCH2 -> r_ele 
-	l_ele = (double)handlerObject.adc.data[11]; // dCH2 -> l_ele
-	rud =   (double)handlerObject.adc.data[12]; // dCH3 -> rud
+        // Initialize zcm and message objects
+        zcm::ZCM zcm{ "ipc" };
+        actuators_t acts;
+        memset(&acts, 0, sizeof(acts));
 
-	// Convert control surface data to radian values
-	r_ail = pow(r_ail,7)*4.8223e-28 + pow(r_ail,6)*-9.3369e-23 + pow(r_ail,5)*7.6526e-18 + pow(r_ail,4)*-3.4398e-13 + pow(r_ail,3)*9.1555e-9 + pow(r_ail,2)*-1.4428e-4 + r_ail*1.2474 - 4.5882e3; // in deg
-	l_ail = pow(l_ail,4)*-1.7482e-16 + pow(l_ail,3)*1.3728e-11 + pow(l_ail,2)*-4.0790e-7 + l_ail*0.0045 + 4.0069; // in deg
-	r_ele = pow(r_ele,3)*-1.8360e-12 + pow(r_ele,2)*6.0969e-8 + r_ele*-0.0019 + 34.3486; // in deg
-	l_ele = pow(l_ele,4)*-4.1426e-16 + pow(l_ele,3)*3.9725e-11 + pow(l_ele,2)*-1.4238e-6 + l_ele*0.0196 - 68.4075; // in deg
-	rud = pow(rud,4)*1.8988e-15 + pow(rud,3)*-2.1584e-10 + pow(rud,2)*9.2592e-6 + rud*-0.1756 + 1.2127e3; // in deg
+        // Subscribe to incoming channels
+        Handler handlerObject;
+        zcm.subscribe("STATUS", &Handler::read_stat, &handlerObject);
+        zcm.subscribe("ADC_DATA", &Handler::read_adc, &handlerObject);
+        zcm.subscribe("VNINS_DATA", &Handler::read_vnins, &handlerObject);
 
-        // Conversion of converted adc data to state data
-        P_avg = (P2 + P3 + P4 + P5) * 0.25; // in dPSI
-        C_alpha = (P4 - P5) / (P1 - P_avg); // unitless
-        C_beta = (P3 - P2) / (P1 - P_avg); // unitless
-        alpha = 0.01745329251 * evaluate_poly(alpha_c, 15, C_alpha, C_beta); // in rad
-        beta = 0.01745329251 * evaluate_poly(beta_c, 15, C_alpha, C_beta); // in rad
-        cps = evaluate_poly(cps_c, 21, C_alpha, C_beta); // unitless
-        cpt = evaluate_poly(cpt_c, 15, C_alpha, C_beta); // unitless
-        Pt = (P1 - cpt * (P1 - P_avg)) * 6894.76; // in Pa
-        Ps = (P_avg - cps * (P1 - P_avg)) * 6894.76; // in Pa
+        // For publishing stat of this module
+        status_t module_stat;
+        memset(&module_stat, 0, sizeof(module_stat));
+        module_stat.module_status = 1;//module running
 
-        // If the pressure readings indicate imaginary velocity, assing the velocity as the previous good value
-        if (Pt >= 0.0 || Ps >= 0.0 || Pt - Ps >= 0.0) {
-            //std::cout << "Pressure readings rejected" << std::endl;
-            V = V_prev;
+        // Run zcm as a separate thread
+        zcm.start();
+        std::cout << "autopilot started" << std::endl;
+
+        // Control loop:
+        while (!handlerObject.stat.should_exit)
+        {
+                // Publish the status of this module
+                zcm.publish("STATUS4", &module_stat);
+
+                // Gather raw data from ADC and convert it to readable data
+                ps1     = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
+                ps2     = evl_exp(ps2_con, 2, (double)handlerObject.adc.data[1] ); // uCH1
+                ps3     = evl_exp(ps3_con, 2, (double)handlerObject.adc.data[2] ); // uCH2
+                ps4     = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
+                ps5     = evl_exp(ps5_con, 2, (double)handlerObject.adc.data[4] ); // uCH4
+                ail_rgt = evl_exp(ral_con, 4, (double)handlerObject.adc.data[8] ); // dCH0
+                ail_lft = evl_exp(lal_con, 5, (double)handlerObject.adc.data[9] ); // dCH1
+                ele_rgt = evl_exp(rel_con, 8, (double)handlerObject.adc.data[10]); // dCH2
+                ele_lft = evl_exp(lel_con, 5, (double)handlerObject.adc.data[11]); // dCH3
+                rud     = evl_exp(rud_con, 5, (double)handlerObject.adc.data[12]); // dCH4
+
+                // Calculate pressure coefficient data
+                pes_avg = (ps2 + ps3 + ps4 + ps5)* 0.25;          // in dPSI
+                cof_AoA = (ps4 - ps5) / (ps1 - pes_avg);          // unitless
+                cof_bet = (ps3 - ps2) / (ps1 - pes_avg);          // unitless
+                cof_ptt = evl_ply(cpt_con, 21, cof_AoA, cof_bet); // unitless
+                cof_pst = evl_ply(cps_con, 15, cof_AoA, cof_bet); // unitless
+
+                // Use pressure coefficient data to calculate AoA, beta, total pressure, static pressure
+                AoA = 0.01745 * evl_ply(AoA_con, 15, cof_AoA, cof_bet);    // in rad
+                bet = 0.01745 * evl_ply(bet_con, 15, cof_AoA, cof_bet);    // in rad
+                pes_tot = (ps1     - cof_ptt * (ps1 - pes_avg)) * 6894.76; // in Pa
+                pes_stc = (pes_avg - cof_pst * (ps1 - pes_avg)) * 6894.76; // in Pa
+
+                // If the pressure readings indicate imaginary velocity, assing the velocity as the previous good value
+                if (pes_tot >= 0.0 || pes_stc >= 0.0 || pes_tot - pes_stc >= 0.0)
+                {
+                        vel = vel_pre; // in m/s
+                }
+                else
+                {
+                        vel = sqrt((2.0 * (abs(pes_tot) - abs(pes_stc))) / (rho_trm)); // in m/s
+                }
+
+                // INS data
+                pit = 0.017453 * handlerObject.vnins.pitch; // in rad
+                rol = 0.017453 * handlerObject.vnins.roll;  // in rad
+                yaw = 0.017453 * handlerObject.vnins.yaw;   // in rad
+                wxx = 1.000000 * handlerObject.vnins.wx;    // in rad/s (roll rate)
+                wyy = 1.000000 * handlerObject.vnins.wy;    // in rad/s (pitch rate)
+                wzz = 1.000000 * handlerObject.vnins.wz;    // in rad/s (yaw rate)
+
+                // Bad state rejection (Assign previous good value of state if measured state is out of range)
+                vel = (vel < vel_min || vel > vel_max) ? vel_pre : vel;
+                AoA = (AoA < AoA_min || AoA > AoA_max) ? AoA_pre : AoA;
+                wyy = (wyy < wyy_min || wyy > wyy_max) ? wyy_pre : wyy;
+                pit = (pit < pit_min || pit > pit_max) ? pit_pre : pit;
+                bet = (bet < bet_min || bet > bet_max) ? bet_pre : bet;
+                wxx = (wxx < wxx_min || wxx > wxx_max) ? wxx_pre : wxx;
+                wyy = (wyy < wyy_min || wyy > wyy_max) ? wyy_pre : wyy;
+                rol = (rol < rol_min || rol > rol_max) ? rol_pre : rol;
+
+                // Collect previous state values
+                vel_pre = vel; // m/s
+                AoA_pre = AoA; // rad
+                wyy_pre = wyy; // rad/s
+                pit_pre = pit; // rad
+                bet_pre = bet; // rad
+                wxx_pre = wxx; // rad/s
+                wzz_pre = wzz; // rad/s
+                rol_pre = rol; // rad
+
+                // Calculate -1.0 * (state errors)
+                lon_sts[0] = vel_trm - vel;
+                lon_sts[1] = AoA_trm - AoA;
+                lon_sts[2] = wyy_trm - wyy;
+                lon_sts[3] = pit_trm - pit;
+                lat_sts[0] = bet_trm - bet;
+                lat_sts[1] = wxx_trm - wxx;
+                lat_sts[2] = wzz_trm - wzz;
+                lat_sts[3] = rol_trm - rol;
+                lat_sts[4] = yaw_trm - yaw;
+
+                // Calculate lon inputs based on lon state (u-u0) = -K_lon * (x - x0)
+                lon_in0 = k_lon[0][0] * lon_sts[0] + k_lon[0][1] * lon_sts[1] + k_lon[0][2] * lon_sts[2] + k_lon[0][3] * lon_sts[3]; // u[0] - u[0]_0 for the lon sys
+                lon_in1 = k_lon[1][0] * lon_sts[0] + k_lon[1][1] * lon_sts[1] + k_lon[1][2] * lon_sts[2] + k_lon[1][3] * lon_sts[3]; // u[1] - u[1]_0 for the lon sys
+
+                // Calculate lat inputs based on lat state (u-u0) = -K_lat * (x - x0)
+                lat_in0 = k_lat[0][0] * lat_sts[0] + k_lat[0][1] * lat_sts[1] + k_lat[0][2] * lat_sts[2] + k_lat[0][3] * lat_sts[3] + k_lat[0][4] * lat_sts[4]; // u[0] - u[0]_0 for the lat sys
+                lat_in1 = k_lat[1][0] * lat_sts[0] + k_lat[1][1] * lat_sts[1] + k_lat[1][2] * lat_sts[2] + k_lat[1][3] * lat_sts[3] + k_lat[1][4] * lat_sts[4]; // u[1] - u[1]_0 for the lat sys
+
+                // Convert angle commands to degrees
+                ele_ang_cmd = 57.29578*(lon_in0 + ele_trm); // in degrees
+                ail_ang_cmd = 57.29578*(lat_in0 + ail_trm); // in degrees
+                rud_ang_cmd = 57.29578*(lat_in1 + rud_trm) - 5.0; // in degrees
+
+                // Convert angular degree commands to PWM commands
+                ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 5, ele_ang_cmd);
+                ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 5, ail_ang_cmd);
+                rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 2, rud_ang_cmd);
+                tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr0_trm);
+                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr1_trm);
+                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr2_trm);
+                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr3_trm);
+                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr4_trm);
+                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr5_trm);
+                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr6_trm);
+                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr7_trm);
+
+                // Ensure PWM commands are within safe limits
+                ele_PWM_cmd = ele_PWM_cmd > ele_PWM_max ? ele_PWM_max : ele_PWM_cmd;
+                ele_PWM_cmd = ele_PWM_cmd < ele_PWM_min ? ele_PWM_min : ele_PWM_cmd;
+                ail_PWM_cmd = ail_PWM_cmd > ail_PWM_max ? ail_PWM_max : ail_PWM_cmd;
+                ail_PWM_cmd = ail_PWM_cmd < ail_PWM_min ? ail_PWM_min : ail_PWM_cmd;
+                rud_PWM_cmd = rud_PWM_cmd > rud_PWM_max ? rud_PWM_max : rud_PWM_cmd;
+                rud_PWM_cmd = rud_PWM_cmd < rud_PWM_min ? rud_PWM_min : rud_PWM_cmd;
+                tr0_PWM_cmd = tr0_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr0_PWM_cmd;
+                tr0_PWM_cmd = tr0_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr0_PWM_cmd;
+                tr1_PWM_cmd = tr1_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr1_PWM_cmd;
+                tr1_PWM_cmd = tr1_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr1_PWM_cmd;
+                tr2_PWM_cmd = tr2_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr2_PWM_cmd;
+                tr2_PWM_cmd = tr2_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr2_PWM_cmd;
+                tr3_PWM_cmd = tr3_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr3_PWM_cmd;
+                tr3_PWM_cmd = tr3_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr3_PWM_cmd;
+                tr4_PWM_cmd = tr4_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr4_PWM_cmd;
+                tr4_PWM_cmd = tr4_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr4_PWM_cmd;
+                tr5_PWM_cmd = tr5_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr5_PWM_cmd;
+                tr5_PWM_cmd = tr5_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr5_PWM_cmd;
+                tr6_PWM_cmd = tr6_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr6_PWM_cmd;
+                tr6_PWM_cmd = tr6_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr6_PWM_cmd;
+                tr7_PWM_cmd = tr7_PWM_cmd > thr_PWM_max ? thr_PWM_max : tr7_PWM_cmd;
+                tr7_PWM_cmd = tr7_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr7_PWM_cmd;
+
+                // Assign actuator values by giving PWM commands
+                acts.de = ele_PWM_cmd;
+                acts.da = ail_PWM_cmd;
+                acts.dr = rud_PWM_cmd;
+                acts.dt[0] = tr0_PWM_cmd;
+                acts.dt[1] = tr1_PWM_cmd;
+                acts.dt[2] = tr2_PWM_cmd;
+                acts.dt[3] = tr3_PWM_cmd;
+                acts.dt[4] = tr4_PWM_cmd;
+                acts.dt[5] = tr5_PWM_cmd;
+                acts.dt[6] = tr6_PWM_cmd;
+                acts.dt[7] = tr7_PWM_cmd;
+
+                // Sleep for 10 ms to remove CPU stree
+                usleep(10000);
+
+                // Debugging stuff
+                if (curr_iteration % 500 == 0)
+                {
+                        std::cout<<std::endl<<std::endl;
+
+                        std::cout<< "Elevator command = " << ele_ang_cmd << " deg" << std::endl;
+                        std::cout<< "l_ele = " << ele_lft << " deg" << std::endl;
+                        std::cout<< "ele PWM = " << ele_PWM_cmd << std::endl << std::endl;
+
+                        std::cout<< "Aileron command = " << ail_ang_cmd << " deg" << std::endl;
+                        std::cout<< "l_ail = " << ail_lft << " deg" << std::endl;
+                        std::cout<< "ail PWM = " << ail_PWM_cmd << std::endl << std::endl;
+
+                        std::cout<< "Rudder command = " << rud_ang_cmd << " deg" << std::endl;
+                        std::cout<< "rud = " << rud << " deg" << std::endl;
+                        std::cout<< "rud PWM = " << rud_PWM_cmd << std::endl << std::endl;
+
+                        std::cout<< "Thrust command = " << (lon_in1 + tr0_trm)*100.0 << " %" << std::endl;
+                        std::cout<< "rud PWM = " << thr_PWM_cmd << std::endl << std::endl;
+                }
+
+                // Iterator iterator
+                cur_itr++;
+
+                // Timestamp the values:
+                acts.time_gps = get_gps_time(&handlerObject);
+
+                // Publish the actuator values:
+                zcm.publish("ACTUATORS", &acts);
+
         }
-        else {
-            V = sqrt((2.0 * (abs(Pt) - abs(Ps))) / (rho)); // in m/s
-        }
 
-        // INS data
-        yaw = 0.01745329251 * handlerObject.vnins.yaw; // in rad
-        pitch = 0.01745329251 * handlerObject.vnins.pitch; // in rad
-        roll = 0.01745329251 * handlerObject.vnins.roll; // in rad
-        wx = handlerObject.vnins.wx; // in rad/s (roll rate)
-        wy = handlerObject.vnins.wy; // in rad/s (pitch rate)
-        wz = handlerObject.vnins.wz; // in rad/s (yaw rate)
+        // Publish terminating status
+        module_stat.module_status = 0;
+        zcm.publish("STATUS4",&module_stat);
+        std::cout << "autopilot module exiting..." << std::endl;
 
-        // Bad state rejection
-        V = (V < V_min || V > V_max) ? V_prev : V;
-        alpha = (alpha < alpha_min || alpha > alpha_max) ? alpha_prev : alpha;
-        wy = (wy < q_min || wy > q_max) ? q_prev : wy;
-        pitch = (pitch < theta_min || pitch > theta_max) ? theta_prev : pitch;
-        beta = (beta < beta_min || beta > beta_max) ? beta_prev : beta;
-        wx = (wx < p_min || wx > p_max) ? p_prev : wx;
-        wz = (wz < r_min || wz > r_max) ? r_prev : wz;
-        roll = (roll < phi_min || roll > phi_max) ? phi_prev : roll;
+        // Stop ZCM
+        zcm.stop();
 
-        // Calculate states
-        lon_states[0] = V - V_0;
-        lon_states[1] = alpha - alpha_0;
-        lon_states[2] = wy - q_0;
-        lon_states[3] = pitch - theta_0;
-        lat_states[0] = beta - beta_0;
-        lat_states[1] = wx - p_0;
-        lat_states[2] = wz - r_0;
-        lat_states[3] = roll - phi_0;
-        lat_states[4] = yaw - psi_0;
-
-        // Calculate lon inputs based on lon state (u-u0) = -K_lon * (x - x0)
-        u_lon_0 = -1.0 * k_lon[0][0] * lon_states[0] + -1.0 * k_lon[0][1] * lon_states[1] + -1.0 * k_lon[0][2] * lon_states[2] + -1.0 * k_lon[0][3] * lon_states[3]; // u[0] - u[0]_0 for the lon sys
-        u_lon_1 = -1.0 * k_lon[1][0] * lon_states[0] + -1.0 * k_lon[1][1] * lon_states[1] + -1.0 * k_lon[1][2] * lon_states[2] + -1.0 * k_lon[1][3] * lon_states[3]; // u[1] - u[1]_0 for the lon sys
-
-        // Calculate lat inputs based on lat state (u-u0) = -K_lat * (x - x0)
-        u_lat_0 = -1.0 * k_lat[0][0] * lat_states[0] + -1.0 * k_lat[0][1] * lat_states[1] + -1.0 * k_lat[0][2] * lat_states[2] + -1.0 * k_lat[0][3] * lat_states[3] + -1.0 * k_lat[0][4] * lat_states[4]; // u[0] - u[0]_0 for the lat sys
-        u_lat_1 = -1.0 * k_lat[1][0] * lat_states[0] + -1.0 * k_lat[1][1] * lat_states[1] + -1.0 * k_lat[1][2] * lat_states[2] + -1.0 * k_lat[1][3] * lat_states[3] + -1.0 * k_lat[1][4] * lat_states[4]; // u[1] - u[1]_0 for the lat sys
-
-        // Collect previous state values
-        V_prev = V; // m/s
-        alpha_prev = alpha; // rad
-        q_prev = wy; // rad/s
-        theta_prev = pitch; // rad
-        beta_prev = beta; // rad
-        p_prev = wx; // rad/s
-        r_prev = wz; // rad/s
-        phi_prev = roll; // rad
-
-	// Convert angle commands to PWM commands
-	elevator_angle_command = 57.29578*(u_lon_0 + de_0); // in degrees
-	elevator_angle_command = pow(elevator_angle_command,4)*-5.1386e-6 + pow(elevator_angle_command,3)*-1.9281e-4 + pow(elevator_angle_command,2)*0.0783 + elevator_angle_command*10.4587 + 1.5023e3; // in PWM
-	elevator_angle_command = elevator_angle_command > 1774.0 ? 1774.0 : elevator_angle_command;
-	elevator_angle_command = elevator_angle_command < 1226.0 ? 1226.0 : elevator_angle_command;
-	aileron_angle_command = 57.29578*(u_lat_0 + da_0); // in degrees
-	aileron_angle_command = pow(aileron_angle_command,4)*8.6261e-4 + pow(aileron_angle_command,3)*-0.0068 + pow(aileron_angle_command,2)*-0.0638 + aileron_angle_command*-17.4873 + 1.4620e3; // in PWM
-	aileron_angle_command = aileron_angle_command > 1826.0 ? 1826.0 : aileron_angle_command;
-	aileron_angle_command = aileron_angle_command < 1186.0 ? 1186.0 : aileron_angle_command;	
-	rudder_angle_command = 57.29578*(u_lat_1 + dr_0) - 5.0; // in degrees
-	rudder_angle_command = rudder_angle_command*-11.7637 + 1.4615e3; // in PWM
-	rudder_angle_command = rudder_angle_command > 1740.0 ? 1740.0 : rudder_angle_command;
-	rudder_angle_command = rudder_angle_command < 1085.0 ? 1085.0 : rudder_angle_command;
-
-
-        //assign actuator values
-        acts.de = (int)elevator_angle_command;
-        acts.da = (int)aileron_angle_command; 
-        acts.dr = (int)rudder_angle_command;
-        acts.dt[0] = u_lon_1 + dt_0_0;
-        acts.dt[1] = u_lon_1 + dt_1_0;
-        acts.dt[2] = u_lon_1 + dt_2_0;
-        acts.dt[3] = u_lon_1 + dt_3_0;
-        acts.dt[4] = u_lon_1 + dt_4_0;
-        acts.dt[5] = u_lon_1 + dt_5_0;
-        acts.dt[6] = u_lon_1 + dt_6_0;
-        acts.dt[7] = u_lon_1 + dt_7_0;
-        usleep(10000);
-	
-	if (curr_iteration % 500 == 0){
-		std::cout<<std::endl<<std::endl;
-		
-		std::cout<< "Elevator command = " << (u_lon_0 + de_0)*57.325 << " deg" << std::endl;
-		std::cout<< "l_ele = " << l_ele << " deg" << std::endl;
-		std::cout<< "ele PWM = " << (int)elevator_angle_command << std::endl << std::endl;
-		
-		std::cout<< "Aileron command = " << (u_lat_0 + da_0)*57.325 << " deg" << std::endl;
-		std::cout<< "l_ail = " << l_ail << " deg" << std::endl;
-		std::cout<< "ail PWM = " << (int)aileron_angle_command << std::endl << std::endl;
-		
-		std::cout<< "Rudder command = " << (u_lat_1 + dr_0)*57.325 << " deg" << std::endl;
-		std::cout<< "rud = " << rud << " deg" << std::endl;
-		std::cout<< "rud PWM = " << (int)rudder_angle_command << std::endl << std::endl;
-	}
-
-	curr_iteration++;
-        
-	//timestamp the values:
-        acts.time_gps = get_gps_time(&handlerObject);
-
-        //publish the actuator values:
-        zcm.publish("ACTUATORS", &acts);
-
-    }
-
-    //_________________________________END_PASTE_HERE_________________________________//
-
-    module_stat.module_status = 0;
-    zcm.publish("STATUS4",&module_stat);
-
-    std::cout << "autopilot module exiting..." << std::endl;
-
-    zcm.stop();
-
-    return 0;
+        return 0;
 }
