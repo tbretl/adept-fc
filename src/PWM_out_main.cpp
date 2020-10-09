@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
         double ail_zero_cmd = 1506.0;
         double rud_zero_cmd = 1520.0;
         double thr_zero_cmd = 1085.0;
-        double null_zone = 0.03;
+        double null_zone = 0.05;
         int pilot_cmd = 0;
         int ap_cmd = 0;
         int use_cmd = 0;
@@ -480,7 +480,7 @@ int main(int argc, char *argv[])
                 }
                 //timestamp the data
                 pwm_comm.time_gps = get_gps_time(&sens_handler);
-                
+
                 //publish pwm values for logging
                 zcm.publish("PWM_OUT", &pwm_comm);
                 usleep(10000);
