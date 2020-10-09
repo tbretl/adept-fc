@@ -114,11 +114,11 @@ double evl_exp(double coeffs[], int size, double X)
 int main(int argc, char *argv[])
 {
         // Conversion constants for the adc inputs (polynomial coefficients from c0*x^0 to cn*x^n)
-        double ps1_con[2] = { -0.19188, 4.8261e-06 }; // To dPSI
-        double ps2_con[2] = { -0.19142, 4.8269e-06 }; // To dPSI
-        double ps3_con[2] = { -0.19211, 4.8141e-06 }; // To dPSI
-        double ps4_con[2] = { -0.19283, 4.8152e-06 }; // To dPSI
-        double ps5_con[2] = { -0.19231, 4.8028e-06 }; // To dPSI
+        double ps1_con[2] = { 4.8261e-06, -0.19188 }; // To dPSI
+        double ps2_con[2] = { 4.8269e-06, -0.19142 }; // To dPSI
+        double ps3_con[2] = { 4.8141e-06, -0.19211 }; // To dPSI
+        double ps4_con[2] = { 4.8152e-06, -0.19283 }; // To dPSI
+        double ps5_con[2] = { 4.8028e-06, -0.19231 }; // To dPSI
 
         /*
         // Conversion constants for ADC to control surface deflections
