@@ -106,7 +106,7 @@ Updated: 09/24/2020 13:08 CST*
 ### Procedure
 - Login: pi
 
-- Password: Ri2e$mmk3
+- Password: *********
 - `cd adept-fc/`
 - `git branch`
 - `git checkout autopilot_dev`
