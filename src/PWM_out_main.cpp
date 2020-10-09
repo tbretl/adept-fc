@@ -157,7 +157,6 @@ double get_gps_time(Handler* adchandle)
 }
 
 
-int curr_iteration = 0;
 int main(int argc, char *argv[])
 {
 
@@ -422,7 +421,6 @@ int main(int argc, char *argv[])
                                 {
                                         pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
                                         pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
-
                                 }
                         }
                         else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
@@ -455,7 +453,6 @@ int main(int argc, char *argv[])
                 pwm_comm.time_gps = get_gps_time(&sens_handler);
                 //publish pwm values for logging
                 zcm.publish("PWM_OUT", &pwm_comm);
-                curr_iteration++;
                 usleep(10000);
         }
 

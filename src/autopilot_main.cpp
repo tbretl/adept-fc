@@ -120,17 +120,19 @@ int main(int argc, char *argv[])
         double ps4_con[2] = { -0.19283, 4.8152e-06 }; // To dPSI
         double ps5_con[2] = { -0.19231, 4.8028e-06 }; // To dPSI
 
+	/*
         // Conversion constants for ADC to control surface deflections
         double rel_con[4] = { -1.8360e-12,  6.0969e-08, -0.00190000,  34.3486000 };
         double lel_con[5] = { -4.1426e-16,  3.9725e-11, -1.4238e-06,  0.01960000, 68.407500 };
         double ral_con[8] = {  4.8223e-28, -9.3369e-23,  7.6526e-18,  3.4398e-13, 9.1555e-9, -1.4428e-4, 1.2474000, 4588.2000 };
         double lal_con[5] = { -1.7482e-16,  1.3728e-11, -4.0790e-07,  0.00450000, 4.0069000 };
         double rud_con[5] = {  1.8988e-15, -2.1584e-10,  9.2592e-06, -0.17560000, 1212.7000 };
+	*/
 
         // Conversion constants for deflection commands to PWM commands
-        double ele_PWM_con[5] = { -5.1386e-6, -1.9281e-4,  0.0783,  10.4587, 1.5023e3 };
-        double ail_PWM_con[5] = {  8.6261e-4, -0.0068000, -0.0638, -17.4873, 1.4620e3 };
-        double rud_PWM_con[2] = { -11.763700,  1.4615e03 };
+        double ail_PWM_con[6] = { -2.5025e-5,  7.2442e-4, 0.0042000, -0.11670, -19.7993,  1498.60 };
+        double ele_PWM_con[6] = { -1.0598e-6, -5.2453e-5, 7.6461e-5,  0.06800,  11.4908,  1528.60 };
+        double rud_PWM_con[7] = {  9.3548e-8, -6.1896e-6, 2.2718e-5,  0.00270,  0.00990, -12.6829, 1547.5 };
 
         // Conversion constants for the converted adc data
         double AoA_con[15] = {  0.14417, -14.0401, -0.48222, -0.82991, -0.39334, -0.06513,  0.29331,  0.10864,  0.57212,  0.12463,  0.022992,  0.02921,  0.08984,  0.057237,  0.016901 };
@@ -169,8 +171,8 @@ int main(int argc, char *argv[])
         double wxx_max =  1.0471; // Maximum acceptable value. Any values higher are considered improper readings.
         double wzz_min = -0.5236; // Minimum acceptable value. Any values lower are considered improper readings.
         double wzz_max =  0.5236; // Maximum acceptable value. Any values higher are considered improper readings.
-        double yaw_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
-        double yaw_max =  1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
+        double rol_min = -1.0472; // Minimum acceptable value. Any values lower are considered improper readings.
+        double rol_max =  1.0472; // Maximum acceptable value. Any values higher are considered improper readings.
 
         // Previous states
         double vel_pre = 0.0; // m/s
@@ -179,7 +181,7 @@ int main(int argc, char *argv[])
         double pit_pre = 0.0; // rad
         double bet_pre = 0.0; // rad
         double wxx_pre = 0.0; // rad/s
-        double wyy_pre = 0.0; // rad/s
+        double wzz_pre = 0.0; // rad/s
         double rol_pre = 0.0; // rad
 
         // Input trim values
@@ -200,7 +202,7 @@ int main(int argc, char *argv[])
         int ele_PWM_max = 1774;
         int ail_PWM_min = 1186;
         int ail_PWM_max = 1826;
-        int rud_PWM_min = 1085;
+        int rud_PWM_min = 1300;
         int rud_PWM_max = 1740;
         int thr_PWM_min = 1085;
         int thr_PWM_max = 1904;
@@ -234,12 +236,14 @@ int main(int argc, char *argv[])
         double lon_sts[4];
         double lat_sts[5];
 
+	/*
         // Declare all other control surface values used
         double ele_lft;
         double ele_rgt;
         double ail_lft;
         double ail_rgt;
         double rud;
+	*/
 
         // Declare all other input values used
         double lon_in0;
@@ -296,11 +300,13 @@ int main(int argc, char *argv[])
                 ps3     = evl_exp(ps3_con, 2, (double)handlerObject.adc.data[2] ); // uCH2
                 ps4     = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
                 ps5     = evl_exp(ps5_con, 2, (double)handlerObject.adc.data[4] ); // uCH4
-                ail_rgt = evl_exp(ral_con, 4, (double)handlerObject.adc.data[8] ); // dCH0
+                /*
+		ail_rgt = evl_exp(ral_con, 4, (double)handlerObject.adc.data[8] ); // dCH0
                 ail_lft = evl_exp(lal_con, 5, (double)handlerObject.adc.data[9] ); // dCH1
                 ele_rgt = evl_exp(rel_con, 8, (double)handlerObject.adc.data[10]); // dCH2
                 ele_lft = evl_exp(lel_con, 5, (double)handlerObject.adc.data[11]); // dCH3
                 rud     = evl_exp(rud_con, 5, (double)handlerObject.adc.data[12]); // dCH4
+		*/
 
                 // Calculate pressure coefficient data
                 pes_avg = (ps2 + ps3 + ps4 + ps5)* 0.25;          // in dPSI
@@ -340,7 +346,7 @@ int main(int argc, char *argv[])
                 pit = (pit < pit_min || pit > pit_max) ? pit_pre : pit;
                 bet = (bet < bet_min || bet > bet_max) ? bet_pre : bet;
                 wxx = (wxx < wxx_min || wxx > wxx_max) ? wxx_pre : wxx;
-                wyy = (wyy < wyy_min || wyy > wyy_max) ? wyy_pre : wyy;
+                wzz = (wzz < wzz_min || wzz > wzz_max) ? wzz_pre : wzz;
                 rol = (rol < rol_min || rol > rol_max) ? rol_pre : rol;
 
                 // Collect previous state values
@@ -375,12 +381,12 @@ int main(int argc, char *argv[])
                 // Convert angle commands to degrees
                 ele_ang_cmd = 57.29578*(lon_in0 + ele_trm); // in degrees
                 ail_ang_cmd = 57.29578*(lat_in0 + ail_trm); // in degrees
-                rud_ang_cmd = 57.29578*(lat_in1 + rud_trm) - 5.0; // in degrees
+                rud_ang_cmd = 57.29578*(lat_in1 + rud_trm); // in degrees
 
                 // Convert angular degree commands to PWM commands
-                ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 5, ele_ang_cmd);
-                ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 5, ail_ang_cmd);
-                rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 2, rud_ang_cmd);
+                ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 6, ele_ang_cmd);
+                ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 6, ail_ang_cmd);
+                rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 7, rud_ang_cmd);
                 tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr0_trm);
                 tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr1_trm);
                 tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr2_trm);
@@ -431,24 +437,26 @@ int main(int argc, char *argv[])
                 usleep(10000);
 
                 // Debugging stuff
-                if (curr_iteration % 500 == 0)
+                if (cur_itr % 100 == 0)
                 {
-                        std::cout<<std::endl<<std::endl;
+			/*	
+			std::cout.precision(1);
+                        std::cout<< "Ele CMD = " << ele_ang_cmd << " deg   |   ";
+                        std::cout<< "Ele PWM = " << ele_PWM_cmd << "   |   ";
 
-                        std::cout<< "Elevator command = " << ele_ang_cmd << " deg" << std::endl;
-                        std::cout<< "l_ele = " << ele_lft << " deg" << std::endl;
-                        std::cout<< "ele PWM = " << ele_PWM_cmd << std::endl << std::endl;
+                        std::cout<< "Ail CMD = " << ail_ang_cmd << " deg   |   ";
+                        std::cout<< "Ail PWM = " << ail_PWM_cmd << "   |   ";
 
-                        std::cout<< "Aileron command = " << ail_ang_cmd << " deg" << std::endl;
-                        std::cout<< "l_ail = " << ail_lft << " deg" << std::endl;
-                        std::cout<< "ail PWM = " << ail_PWM_cmd << std::endl << std::endl;
+                        std::cout<< "Rud CMD = " << rud_ang_cmd << " deg   |   ";
+                        std::cout<< "Rud PWM = " << rud_PWM_cmd << "   |   ";
 
-                        std::cout<< "Rudder command = " << rud_ang_cmd << " deg" << std::endl;
-                        std::cout<< "rud = " << rud << " deg" << std::endl;
-                        std::cout<< "rud PWM = " << rud_PWM_cmd << std::endl << std::endl;
+                        std::cout<< "Thr CMD = " << (lon_in1 + tr0_trm)*100.0 << " %   |   ";
+                        std::cout<< "Thr PWM = " << tr0_PWM_cmd;
+			
+			std::cout<< "\t\r" << std::flush;
+			*/
 
-                        std::cout<< "Thrust command = " << (lon_in1 + tr0_trm)*100.0 << " %" << std::endl;
-                        std::cout<< "rud PWM = " << thr_PWM_cmd << std::endl << std::endl;
+			cur_itr = 1;
                 }
 
                 // Iterator iterator
