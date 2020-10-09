@@ -178,14 +178,19 @@ int main(int argc, char *argv[])
         int mode_cutoff = 1500;
         int maneuver_chan = 5;
         int gain_chan = 6;
-        double ele_zero_cmd = 1500.0;
-        double ail_zero_cmd = 1506.0;
-        double rud_zero_cmd = 1520.0;
+        double ele_zero_cmd = 1516.0;
+        double ail_zero_cmd = 1494.0;
+        double rud_zero_cmd = 1546.0;
         double thr_zero_cmd = 1085.0;
-        double null_zone = 0.05;
+        double null_zone = 0.005;
         int pilot_cmd = 0;
         int ap_cmd = 0;
         int use_cmd = 0;
+	int itr_ail_zero = 0;
+	int itr_ele_zero = 0;
+	int itr_rud_zero = 0;
+	int wait_time = 3;
+	int itr = 1;
         std::ifstream config_stream;
 
         // This function determines the scaling for PWM conversion
@@ -427,8 +432,12 @@ int main(int argc, char *argv[])
                                 for (int i=0; i<num_outputs; i++)
                                 {
                                         pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
-                                        pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+					pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                                 }
+				if (itr % 500 == 0)
+				{
+					itr = 1;
+				}
                         }
                         else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
                         {
@@ -440,15 +449,63 @@ int main(int argc, char *argv[])
 
                                         if (i == 0) // Aileron command
                                         {
-                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*ail_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ail_zero_cmd)) ? pilot_cmd : ap_cmd;
+						if ((pilot_cmd > (int)((1.0+null_zone/2.0)*ail_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ail_zero_cmd))) 
+						{
+							use_cmd = pilot_cmd;
+							itr_ail_zero = 0;
+						}
+						else
+						{
+							if (itr_ail_zero < 100*wait_time) // Wait 2 seconds after 0 input to engage autopilot
+							{
+								use_cmd = pilot_cmd;
+								itr_ail_zero++;
+							}
+							else
+							{
+								use_cmd = ap_cmd;
+							}
+						}
                                         }
-                                        elseif (i == 1) // Elevator command
+					else if (i == 1) // Elevator command
                                         {
-                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*ele_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ele_zero_cmd)) ? pilot_cmd : ap_cmd;
+						if ((pilot_cmd > (int)((1.0+null_zone/2.0)*ele_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ele_zero_cmd))) 
+						{
+							use_cmd = pilot_cmd;
+							itr_ele_zero = 0;
+						}
+						else
+						{
+							if (itr_ele_zero < 100*wait_time) // Wait wait_time seconds after 0 input to engage autopilot
+							{
+								use_cmd = pilot_cmd;
+								itr_ele_zero++;
+							}
+							else
+							{
+								use_cmd = ap_cmd;
+							}
+						}
                                         }
-                                        elseif (i == 2) // Rudder command
+                                        else if (i == 2) // Rudder command
                                         {
-                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*rud_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*rud_zero_cmd)) ? pilot_cmd : ap_cmd;
+						if ((pilot_cmd > (int)((1.0+null_zone/2.0)*rud_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*rud_zero_cmd))) 
+						{
+							use_cmd = pilot_cmd;
+							itr_rud_zero = 0;
+						}
+						else
+						{
+							if (itr_rud_zero < 100*wait_time) // Wait wait_time seconds after 0 input to engage autopilot
+							{
+								use_cmd = pilot_cmd;
+								itr_rud_zero++;
+							}
+							else
+							{
+								use_cmd = ap_cmd;
+							}
+						}
                                         }
                                         else // Thrust command
                                         {
@@ -459,6 +516,10 @@ int main(int argc, char *argv[])
                                         pwm_comm.pwm_out[i] = use_cmd;
                                         pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                                 }
+				if (itr % 500 == 0)
+				{
+					itr = 1;
+				}
                         }
                 }
                 else //disarmed
@@ -480,6 +541,7 @@ int main(int argc, char *argv[])
                 }
                 //timestamp the data
                 pwm_comm.time_gps = get_gps_time(&sens_handler);
+		itr++;
 
                 //publish pwm values for logging
                 zcm.publish("PWM_OUT", &pwm_comm);
