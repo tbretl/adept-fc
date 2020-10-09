@@ -178,9 +178,16 @@ int main(int argc, char *argv[])
         int mode_cutoff = 1500;
         int maneuver_chan = 5;
         int gain_chan = 6;
+        double ele_zero_cmd = 1500.0;
+        double ail_zero_cmd = 1506.0;
+        double rud_zero_cmd = 1520.0;
+        double thr_zero_cmd = 1085.0;
+        double null_zone = 0.03;
+        int pilot_cmd = 0;
+        int ap_cmd = 0;
+        int use_cmd = 0;
         std::ifstream config_stream;
 
-        // TODO Update this function
         // This function determines the scaling for PWM conversion
         for(int i=3; i<11; i++)
         {
@@ -425,9 +432,31 @@ int main(int argc, char *argv[])
                         }
                         else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
                         {
-                                for (int i=0; i<num_outputs; i++)
+                                for (int i=0; i<num_outputs; i++) // Ignore autopilot commands if pilot commands are present
                                 {
-                                        pwm_comm.pwm_out[i] = handlerObject.acts[i];
+                                        // Gather Pilot and AP cmds
+                                        pilot_cmd = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                                        ap_cmd = (int)(handlerObject.acts[i]);
+
+                                        if (i == 0) // Aileron command
+                                        {
+                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*ail_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ail_zero_cmd)) ? pilot_cmd : ap_cmd;
+                                        }
+                                        elseif (i == 1) // Elevator command
+                                        {
+                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*ele_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ele_zero_cmd)) ? pilot_cmd : ap_cmd;
+                                        }
+                                        elseif (i == 2) // Rudder command
+                                        {
+                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*rud_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*rud_zero_cmd)) ? pilot_cmd : ap_cmd;
+                                        }
+                                        else // Thrust command
+                                        {
+                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*thr_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*thr_zero_cmd)) ? pilot_cmd : ap_cmd;
+                                        }
+
+                                        // Send cmd to PWM
+                                        pwm_comm.pwm_out[i] = use_cmd;
                                         pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                                 }
                         }
@@ -451,6 +480,7 @@ int main(int argc, char *argv[])
                 }
                 //timestamp the data
                 pwm_comm.time_gps = get_gps_time(&sens_handler);
+                
                 //publish pwm values for logging
                 zcm.publish("PWM_OUT", &pwm_comm);
                 usleep(10000);

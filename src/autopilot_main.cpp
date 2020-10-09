@@ -120,14 +120,14 @@ int main(int argc, char *argv[])
         double ps4_con[2] = { -0.19283, 4.8152e-06 }; // To dPSI
         double ps5_con[2] = { -0.19231, 4.8028e-06 }; // To dPSI
 
-	/*
+        /*
         // Conversion constants for ADC to control surface deflections
         double rel_con[4] = { -1.8360e-12,  6.0969e-08, -0.00190000,  34.3486000 };
         double lel_con[5] = { -4.1426e-16,  3.9725e-11, -1.4238e-06,  0.01960000, 68.407500 };
         double ral_con[8] = {  4.8223e-28, -9.3369e-23,  7.6526e-18,  3.4398e-13, 9.1555e-9, -1.4428e-4, 1.2474000, 4588.2000 };
         double lal_con[5] = { -1.7482e-16,  1.3728e-11, -4.0790e-07,  0.00450000, 4.0069000 };
         double rud_con[5] = {  1.8988e-15, -2.1584e-10,  9.2592e-06, -0.17560000, 1212.7000 };
-	*/
+         */
 
         // Conversion constants for deflection commands to PWM commands
         double ail_PWM_con[6] = { -2.5025e-5,  7.2442e-4, 0.0042000, -0.11670, -19.7993,  1498.60 };
@@ -236,14 +236,14 @@ int main(int argc, char *argv[])
         double lon_sts[4];
         double lat_sts[5];
 
-	/*
+        /*
         // Declare all other control surface values used
         double ele_lft;
         double ele_rgt;
         double ail_lft;
         double ail_rgt;
         double rud;
-	*/
+        */
 
         // Declare all other input values used
         double lon_in0;
@@ -301,12 +301,12 @@ int main(int argc, char *argv[])
                 ps4     = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
                 ps5     = evl_exp(ps5_con, 2, (double)handlerObject.adc.data[4] ); // uCH4
                 /*
-		ail_rgt = evl_exp(ral_con, 4, (double)handlerObject.adc.data[8] ); // dCH0
+                ail_rgt = evl_exp(ral_con, 4, (double)handlerObject.adc.data[8] ); // dCH0
                 ail_lft = evl_exp(lal_con, 5, (double)handlerObject.adc.data[9] ); // dCH1
                 ele_rgt = evl_exp(rel_con, 8, (double)handlerObject.adc.data[10]); // dCH2
                 ele_lft = evl_exp(lel_con, 5, (double)handlerObject.adc.data[11]); // dCH3
                 rud     = evl_exp(rud_con, 5, (double)handlerObject.adc.data[12]); // dCH4
-		*/
+                */
 
                 // Calculate pressure coefficient data
                 pes_avg = (ps2 + ps3 + ps4 + ps5)* 0.25;          // in dPSI
@@ -433,14 +433,14 @@ int main(int argc, char *argv[])
                 acts.dt[6] = tr6_PWM_cmd;
                 acts.dt[7] = tr7_PWM_cmd;
 
-                // Sleep for 10 ms to remove CPU stree
+                // Sleep for 10 ms to remove CPU stress
                 usleep(10000);
 
                 // Debugging stuff
                 if (cur_itr % 100 == 0)
                 {
-			/*	
-			std::cout.precision(1);
+                        /*
+                        std::cout.precision(1);
                         std::cout<< "Ele CMD = " << ele_ang_cmd << " deg   |   ";
                         std::cout<< "Ele PWM = " << ele_PWM_cmd << "   |   ";
 
@@ -452,11 +452,10 @@ int main(int argc, char *argv[])
 
                         std::cout<< "Thr CMD = " << (lon_in1 + tr0_trm)*100.0 << " %   |   ";
                         std::cout<< "Thr PWM = " << tr0_PWM_cmd;
-			
-			std::cout<< "\t\r" << std::flush;
-			*/
 
-			cur_itr = 1;
+                        std::cout<< "\t\r" << std::flush;
+                        */
+                        cur_itr = 1;
                 }
 
                 // Iterator iterator
