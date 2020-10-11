@@ -295,11 +295,11 @@ int main(int argc, char *argv[])
                 zcm.publish("STATUS4", &module_stat);
 
                 // Gather raw data from ADC and convert it to readable data
-                ps1     = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
-                ps2     = evl_exp(ps2_con, 2, (double)handlerObject.adc.data[1] ); // uCH1
-                ps3     = evl_exp(ps3_con, 2, (double)handlerObject.adc.data[2] ); // uCH2
-                ps4     = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
-                ps5     = evl_exp(ps5_con, 2, (double)handlerObject.adc.data[4] ); // uCH4
+                ps1 = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
+                ps2 = evl_exp(ps2_con, 2, (double)handlerObject.adc.data[1] ); // uCH1
+                ps3 = evl_exp(ps3_con, 2, (double)handlerObject.adc.data[2] ); // uCH2
+                ps4 = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
+                ps5 = evl_exp(ps5_con, 2, (double)handlerObject.adc.data[4] ); // uCH4
                 /*
                 ail_rgt = evl_exp(ral_con, 4, (double)handlerObject.adc.data[8] ); // dCH0
                 ail_lft = evl_exp(lal_con, 5, (double)handlerObject.adc.data[9] ); // dCH1
@@ -312,8 +312,8 @@ int main(int argc, char *argv[])
                 pes_avg = (ps2 + ps3 + ps4 + ps5)* 0.25;          // in dPSI
                 cof_AoA = (ps4 - ps5) / (ps1 - pes_avg);          // unitless
                 cof_bet = (ps3 - ps2) / (ps1 - pes_avg);          // unitless
-                cof_ptt = evl_ply(cpt_con, 21, cof_AoA, cof_bet); // unitless
-                cof_pst = evl_ply(cps_con, 15, cof_AoA, cof_bet); // unitless
+                cof_ptt = evl_ply(cpt_con, 15, cof_AoA, cof_bet); // unitless
+                cof_pst = evl_ply(cps_con, 21, cof_AoA, cof_bet); // unitless
 
                 // Use pressure coefficient data to calculate AoA, beta, total pressure, static pressure
                 AoA = 0.01745 * evl_ply(AoA_con, 15, cof_AoA, cof_bet);    // in rad
