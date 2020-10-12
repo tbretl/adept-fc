@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
                 // Use pressure coefficient data to calculate AoA, beta, total pressure, static pressure
                 AoA = 0.01745 * evl_ply(AoA_con, 15, cof_AoA, cof_bet);    // in rad
                 bet = 0.01745 * evl_ply(bet_con, 15, cof_AoA, cof_bet);    // in rad
-                pes_tot = (ps1     - cof_ptt * (ps1 - pes_avg)) * 6894.76; // in Pa
+                pes_tot = (ps1 - cof_ptt * (ps1 - pes_avg)) * 6894.76; // in Pa
                 pes_stc = (pes_avg - cof_pst * (ps1 - pes_avg)) * 6894.76; // in Pa
 
                 // If the pressure readings indicate imaginary velocity, assing the velocity as the previous good value
@@ -335,9 +335,9 @@ int main(int argc, char *argv[])
                 pit = 0.017453 * handlerObject.vnins.pitch; // in rad
                 rol = 0.017453 * handlerObject.vnins.roll;  // in rad
                 yaw = 0.017453 * handlerObject.vnins.yaw;   // in rad
-                wxx = 1.000000 * handlerObject.vnins.wx;    // in rad/s (roll rate)
-                wyy = 1.000000 * handlerObject.vnins.wy;    // in rad/s (pitch rate)
-                wzz = 1.000000 * handlerObject.vnins.wz;    // in rad/s (yaw rate)
+                wxx = handlerObject.vnins.wx;    // in rad/s (roll rate)
+                wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
+                wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 
                 // Bad state rejection (Assign previous good value of state if measured state is out of range)
                 vel = (vel < vel_min || vel > vel_max) ? vel_pre : vel;
