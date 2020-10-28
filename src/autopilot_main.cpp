@@ -11,6 +11,7 @@
 #include <zcm/zcm-cpp.hpp>
 #include <chrono>
 #include <math.h>
+#include <assert.h>
 
 // Message types
 #include "actuators_t.hpp"
@@ -19,6 +20,24 @@
 #include "vnins_data_t.hpp"
 
 using std::string;
+
+// Debugging mode parameters
+bool debugging_mode = true;
+bool done_debugging = false;
+int debug_point = 0;
+double debug_pit[21] = { 0.00000, -100.0, 100.0, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000,   1.00000, 0.00000 };	
+double debug_rol[21] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000,   1.00000, 0.00000 };
+double debug_yaw[21] = { 0.00000,  0.000, 0.000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000,   0.00000, 0.00000 };
+double debug_wxx[21] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.00000,  0.00000, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000,   1.00000, 0.00000 };
+double debug_wyy[21] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000,   0.60000, 0.00000 };
+double debug_wzz[21] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000,   0.00000, 0.00000 };
+double debug_AoA[21] = { 0.01780, -100.0, 100.0, 0.01780,  0.01780, 0.01780,  0.01780, 0.01780,  0.01780, 0.01780,  0.01780, 0.01780,  0.01780, 0.10000, -0.10000, 0.01780,  0.01780, 0.01780, 0.01780,   0.60000, 0.01780 };
+double debug_bet[21] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.10000, -0.10000, 0.00000, 0.00000,   0.00000, 0.00000 };
+double debug_vel[21] = { 30.5755, -100.0, 100.0, 30.5755,  0.00000, 0.00000,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 40.0000, 20.0000,   60.0000, 30.5755 };
+double debug_ele[21] = { -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 };
+double debug_ail[21] = {  0.0,  0.0,  0.0,  0.0,  0.0, -1.0,  1.0, -1.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -1.0,  0.0 };
+double debug_rud[21] = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0 };
+double debug_thr[21] = {  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0 };
 
 // Class used to handle incoming ZCM messages
 class Handler
@@ -264,7 +283,14 @@ int main(int argc, char *argv[])
 
         // Run zcm as a separate thread
         zcm.start();
-        std::cout << "autopilot started" << std::endl;
+	if (debugging_mode)
+	{
+		std::cout << "WARNING: AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
+	}
+	else
+	{
+        	std::cout << "autopilot started" << std::endl;
+	}
 
         // Control loop:
         while (!handlerObject.stat.should_exit)
@@ -273,7 +299,7 @@ int main(int argc, char *argv[])
                 zcm.publish("STATUS4", &module_stat);
 
                 // Gather raw data from ADC and convert it to readable data
-                ps1 = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
+		ps1 = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
                 ps2 = evl_exp(ps2_con, 2, (double)handlerObject.adc.data[1] ); // uCH1
                 ps3 = evl_exp(ps3_con, 2, (double)handlerObject.adc.data[2] ); // uCH2
                 ps4 = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
@@ -308,6 +334,21 @@ int main(int argc, char *argv[])
                 wxx = handlerObject.vnins.wx;    // in rad/s (roll rate)
                 wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
                 wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
+
+		// In debugging mode, intercept the state inputs
+		if (debugging_mode)
+		{
+			pit = debug_pit[debug_point];
+			rol = debug_rol[debug_point];
+			yaw = debug_yaw[debug_point];
+			wxx = debug_wxx[debug_point];
+			wyy = debug_wyy[debug_point];
+			wzz = debug_wzz[debug_point];
+			AoA = debug_AoA[debug_point];
+			bet = debug_bet[debug_point];
+			vel = debug_vel[debug_point];
+
+		}
 
                 // Bad state rejection (Assign previous good value of state if measured state is out of range)
                 vel = (vel < vel_min || vel > vel_max) ? vel_pre : vel;
@@ -385,37 +426,135 @@ int main(int argc, char *argv[])
                 tr7_PWM_cmd = tr7_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr7_PWM_cmd;
 
                 // Assign actuator values by giving PWM commands
-                acts.de = ele_PWM_cmd;
-                acts.da = ail_PWM_cmd;
-                acts.dr = rud_PWM_cmd;
-                acts.dt[0] = tr0_PWM_cmd;
-                acts.dt[1] = tr1_PWM_cmd;
-                acts.dt[2] = tr2_PWM_cmd;
-                acts.dt[3] = tr3_PWM_cmd;
-                acts.dt[4] = tr4_PWM_cmd;
-                acts.dt[5] = tr5_PWM_cmd;
-                acts.dt[6] = tr6_PWM_cmd;
-                acts.dt[7] = tr7_PWM_cmd;
+		if (debugging_mode)
+		{
+			// Check state inputs
+			if (debug_point == 1 || debug_point == 2)
+			{
+				assert (pit == 0.00000);
+				assert (rol == 0.00000);
+				assert (yaw == 0.00000);
+				assert (wxx == 0.00000);
+				assert (wyy == 0.00000);
+				assert (wzz == 0.00000);
+				assert (AoA == 0.01780);
+				assert (bet == 0.00000);
+				assert (vel == 30.5755);
+			}
+
+			// Check state range
+			assert (pit <= pit_max);
+			assert (pit >= pit_min);
+			assert (rol <= rol_max);
+			assert (rol >= rol_min);
+			assert (wxx <= wxx_max);
+			assert (wxx >= wxx_min);
+			assert (wyy <= wyy_max);
+			assert (wyy >= wyy_min);
+			assert (wzz <= wzz_max);
+			assert (wzz >= wzz_min);
+			assert (AoA <= AoA_max);
+			assert (AoA >= AoA_min);
+			assert (bet <= bet_max);
+			assert (bet >= bet_min);
+			assert (vel <= vel_max);
+			assert (vel >= vel_min);
+
+			// Check command range
+			assert (ele_PWM_cmd <= ele_PWM_max);
+			assert (ele_PWM_cmd >= ele_PWM_min);
+			assert (ail_PWM_cmd <= ail_PWM_max);
+			assert (ail_PWM_cmd <= ail_PWM_max);
+			assert (rud_PWM_cmd >= rud_PWM_min);
+			assert (rud_PWM_cmd >= rud_PWM_min);
+			assert (tr0_PWM_cmd <= thr_PWM_max);
+			assert (tr0_PWM_cmd >= thr_PWM_min);
+			assert (tr1_PWM_cmd <= thr_PWM_max);
+			assert (tr1_PWM_cmd >= thr_PWM_min);
+			assert (tr2_PWM_cmd <= thr_PWM_max);
+			assert (tr2_PWM_cmd >= thr_PWM_min);
+			assert (tr3_PWM_cmd <= thr_PWM_max);
+			assert (tr3_PWM_cmd >= thr_PWM_min);
+			assert (tr4_PWM_cmd <= thr_PWM_max);
+			assert (tr4_PWM_cmd >= thr_PWM_min);
+			assert (tr5_PWM_cmd <= thr_PWM_max);
+			assert (tr5_PWM_cmd >= thr_PWM_min);
+			assert (tr6_PWM_cmd <= thr_PWM_max);
+			assert (tr6_PWM_cmd >= thr_PWM_min);
+			assert (tr7_PWM_cmd <= thr_PWM_max);
+			assert (tr7_PWM_cmd >= thr_PWM_min);
+
+			// Check control surface commands
+			if (debug_ele[debug_point] == 0.0)
+			{
+				assert (ele_ang_cmd == 0.0);
+			}
+			else 
+			{
+				assert (signbit(ele_ang_cmd) == signbit(debug_ele[debug_point]));
+			}
+			if (debug_ail[debug_point] == 0.0)
+			{
+				assert (ail_ang_cmd == 0.0);
+			}
+			else 
+			{
+				assert (signbit(ail_ang_cmd) == signbit(debug_ail[debug_point]));
+			}
+			if (debug_rud[debug_point] == 0.0)
+			{
+				assert (rud_ang_cmd == 0.0);
+			}
+			else 
+			{
+				assert (signbit(rud_ang_cmd) == signbit(debug_rud[debug_point]));
+			}
+			
+		}
+		else
+		{
+                	acts.de = ele_PWM_cmd;
+                	acts.da = ail_PWM_cmd;
+               		acts.dr = rud_PWM_cmd;
+                	acts.dt[0] = tr0_PWM_cmd;
+                	acts.dt[1] = tr1_PWM_cmd;
+                	acts.dt[2] = tr2_PWM_cmd;
+                	acts.dt[3] = tr3_PWM_cmd;
+                	acts.dt[4] = tr4_PWM_cmd;
+                	acts.dt[5] = tr5_PWM_cmd;
+                	acts.dt[6] = tr6_PWM_cmd;
+                	acts.dt[7] = tr7_PWM_cmd;
+		}
 
                 // Sleep for 10 ms to remove CPU stress
                 usleep(10000);
 
                 // Debugging stuff
-                if (cur_itr % 100 == 0)
+                if (cur_itr % 250 == 0)
                 {
-                        /*
-                        std::cout.precision(1);
-                        std::cout<< "Ele CMD = " << ele_ang_cmd << " deg   |   ";
-                        std::cout<< "Ele PWM = " << ele_PWM_cmd << "   |   ";
-                        std::cout<< "Ail CMD = " << ail_ang_cmd << " deg   |   ";
-                        std::cout<< "Ail PWM = " << ail_PWM_cmd << "   |   ";
-                        std::cout<< "Rud CMD = " << rud_ang_cmd << " deg   |   ";
-                        std::cout<< "Rud PWM = " << rud_PWM_cmd << "   |   ";
-                        std::cout<< "Thr CMD = " << tr0_trm*100.0 << " %   |   ";
-                        std::cout<< "Thr PWM = " << tr0_PWM_cmd;
-                        std::cout<< "\t\r" << std::flush;
-                        */
+                        if (debugging_mode && !done_debugging)
+			{
+                        	std::cout.precision(5);
+				std::cout<< "DEBUG POINT " << debug_point << " PASSED   |   ";
+                        	std::cout<< "Ele CMD = " << ele_ang_cmd << " deg   |   ";
+                        	std::cout<< "Ele PWM = " << ele_PWM_cmd << "   |   ";
+                        	std::cout<< "Ail CMD = " << ail_ang_cmd << " deg   |   ";
+                        	std::cout<< "Ail PWM = " << ail_PWM_cmd << "   |   ";
+                        	std::cout<< "Rud CMD = " << rud_ang_cmd << " deg   |   ";
+                        	std::cout<< "Rud PWM = " << rud_PWM_cmd << "   |   ";
+                        	std::cout<< "Thr CMD = " << tr0_trm*100.0 << " %   |   ";
+                        	std::cout<< "Thr PWM = " << tr0_PWM_cmd;
+                        	std::cout<< std::endl;
+			}
                         cur_itr = 1;
+			if (debug_point >= 20)
+			{
+				done_debugging = true;
+			}
+			else
+			{
+				debug_point++;
+			}
                 }
 
                 // Iterator iterator
