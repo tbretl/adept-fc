@@ -4,7 +4,7 @@ Bretl Research Group\
 Aerodynamics and Unsteady Flow Group\
 ESAero\
 Created: 09/24/2020 13:08 CST\
-Updated: 09/24/2020 13:08 CST*
+Updated: 10/28/2020 10:39 CST*
 
 ---
 
@@ -113,7 +113,7 @@ Updated: 09/24/2020 13:08 CST*
 - `git fetch`
 - `git pull`
 - `make all`
-- Ensure SC is fully forward
+- Ensure all SC on TX are fully forward
 - `sudo ./run.sh`
 - `pwm arm`
 - Begin autopilot test by moving SC fully backward
