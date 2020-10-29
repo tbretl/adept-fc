@@ -65,12 +65,12 @@ class Handler
             int num_outputs = 11; // TODO: Read this from a common file
             pwm_out = *msg;
             std::ostringstream data_out;
-            data_out << "!,";
-            for (int i=0;i<num_outputs;i++)
+            data_out << "!PWM,";
+            for (int i=0; i < num_outputs; i++)
             {
                 data_out << msg->pwm_out[i] << ",";
             }
-            data_out << "!";
+            data_out << "PWM!";
             string out_msg = data_out.str();
             socket.send_to(boost::asio::buffer(out_msg, out_msg.size()), endpoint);
         }
@@ -153,34 +153,92 @@ public:
         }
     }
 
-    void parse_message(const std::string udp_message,adc_data_t* adc, vnins_data_t* vn200){
+    void parse_message(const std::string udp_message, adc_data_t* adc, vnins_data_t* vn200){
         std::string dump;
-        std::string in_data[20];
         std::istringstream ss(udp_message);
         int i = 0;
-        while(std::getline(ss, dump, ',')) {
-            in_data[i] = dump;
-            i++;
+        std::getline(ss, dump, ',');
+        
+        if (!strcmp(dump.c_str(), "!VNINS"))
+        {
+            std::string in_data[21]; // 21 VNINS fields
+            
+            while(std::getline(ss, dump, ','))
+            {
+                if (!strcmp(dump.c_str(), "VNINS!"))
+                {
+                    // fill VN200 structure fields:
+                    vn200->time = std::stod(in_data[0], nullptr);
+                    vn200->tracking = (bool)std::stoi(in_data[1], nullptr); // assumes 0 or 1
+                    vn200->gpsfix = (bool)std::stoi(in_data[2], nullptr); // assumes 0 or 1
+                    vn200->error = (bool)std::stoi(in_data[3], nullptr); // assumes 0 or 1
+                    vn200->yaw = std::stof(in_data[4], nullptr);
+                    vn200->pitch = std::stof(in_data[5], nullptr);
+                    vn200->roll = std::stof(in_data[6], nullptr);
+                    vn200->wx = std::stof(in_data[7], nullptr);
+                    vn200->wy = std::stof(in_data[8], nullptr);
+                    vn200->wz = std::stof(in_data[9], nullptr);
+                    vn200->latitude = std::stod(in_data[10], nullptr);
+                    vn200->longitude = std::stod(in_data[11], nullptr);
+                    vn200->altitude = std::stod(in_data[12], nullptr);
+                    vn200->vn = std::stof(in_data[13], nullptr);
+                    vn200->ve = std::stof(in_data[14], nullptr);
+                    vn200->vd = std::stof(in_data[15], nullptr);
+                    vn200->ax = std::stof(in_data[16], nullptr);
+                    vn200->ay = std::stof(in_data[17], nullptr);
+                    vn200->az = std::stof(in_data[18], nullptr);
+                    vn200->time_gpspps = std::stol(in_data[19], nullptr); // 64 bit
+                    vn200->time_rpi = std::stol(in_data[20], nullptr); // 64 bit
+                    return;
+                }
+                
+                in_data[i] = dump;
+                i++;
+
+                if ( i > 25 )
+                {
+                    std::cout << "ERROR No VNINS End Identifier\n";
+
+                    return;
+                }
+            }
         }
-        if (!in_data[0].compare("!") && !in_data[19].compare("!")){
-            //fill structure fields:
-            vn200->roll = (float) std::stod(in_data[16],nullptr);
-            vn200->pitch = (float) std::stod(in_data[17],nullptr);
-            vn200->yaw = (float) std::stod(in_data[18],nullptr);
-            vn200->latitude = std::stod(in_data[10],nullptr);
-            vn200->longitude = std::stod(in_data[11],nullptr);
-            vn200->altitude = std::stod(in_data[12],nullptr);
-            vn200->vn = (float) std::stod(in_data[4],nullptr);
-            vn200->ve = (float) std::stod(in_data[5],nullptr);
-            vn200->vd = (float) std::stod(in_data[6],nullptr);
-            //TODO:
-            // fill in the rest of the VN200 fields
-            // fill in ADC fields as well
-            // These items will come into play with the autopilot
-        } else {
-            std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
-            " ERROR: bad UDP message received [hitl]." << std::endl;
+        
+		if (!strcmp(dump.c_str(), "!ADC" ))
+        {
+            std::string in_data[19];  // 19 ADC fields
+            
+            while(std::getline(ss, dump, ','))
+            {
+                if (!strcmp(dump.c_str(), "ADC!"))
+                {
+                    // ADC fill structure fields:
+                    for (int i_data = 0; i_data < 16; i_data++)
+                    {
+                        adc->data[i_data] = std::stoi(in_data[i_data], nullptr); // 32 bit
+                    }
+                    
+                    adc->time_gpspps = std::stol(in_data[16], nullptr); // 64 bit
+                    adc->time_rpi = std::stol(in_data[17], nullptr); // 64 bit
+                    adc->time_gps = std::stod(in_data[18], nullptr);
+                    return;
+                }
+                
+                in_data[i] = dump;
+                i++;
+
+                if ( i > 25 )
+                {
+                    std::cout << "ERROR No ADC End Identifier\n";
+
+                    return;
+                }
+            }
         }
+
+		// Message error if this point is reached 
+		std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+		" ERROR: bad UDP message received [hitl]." << std::endl;
         return;
     }
 
