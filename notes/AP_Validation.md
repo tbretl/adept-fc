@@ -17,7 +17,7 @@ Unit tests are conducted to ensure:
 2. Autopilot state rejection performs as expected.
 3. Input commands calculated by the autopilot are in the expected direction.
 
-These tasks are achieved by intercepting the states observed by the 5-hole probe and INS and replacing them with a set of test states. In total, 23 states are tested. The expected inputs are based on optimal controller simulation. The test points include:
+These tasks are achieved by intercepting the states observed by the 5-hole probe and INS and replacing them with a set of test states. In total, 22 states are tested. The expected inputs are based on optimal controller simulation. The test points include:
 1. Trim condition
   - *Expected behavior:* No state variable rejection.
   - *Expected input:* Trim input on all input axes.
@@ -81,10 +81,7 @@ These tasks are achieved by intercepting the states observed by the 5-hole probe
 21. Negative velocity
   - *Expected behavior:* No state variables rejected.
   - *Expected input:* Trim input on aileron and rudder. **IF CONTROLLED**, positive inputs from elevator and throttle. **ELSE**, trim.
-22. Maximum state
-  - *Expected behavior:* No state variables rejected.
-  - *Expected input:* **IF CONTROLLED**, . **ELSE**, trim.
-23. Trim condition
+22. Trim condition
   - *Expected behavior:* No state variable rejection.
   - *Expected input:* Trim input on all input axes.
 
