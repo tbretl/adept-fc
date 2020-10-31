@@ -23,7 +23,7 @@
 using std::string;
 
 // Debugging mode parameters
-bool debugging_mode = false;
+#ifdef DEBUGGING_MODE
 bool done_debugging = false;
 int debug_point = 0;
 std::string description[22] = {"Trim","-Bad","+Bad","Pitch Up","Pitch Down","Roll Right","Roll Left","Yaw Right","Yaw Left","Pitch Rate Up", "Pitch Rate Down", "Roll Rate Right", "Roll Rate Left", "Yaw Rate Right", "Yaw Rate Left", "Positive AoA", "Negative AoA", "Right Slip", "Left Slip", "High Vel", "Low Vel", "Trim"};
@@ -41,6 +41,7 @@ double debug_vel[22] = { 30.5755, -100.0, 100.0, 30.5755,  30.5755, 30.5755,  30
 double debug_ele[22] = { 0.0, 0.0, 0.0, 1.0, -1.0,  0.0,  0.0,  0.0,  0.0, 1.0, -1.0,  0.0,  0.0,  0.0,  0.0, -1.0,  1.0,  0.0,  0.0, -1.0, 1.0, 0.0 };
 double debug_ail[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0, -1.0,  1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
 double debug_rud[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
+#endif
 
 // Class used to handle incoming ZCM messages
 class Handler
@@ -265,6 +266,34 @@ int main(int argc, char *argv[])
         int tr6_PWM_cmd;
         int tr7_PWM_cmd;
 
+        // Calibration parameters
+        #ifdef CALIBRATION_AIL
+        int ail_PWM_cal = ail_PWM_min;
+        int ail_stp = (int)(((double)ail_PWM_max - (double)ail_PWM_min) / 15.0);
+        #endif
+        #ifdef CALIBRATION_ELE
+        int ele_PWM_cal = ele_PWM_min;
+        int ele_stp = (int)(((double)ele_PWM_max - (double)ele_PWM_min) / 15.0);
+        #endif
+        #ifdef CALIBRATION_RUD
+        int rud_PWM_cal = rud_PWM_min;
+        int rud_stp = (int)(((double)rud_PWM_max - (double)rud_PWM_min) / 15.0);
+        #endif
+
+        // Calibration check parameters
+        #ifdef CALICHECK_AIL
+        double cur_ail_ang = -10.0; // in deg
+        double ail_stp = 5.0; // in deg
+        #endif
+        #ifdef CALICHECK_ELE
+        double cur_ele_ang = -10.0; // in deg
+        double ele_stp = 5.0; // in deg
+        #endif
+        #ifdef CALICHECK_RUD
+        double cur_rud_ang = -10.0; // in deg
+        double rud_stp = 5.0; // in deg
+        #endif
+
         // Initialize an iterator
         int cur_itr = 1;
 
@@ -286,14 +315,23 @@ int main(int argc, char *argv[])
 
         // Run zcm as a separate thread
         zcm.start();
-	if (debugging_mode)
-	{
-		std::cout << "WARNING: AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
-	}
-	else
-	{
-        	std::cout << "autopilot started" << std::endl;
-	}
+        #ifdef DEBUGGING_MODE
+        std::cout << "WARNING: AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
+        #elif defined (CALIBRATION_AIL)
+        std::cout << "WARNING: AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        #elif defined (CALIBRATION_ELE)
+        std::cout << "WARNING: AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        #elif defined (CALIBRATION_RUD)
+        std::cout << "WARNING: AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        #elif defined (CALICHECK_AIL)
+        std::cout << "WARNING: AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        #elif defined (CALICHECK_ELE)
+        std::cout << "WARNING: AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        #elif defined (CALICHECK_RUD)
+        std::cout << "WARNING: AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        #else
+        std::cout << "autopilot started" << std::endl;
+        #endif
 
         // Control loop:
         while (!handlerObject.stat.should_exit)
@@ -302,7 +340,7 @@ int main(int argc, char *argv[])
                 zcm.publish("STATUS4", &module_stat);
 
                 // Gather raw data from ADC and convert it to readable data
-		ps1 = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
+                ps1 = evl_exp(ps1_con, 2, (double)handlerObject.adc.data[0] ); // uCH0
                 ps2 = evl_exp(ps2_con, 2, (double)handlerObject.adc.data[1] ); // uCH1
                 ps3 = evl_exp(ps3_con, 2, (double)handlerObject.adc.data[2] ); // uCH2
                 ps4 = evl_exp(ps4_con, 2, (double)handlerObject.adc.data[3] ); // uCH3
@@ -338,20 +376,18 @@ int main(int argc, char *argv[])
                 wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
                 wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 
-		// In debugging mode, intercept the state inputs
-		if (debugging_mode)
-		{
-			pit = debug_pit[debug_point];
-			rol = debug_rol[debug_point];
-			yaw = debug_yaw[debug_point];
-			wxx = debug_wxx[debug_point];
-			wyy = debug_wyy[debug_point];
-			wzz = debug_wzz[debug_point];
-			AoA = debug_AoA[debug_point];
-			bet = debug_bet[debug_point];
-			vel = debug_vel[debug_point];
-
-		}
+                // In debugging mode, intercept the state inputs
+                #ifdef DEBUGGING_MODE
+                pit = debug_pit[debug_point];
+                rol = debug_rol[debug_point];
+                yaw = debug_yaw[debug_point];
+                wxx = debug_wxx[debug_point];
+                wyy = debug_wyy[debug_point];
+                wzz = debug_wzz[debug_point];
+                AoA = debug_AoA[debug_point];
+                bet = debug_bet[debug_point];
+                vel = debug_vel[debug_point];
+                #endif
 
                 // Bad state rejection (Assign previous good value of state if measured state is out of range)
                 vel = (vel < vel_min || vel > vel_max) ? vel_pre : vel;
@@ -429,205 +465,287 @@ int main(int argc, char *argv[])
                 tr7_PWM_cmd = tr7_PWM_cmd < thr_PWM_min ? thr_PWM_min : tr7_PWM_cmd;
 
                 // Assign actuator values by giving PWM commands
-		if (debugging_mode)
-		{
-			// Check state inputs
-			if (debug_point == 1 || debug_point == 2)
-			{
-				assert (pit == 0.00000);
-				assert (rol == 0.00000);
-				assert (yaw == 0.00000);
-				assert (wxx == 0.00000);
-				assert (wyy == 0.00000);
-				assert (wzz == 0.00000);
-				assert (AoA == 0.01780);
-				assert (bet == 0.00000);
-				assert (vel == 30.5755);
-			}
+                #ifdef DEBUGGING_MODE
+                // Check state inputs
+                if (debug_point == 1 || debug_point == 2)
+                {
+                        assert (pit == 0.00000);
+                        assert (rol == 0.00000);
+                        assert (yaw == 0.00000);
+                        assert (wxx == 0.00000);
+                        assert (wyy == 0.00000);
+                        assert (wzz == 0.00000);
+                        assert (AoA == 0.01780);
+                        assert (bet == 0.00000);
+                        assert (vel == 30.5755);
+                }
 
-			// Check state range
-			assert (pit <= pit_max);
-			assert (pit >= pit_min);
-			assert (rol <= rol_max);
-			assert (rol >= rol_min);
-			assert (wxx <= wxx_max);
-			assert (wxx >= wxx_min);
-			assert (wyy <= wyy_max);
-			assert (wyy >= wyy_min);
-			assert (wzz <= wzz_max);
-			assert (wzz >= wzz_min);
-			assert (AoA <= AoA_max);
-			assert (AoA >= AoA_min);
-			assert (bet <= bet_max);
-			assert (bet >= bet_min);
-			assert (vel <= vel_max);
-			assert (vel >= vel_min);
+                // Check state range
+                assert (pit <= pit_max);
+                assert (pit >= pit_min);
+                assert (rol <= rol_max);
+                assert (rol >= rol_min);
+                assert (wxx <= wxx_max);
+                assert (wxx >= wxx_min);
+                assert (wyy <= wyy_max);
+                assert (wyy >= wyy_min);
+                assert (wzz <= wzz_max);
+                assert (wzz >= wzz_min);
+                assert (AoA <= AoA_max);
+                assert (AoA >= AoA_min);
+                assert (bet <= bet_max);
+                assert (bet >= bet_min);
+                assert (vel <= vel_max);
+                assert (vel >= vel_min);
 
-			// Check command range
-			assert (ele_PWM_cmd <= ele_PWM_max);
-			assert (ele_PWM_cmd >= ele_PWM_min);
-			assert (ail_PWM_cmd <= ail_PWM_max);
-			assert (ail_PWM_cmd <= ail_PWM_max);
-			assert (rud_PWM_cmd >= rud_PWM_min);
-			assert (rud_PWM_cmd >= rud_PWM_min);
-			assert (tr0_PWM_cmd <= thr_PWM_max);
-			assert (tr0_PWM_cmd >= thr_PWM_min);
-			assert (tr1_PWM_cmd <= thr_PWM_max);
-			assert (tr1_PWM_cmd >= thr_PWM_min);
-			assert (tr2_PWM_cmd <= thr_PWM_max);
-			assert (tr2_PWM_cmd >= thr_PWM_min);
-			assert (tr3_PWM_cmd <= thr_PWM_max);
-			assert (tr3_PWM_cmd >= thr_PWM_min);
-			assert (tr4_PWM_cmd <= thr_PWM_max);
-			assert (tr4_PWM_cmd >= thr_PWM_min);
-			assert (tr5_PWM_cmd <= thr_PWM_max);
-			assert (tr5_PWM_cmd >= thr_PWM_min);
-			assert (tr6_PWM_cmd <= thr_PWM_max);
-			assert (tr6_PWM_cmd >= thr_PWM_min);
-			assert (tr7_PWM_cmd <= thr_PWM_max);
-			assert (tr7_PWM_cmd >= thr_PWM_min);
+                // Check command range
+                assert (ele_PWM_cmd <= ele_PWM_max);
+                assert (ele_PWM_cmd >= ele_PWM_min);
+                assert (ail_PWM_cmd <= ail_PWM_max);
+                assert (ail_PWM_cmd <= ail_PWM_max);
+                assert (rud_PWM_cmd >= rud_PWM_min);
+                assert (rud_PWM_cmd >= rud_PWM_min);
+                assert (tr0_PWM_cmd <= thr_PWM_max);
+                assert (tr0_PWM_cmd >= thr_PWM_min);
+                assert (tr1_PWM_cmd <= thr_PWM_max);
+                assert (tr1_PWM_cmd >= thr_PWM_min);
+                assert (tr2_PWM_cmd <= thr_PWM_max);
+                assert (tr2_PWM_cmd >= thr_PWM_min);
+                assert (tr3_PWM_cmd <= thr_PWM_max);
+                assert (tr3_PWM_cmd >= thr_PWM_min);
+                assert (tr4_PWM_cmd <= thr_PWM_max);
+                assert (tr4_PWM_cmd >= thr_PWM_min);
+                assert (tr5_PWM_cmd <= thr_PWM_max);
+                assert (tr5_PWM_cmd >= thr_PWM_min);
+                assert (tr6_PWM_cmd <= thr_PWM_max);
+                assert (tr6_PWM_cmd >= thr_PWM_min);
+                assert (tr7_PWM_cmd <= thr_PWM_max);
+                assert (tr7_PWM_cmd >= thr_PWM_min);
 
-			// Check control surface commands
-			if (controlled_state[debug_point] == 0.0 || controlled_input[0] == 0.0 || debug_ele[debug_point] == 0.0)
-			{
-				assert (abs(ele_ang_cmd - 57.29578 * ele_trm) <= 0.01);
-			}
-			else
-			{
-				assert (signbit(ele_ang_cmd - 57.29578 * ele_trm) == signbit(debug_ele[debug_point]));
-			}
-			if (controlled_state[debug_point] == 0.0 || controlled_input[1] == 0.0 || debug_ail[debug_point] == 0.0)
-			{
-				assert (abs(ail_ang_cmd - 57.29578 * ail_trm) <= 0.01);
-			}
-			else
-			{
-				assert (signbit(ail_ang_cmd - 57.29578 * ail_trm) == signbit(debug_ail[debug_point]));
-			}
-			if (controlled_state[debug_point] == 0.0 || controlled_input[2] == 0.0 || debug_rud[debug_point] == 0.0)
-			{
-				assert (abs(rud_ang_cmd - 57.29578 * rud_trm) <= 0.01);
-			}
-			else
-			{
-				assert (signbit(rud_ang_cmd - 57.29578 * rud_trm) == signbit(debug_rud[debug_point]));
-			}
+                // Check control surface commands
+                if (controlled_state[debug_point] == 0.0 || controlled_input[0] == 0.0 || debug_ele[debug_point] == 0.0)
+                {
+                        assert (abs(ele_ang_cmd - 57.29578 * ele_trm) <= 0.01);
+                }
+                else
+                {
+                        assert (signbit(ele_ang_cmd - 57.29578 * ele_trm) == signbit(debug_ele[debug_point]));
+                }
+                if (controlled_state[debug_point] == 0.0 || controlled_input[1] == 0.0 || debug_ail[debug_point] == 0.0)
+                {
+                        assert (abs(ail_ang_cmd - 57.29578 * ail_trm) <= 0.01);
+                }
+                else
+                {
+                        assert (signbit(ail_ang_cmd - 57.29578 * ail_trm) == signbit(debug_ail[debug_point]));
+                }
+                if (controlled_state[debug_point] == 0.0 || controlled_input[2] == 0.0 || debug_rud[debug_point] == 0.0)
+                {
+                        assert (abs(rud_ang_cmd - 57.29578 * rud_trm) <= 0.01);
+                }
+                else
+                {
+                        assert (signbit(rud_ang_cmd - 57.29578 * rud_trm) == signbit(debug_rud[debug_point]));
+                }
 
-			// Set the actuator values
-                	acts.de = ele_PWM_cmd;
-                	acts.da = ail_PWM_cmd;
-               		acts.dr = rud_PWM_cmd;
-                	acts.dt[0] = tr0_PWM_cmd;
-                	acts.dt[1] = tr1_PWM_cmd;
-                	acts.dt[2] = tr2_PWM_cmd;
-                	acts.dt[3] = tr3_PWM_cmd;
-                	acts.dt[4] = tr4_PWM_cmd;
-                	acts.dt[5] = tr5_PWM_cmd;
-                	acts.dt[6] = tr6_PWM_cmd;
-                	acts.dt[7] = tr7_PWM_cmd;
+                // Set the actuator values
+                acts.de = ele_PWM_cmd;
+                acts.da = ail_PWM_cmd;
+                acts.dr = rud_PWM_cmd;
+                acts.dt[0] = tr0_PWM_cmd;
+                acts.dt[1] = tr1_PWM_cmd;
+                acts.dt[2] = tr2_PWM_cmd;
+                acts.dt[3] = tr3_PWM_cmd;
+                acts.dt[4] = tr4_PWM_cmd;
+                acts.dt[5] = tr5_PWM_cmd;
+                acts.dt[6] = tr6_PWM_cmd;
+                acts.dt[7] = tr7_PWM_cmd;
 
-		}
-		else
-		{
-                	acts.de = ele_PWM_cmd;
-                	acts.da = ail_PWM_cmd;
-               		acts.dr = rud_PWM_cmd;
-                	acts.dt[0] = tr0_PWM_cmd;
-                	acts.dt[1] = tr1_PWM_cmd;
-                	acts.dt[2] = tr2_PWM_cmd;
-                	acts.dt[3] = tr3_PWM_cmd;
-                	acts.dt[4] = tr4_PWM_cmd;
-                	acts.dt[5] = tr5_PWM_cmd;
-                	acts.dt[6] = tr6_PWM_cmd;
-                	acts.dt[7] = tr7_PWM_cmd;
-		}
+                #elif defined (CALIBRATION_AIL)
+                acts.de = ele_PWM_cmd;
+                acts.da = ail_PWM_cal;
+                acts.dr = rud_PWM_cmd;
+                acts.dt[0] = tr0_PWM_cmd;
+                acts.dt[1] = tr1_PWM_cmd;
+                acts.dt[2] = tr2_PWM_cmd;
+                acts.dt[3] = tr3_PWM_cmd;
+                acts.dt[4] = tr4_PWM_cmd;
+                acts.dt[5] = tr5_PWM_cmd;
+                acts.dt[6] = tr6_PWM_cmd;
+                acts.dt[7] = tr7_PWM_cmd;
+
+                #elif defined (CALIBRATION_ELE)
+                acts.de = ele_PWM_cal;
+                acts.da = ail_PWM_cmd;
+                acts.dr = rud_PWM_cmd;
+                acts.dt[0] = tr0_PWM_cmd;
+                acts.dt[1] = tr1_PWM_cmd;
+                acts.dt[2] = tr2_PWM_cmd;
+                acts.dt[3] = tr3_PWM_cmd;
+                acts.dt[4] = tr4_PWM_cmd;
+                acts.dt[5] = tr5_PWM_cmd;
+                acts.dt[6] = tr6_PWM_cmd;
+                acts.dt[7] = tr7_PWM_cmd;
+
+                #elif defined (CALIBRATION_RUD)
+                acts.de = ele_PWM_cmd;
+                acts.da = ail_PWM_cmd;
+                acts.dr = rud_PWM_cal;
+                acts.dt[0] = tr0_PWM_cmd;
+                acts.dt[1] = tr1_PWM_cmd;
+                acts.dt[2] = tr2_PWM_cmd;
+                acts.dt[3] = tr3_PWM_cmd;
+                acts.dt[4] = tr4_PWM_cmd;
+                acts.dt[5] = tr5_PWM_cmd;
+                acts.dt[6] = tr6_PWM_cmd;
+                acts.dt[7] = tr7_PWM_cmd;
+
+                #else
+                acts.de = ele_PWM_cmd;
+                acts.da = ail_PWM_cmd;
+                acts.dr = rud_PWM_cmd;
+                acts.dt[0] = tr0_PWM_cmd;
+                acts.dt[1] = tr1_PWM_cmd;
+                acts.dt[2] = tr2_PWM_cmd;
+                acts.dt[3] = tr3_PWM_cmd;
+                acts.dt[4] = tr4_PWM_cmd;
+                acts.dt[5] = tr5_PWM_cmd;
+                acts.dt[6] = tr6_PWM_cmd;
+                acts.dt[7] = tr7_PWM_cmd;
+                #endif
 
                 // Sleep for 10 ms to remove CPU stress
                 usleep(10000);
 
                 // Debugging stuff
+                #ifdef DEBUGGING_MODE
                 if (cur_itr % 700 == 0)
                 {
-                        if (debugging_mode && !done_debugging)
-			{
-				if (debug_point < 21)
-				{
-                        		std::cout << std::fixed;
-					std::cout << std::setprecision(2);
-					if (debug_point + 1 <= 9)
-					{
-						std::cout<< "DEBUG POINT " << debug_point+1<< "   |  ";
-					}
-					else
-					{
-						std::cout<< "DEBUG POINT " << debug_point+1<< "  |  ";
-					}
-					std::cout<< std::setw(15) << description[debug_point+1] << "  |  " << std::flush;
-					if (ele_ang_cmd >= 0.0 && ele_ang_cmd < 10.0)
-					{
-                        			std::cout<< "Ele CMD =   " << ele_ang_cmd << " deg  |  ";
-					}
-					else if (ele_ang_cmd >= 10.0)
-					{
-                        			std::cout<< "Ele CMD =  " << ele_ang_cmd << " deg  |  ";
-					}
-					else if (ele_ang_cmd < 0.0 && ele_ang_cmd > -10.0)
-					{
-                        			std::cout<< "Ele CMD =  " << ele_ang_cmd << " deg  |  ";
-					}
-					else
-					{
-                        			std::cout<< "Ele CMD = " << ele_ang_cmd << " deg  |  ";
-					}
-					if (ail_ang_cmd >= 0.0 && ail_ang_cmd < 10.0)
-					{
-                        			std::cout<< "Ail CMD =   " << ail_ang_cmd << " deg  |  ";
-					}
-					else if (ail_ang_cmd >= 10.0)
-					{
-                        			std::cout<< "Ail CMD =  " << ail_ang_cmd << " deg  |  ";
-					}
-					else if (ail_ang_cmd < 0.0 && ail_ang_cmd > -10.0)
-					{
-                        			std::cout<< "Ail CMD =  " << ail_ang_cmd << " deg  |  ";
-					}
-					else
-					{
-                        			std::cout<< "Ail CMD = " << ail_ang_cmd << " deg  |  ";
-					}
-					if (rud_ang_cmd >= 0.0 && rud_ang_cmd < 10.0)
-					{
-                        			std::cout<< "Rud CMD =   " << rud_ang_cmd << " deg  |  ";
-					}
-					else if (rud_ang_cmd >= 10.0)
-					{
-                        			std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
-					}
-					else if (rud_ang_cmd < 0.0 && rud_ang_cmd > -10.0)
-					{
-                        			std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
-					}
-					else
-					{
-                        			std::cout<< "Rud CMD = " << rud_ang_cmd << " deg  |  ";
-					}
-                        		std::cout<< std::endl;
-				}
-				else
-				{
-					std::cout<<"ALL TESTS PASSED!"<<std::endl;
-				}
-			}
+                        if (!done_debugging)
+                        {
+                                if (debug_point < 21)
+                                {
+                                        std::cout << std::fixed;
+                                        std::cout << std::setprecision(2);
+                                        if (debug_point + 1 <= 9)
+                                        {
+                                                std::cout<< "DEBUG POINT " << debug_point+1<< "   |  ";
+                                        }
+                                        else
+                                        {
+                                                std::cout<< "DEBUG POINT " << debug_point+1<< "  |  ";
+                                        }
+                                        std::cout<< std::setw(15) << description[debug_point+1] << "  |  " << std::flush;
+                                        if (ele_ang_cmd >= 0.0 && ele_ang_cmd < 10.0)
+                                        {
+                                                std::cout<< "Ele CMD =   " << ele_ang_cmd << " deg  |  ";
+                                        }
+                                        else if (ele_ang_cmd >= 10.0)
+                                        {
+                                                std::cout<< "Ele CMD =  " << ele_ang_cmd << " deg  |  ";
+                                        }
+                                        else if (ele_ang_cmd < 0.0 && ele_ang_cmd > -10.0)
+                                        {
+                                                std::cout<< "Ele CMD =  " << ele_ang_cmd << " deg  |  ";
+                                        }
+                                        else
+                                        {
+                                                std::cout<< "Ele CMD = " << ele_ang_cmd << " deg  |  ";
+                                        }
+                                        if (ail_ang_cmd >= 0.0 && ail_ang_cmd < 10.0)
+                                        {
+                                                std::cout<< "Ail CMD =   " << ail_ang_cmd << " deg  |  ";
+                                        }
+                                        else if (ail_ang_cmd >= 10.0)
+                                        {
+                                                std::cout<< "Ail CMD =  " << ail_ang_cmd << " deg  |  ";
+                                        }
+                                        else if (ail_ang_cmd < 0.0 && ail_ang_cmd > -10.0)
+                                        {
+                                                std::cout<< "Ail CMD =  " << ail_ang_cmd << " deg  |  ";
+                                        }
+                                        else
+                                        {
+                                                std::cout<< "Ail CMD = " << ail_ang_cmd << " deg  |  ";
+                                        }
+                                        if (rud_ang_cmd >= 0.0 && rud_ang_cmd < 10.0)
+                                        {
+                                                std::cout<< "Rud CMD =   " << rud_ang_cmd << " deg  |  ";
+                                        }
+                                        else if (rud_ang_cmd >= 10.0)
+                                        {
+                                                std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
+                                        }
+                                        else if (rud_ang_cmd < 0.0 && rud_ang_cmd > -10.0)
+                                        {
+                                                std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
+                                        }
+                                        else
+                                        {
+                                                std::cout<< "Rud CMD = " << rud_ang_cmd << " deg  |  ";
+                                        }
+                                        std::cout<< std::endl;
+                                }
+                                else
+                                {
+                                        std::cout<<"ALL TESTS PASSED!"<<std::endl;
+                                }
+                        }
                         cur_itr = 1;
-			if (debug_point >= 21)
-			{
-				done_debugging = true;
-			}
-			else
-			{
-				debug_point++;
-			}
+                        if (debug_point >= 21)
+                        {
+                                done_debugging = true;
+                        }
+                        else
+                        {
+                                debug_point++;
+                        }
                 }
+                #elif defined(CALIBRATION_AIL)
+                if (cur_itr % 1500 == 0)
+                {
+                        if (ail_PWM_cal + ail_stp <= ail_PWM_max)
+                        {
+                                ail_PWM_cal += ail_stp;
+                        }
+                        cur_itr = 1;
+                }
+                #elif defined(CALIBRATION_ELE)
+                if (cur_itr % 1500 == 0)
+                {
+                        if (ele_PWM_cal + ele_stp <= ele_PWM_max)
+                        {
+                                ele_PWM_cal += ele_stp;
+                        }
+                        cur_itr = 1;
+                }
+                #elif defined(CALIBRATION_RUD)
+                if (cur_itr % 1500 == 0)
+                {
+                        if (rud_PWM_cal + rud_stp <= rud_PWM_max)
+                        {
+                                rud_PWM_cal += ail_stp;
+                        }
+                        cur_itr = 1;
+                }
+                #elif defined(CALICHECK_AIL)
+                if (cur_itr % 1500 == 0)
+                {
+                        cur_itr = 1;
+                }
+                #elif defined(CALICHECK_ELE)
+                if (cur_itr % 1500 == 0)
+                {
+                        cur_itr = 1;
+                }
+                #elif defined(CALICHECK_RUD)
+                if (cur_itr % 1500 == 0)
+                {
+                        cur_itr = 1;
+                }
+                #else
+                cur_itr--;
+                #endif
 
                 // Iterator iterator
                 cur_itr++;
