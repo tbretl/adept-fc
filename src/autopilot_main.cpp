@@ -270,26 +270,36 @@ int main(int argc, char *argv[])
         #ifdef CALIBRATION_AIL
         int ail_PWM_cal = ail_PWM_min;
         int ail_stp = (int)(((double)ail_PWM_max - (double)ail_PWM_min) / 15.0);
-        #elif defined (CALIBRATION_ELE)
+        bool done_initial_wait = false;
+	bool done = false;
+	#elif defined (CALIBRATION_ELE)
         int ele_PWM_cal = ele_PWM_min;
         int ele_stp = (int)(((double)ele_PWM_max - (double)ele_PWM_min) / 15.0);
+        bool done_initial_wait = false;
+	bool done = false;
         #elif defined (CALIBRATION_RUD)
         int rud_PWM_cal = rud_PWM_min;
         int rud_stp = (int)(((double)rud_PWM_max - (double)rud_PWM_min) / 15.0);
+        bool done_initial_wait = false;
+	bool done = false;
         #endif
 
         // Calibration check parameters
         #ifdef CALICHECK_AIL
         double cur_ail_ang = -10.0; // in deg
         double ail_stp = 5.0; // in deg
-        #endif
-        #ifdef CALICHECK_ELE
+        bool done_initial_wait = false;
+	bool done = false;
+        #elif defined (CALICHECK_ELE)
         double cur_ele_ang = -10.0; // in deg
         double ele_stp = 5.0; // in deg
-        #endif
-        #ifdef CALICHECK_RUD
+        bool done_initial_wait = false;
+	bool done = false;
+        #elif defined (CALICHECK_RUD)
         double cur_rud_ang = -10.0; // in deg
         double rud_stp = 5.0; // in deg
+        bool done_initial_wait = false;
+	bool done = false;
         #endif
 
         // Initialize an iterator
@@ -682,19 +692,19 @@ int main(int argc, char *argv[])
                                         }
                                         if (rud_ang_cmd >= 0.0 && rud_ang_cmd < 10.0)
                                         {
-                                                std::cout<< "Rud CMD =   " << rud_ang_cmd << " deg  |  ";
+                                                std::cout<< "Rud CMD =   " << rud_ang_cmd << " deg";
                                         }
                                         else if (rud_ang_cmd >= 10.0)
                                         {
-                                                std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
+                                                std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg";
                                         }
                                         else if (rud_ang_cmd < 0.0 && rud_ang_cmd > -10.0)
                                         {
-                                                std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
+                                                std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg";
                                         }
                                         else
                                         {
-                                                std::cout<< "Rud CMD = " << rud_ang_cmd << " deg  |  ";
+                                                std::cout<< "Rud CMD = " << rud_ang_cmd << " deg";
                                         }
                                         std::cout<< std::endl;
                                 }
@@ -714,82 +724,136 @@ int main(int argc, char *argv[])
                         }
                 }
                 #elif defined(CALIBRATION_AIL)
-                if ((cur_itr - 1) % 1500 == 0)
+		if (!done_initial_wait && cur_itr == 600)
+		{
+			done_initial_wait = true;
+			cur_itr = 0;
+		}
+		if (done_initial_wait && cur_itr == 1 && !done)
                 {
-                    std::cout<<"Aileron PWM Command: " << ail_PWM_cal << " deg" << std::endl;
+                    std::cout<<"Aileron PWM Command: " << ail_PWM_cal << std::endl;
                 }
-                if (cur_itr % 1500 == 0)
+                if (done_initial_wait && cur_itr == 1500)
                 {
                         if (ail_PWM_cal + ail_stp <= ail_PWM_max)
                         {
                                 ail_PWM_cal += ail_stp;
                         }
-                        cur_itr = 1;
+			else
+			{
+				done = true;
+			}
+                        cur_itr = 0;
                 }
                 #elif defined(CALIBRATION_ELE)
-                if ((cur_itr - 1) % 1500 == 0)
+		if (!done_initial_wait && cur_itr == 600)
+		{
+			done_initial_wait = true;
+			cur_itr = 0;
+		}
+		if (done_initial_wait && cur_itr == 1 && !done)
                 {
-                    std::cout<<"Elevator PWM Command: " << ele_PWM_cal << " deg" << std::endl;
+                    std::cout<<"Elevator PWM Command: " << ele_PWM_cal << std::endl;
                 }
-                if (cur_itr % 1500 == 0)
+                if (done_initial_wait && cur_itr == 1500)
                 {
                         if (ele_PWM_cal + ele_stp <= ele_PWM_max)
                         {
                                 ele_PWM_cal += ele_stp;
                         }
-                        cur_itr = 1;
+			else
+			{
+				done = true;
+			}
+                        cur_itr = 0;
                 }
                 #elif defined(CALIBRATION_RUD)
-                if ((cur_itr - 1) % 1500 == 0)
+		if (!done_initial_wait && cur_itr == 600)
+		{
+			done_initial_wait = true;
+			cur_itr = 0;
+		}
+		if (done_initial_wait && cur_itr == 1 && !done)
                 {
-                    std::cout<<"Rudder PWM Command: " << rud_PWM_cal << " deg" << std::endl;
+                    std::cout<<"Rudder PWM Command: " << rud_PWM_cal << std::endl;
                 }
-                if (cur_itr % 1500 == 0)
+                if (done_initial_wait && cur_itr == 1500)
                 {
                         if (rud_PWM_cal + rud_stp <= rud_PWM_max)
                         {
-                                rud_PWM_cal += ail_stp;
+                                rud_PWM_cal += rud_stp;
                         }
-                        cur_itr = 1;
+			else
+			{
+				done = true;
+			}
+                        cur_itr = 0;
                 }
                 #elif defined(CALICHECK_AIL)
-                if ((cur_itr - 1) % 1500 == 0)
+		if (!done_initial_wait && cur_itr == 600)
+		{
+			done_initial_wait = true;
+			cur_itr = 0;
+		}
+		if (done_initial_wait && cur_itr == 1 && !done)
                 {
                     std::cout<<"Aileron Angular Command: " << cur_ail_ang << " deg" << std::endl;
                 }
-                if (cur_itr % 1500 == 0)
+                if (done_initial_wait && cur_itr == 1500)
                 {
                         if (cur_ail_ang + ail_stp <= 10.0)
                         {
                                 cur_ail_ang += ail_stp;
                         }
-                        cur_itr = 1;
+			else
+			{
+				done = true;
+			}
+                        cur_itr = 0;
                 }
                 #elif defined(CALICHECK_ELE)
-                if ((cur_itr - 1) % 1500 == 0)
+		if (!done_initial_wait && cur_itr == 600)
+		{
+			done_initial_wait = true;
+			cur_itr = 0;
+		}
+		if (done_initial_wait && cur_itr == 1 && !done)
                 {
                     std::cout<<"Elevator Angular Command: " << cur_ele_ang << " deg" << std::endl;
                 }
-                if (cur_itr % 1500 == 0)
+                if (done_initial_wait && cur_itr == 1500)
                 {
                         if (cur_ele_ang + ele_stp <= 10.0)
                         {
                                 cur_ele_ang += ele_stp;
                         }
-                        cur_itr = 1;
+			else
+			{
+				done = true;
+			}
+                        cur_itr = 0;
                 }
                 #elif defined(CALICHECK_RUD)
-                if ((cur_itr - 1) % 1500 == 0)
+		if (!done_initial_wait && cur_itr == 600)
+		{
+			done_initial_wait = true;
+			cur_itr = 0;
+		}
+		if (done_initial_wait && cur_itr == 1 && !done)
                 {
                     std::cout<<"Rudder Angular Command: " << cur_rud_ang << " deg" << std::endl;
                 }
-                if (cur_itr % 1500 == 0)
+                if (done_initial_wait && cur_itr == 1500)
                 {
                         if (cur_rud_ang + rud_stp <= 10.0)
                         {
                                 cur_rud_ang += rud_stp;
                         }
-                        cur_itr = 1;
+			else
+			{
+				done = true;
+			}
+                        cur_itr = 0;
                 }
                 #else
                 cur_itr--;
