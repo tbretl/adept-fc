@@ -12,6 +12,7 @@
 #include <chrono>
 #include <math.h>
 #include <assert.h>
+#include <iomanip>
 
 // Message types
 #include "actuators_t.hpp"
@@ -22,9 +23,10 @@
 using std::string;
 
 // Debugging mode parameters
-bool debugging_mode = true;
+bool debugging_mode = false;
 bool done_debugging = false;
 int debug_point = 0;
+std::string description[22] = {"Trim","-Bad","+Bad","Pitch Up","Pitch Down","Roll Right","Roll Left","Yaw Right","Yaw Left","Pitch Rate Up", "Pitch Rate Down", "Roll Rate Right", "Roll Rate Left", "Yaw Rate Right", "Yaw Rate Left", "Positive AoA", "Negative AoA", "Right Slip", "Left Slip", "High Vel", "Low Vel", "Trim"};
 double controlled_input[3]  = { 0.0, 1.0, 0.0 };
 double controlled_state[22] = { 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
 double debug_pit[22] = { 0.00000, -100.0, 100.0, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000, 0.00000};
@@ -511,6 +513,19 @@ int main(int argc, char *argv[])
 				assert (signbit(rud_ang_cmd - 57.29578 * rud_trm) == signbit(debug_rud[debug_point]));
 			}
 
+			// Set the actuator values
+                	acts.de = ele_PWM_cmd;
+                	acts.da = ail_PWM_cmd;
+               		acts.dr = rud_PWM_cmd;
+                	acts.dt[0] = tr0_PWM_cmd;
+                	acts.dt[1] = tr1_PWM_cmd;
+                	acts.dt[2] = tr2_PWM_cmd;
+                	acts.dt[3] = tr3_PWM_cmd;
+                	acts.dt[4] = tr4_PWM_cmd;
+                	acts.dt[5] = tr5_PWM_cmd;
+                	acts.dt[6] = tr6_PWM_cmd;
+                	acts.dt[7] = tr7_PWM_cmd;
+
 		}
 		else
 		{
@@ -531,30 +546,82 @@ int main(int argc, char *argv[])
                 usleep(10000);
 
                 // Debugging stuff
-                if (cur_itr % 200 == 0)
+                if (cur_itr % 700 == 0)
                 {
                         if (debugging_mode && !done_debugging)
 			{
-                        	std::cout.precision(5);
-				std::cout<< "DEBUG POINT " << debug_point << " PASSED   |   ";
-                        	std::cout<< "Ele CMD = " << ele_ang_cmd << " deg   |   ";
-                        	std::cout<< "Ele PWM = " << ele_PWM_cmd << "   |   ";
-                        	std::cout<< "Ail CMD = " << ail_ang_cmd << " deg   |   ";
-                        	std::cout<< "Ail PWM = " << ail_PWM_cmd << "   |   ";
-                        	std::cout<< "Rud CMD = " << rud_ang_cmd << " deg   |   ";
-                        	std::cout<< "Rud PWM = " << rud_PWM_cmd << "   |   ";
-                        	std::cout<< "Thr CMD = " << tr0_trm*100.0 << " %   |   ";
-                        	std::cout<< "Thr PWM = " << tr0_PWM_cmd;
-                        	std::cout<< std::endl;
+				if (debug_point < 21)
+				{
+                        		std::cout << std::fixed;
+					std::cout << std::setprecision(2);
+					if (debug_point + 1 <= 9)
+					{
+						std::cout<< "DEBUG POINT " << debug_point+1<< "   |  ";
+					}
+					else
+					{
+						std::cout<< "DEBUG POINT " << debug_point+1<< "  |  ";
+					}
+					std::cout<< std::setw(15) << description[debug_point+1] << "  |  " << std::flush;
+					if (ele_ang_cmd >= 0.0 && ele_ang_cmd < 10.0)
+					{
+                        			std::cout<< "Ele CMD =   " << ele_ang_cmd << " deg  |  ";
+					}
+					else if (ele_ang_cmd >= 10.0)
+					{
+                        			std::cout<< "Ele CMD =  " << ele_ang_cmd << " deg  |  ";
+					}
+					else if (ele_ang_cmd < 0.0 && ele_ang_cmd > -10.0)
+					{
+                        			std::cout<< "Ele CMD =  " << ele_ang_cmd << " deg  |  ";
+					}
+					else
+					{
+                        			std::cout<< "Ele CMD = " << ele_ang_cmd << " deg  |  ";
+					}
+					if (ail_ang_cmd >= 0.0 && ail_ang_cmd < 10.0)
+					{
+                        			std::cout<< "Ail CMD =   " << ail_ang_cmd << " deg  |  ";
+					}
+					else if (ail_ang_cmd >= 10.0)
+					{
+                        			std::cout<< "Ail CMD =  " << ail_ang_cmd << " deg  |  ";
+					}
+					else if (ail_ang_cmd < 0.0 && ail_ang_cmd > -10.0)
+					{
+                        			std::cout<< "Ail CMD =  " << ail_ang_cmd << " deg  |  ";
+					}
+					else
+					{
+                        			std::cout<< "Ail CMD = " << ail_ang_cmd << " deg  |  ";
+					}
+					if (rud_ang_cmd >= 0.0 && rud_ang_cmd < 10.0)
+					{
+                        			std::cout<< "Rud CMD =   " << rud_ang_cmd << " deg  |  ";
+					}
+					else if (rud_ang_cmd >= 10.0)
+					{
+                        			std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
+					}
+					else if (rud_ang_cmd < 0.0 && rud_ang_cmd > -10.0)
+					{
+                        			std::cout<< "Rud CMD =  " << rud_ang_cmd << " deg  |  ";
+					}
+					else
+					{
+                        			std::cout<< "Rud CMD = " << rud_ang_cmd << " deg  |  ";
+					}
+                        		std::cout<< std::endl;
+				}
+				else
+				{
+					std::cout<<"ALL TESTS PASSED!"<<std::endl;
+				}
 			}
                         cur_itr = 1;
 			if (debug_point >= 21)
 			{
 				done_debugging = true;
-				if (debug_point == 21)
-				{
-					std::cout<<"ALL TESTS PASSED!";
-				}
 			}
 			else
 			{
