@@ -270,12 +270,10 @@ int main(int argc, char *argv[])
         #ifdef CALIBRATION_AIL
         int ail_PWM_cal = ail_PWM_min;
         int ail_stp = (int)(((double)ail_PWM_max - (double)ail_PWM_min) / 15.0);
-        #endif
-        #ifdef CALIBRATION_ELE
+        #elif defined (CALIBRATION_ELE)
         int ele_PWM_cal = ele_PWM_min;
         int ele_stp = (int)(((double)ele_PWM_max - (double)ele_PWM_min) / 15.0);
-        #endif
-        #ifdef CALIBRATION_RUD
+        #elif defined (CALIBRATION_RUD)
         int rud_PWM_cal = rud_PWM_min;
         int rud_stp = (int)(((double)rud_PWM_max - (double)rud_PWM_min) / 15.0);
         #endif
@@ -426,9 +424,23 @@ int main(int argc, char *argv[])
                 rud_ang_cmd = 57.29578 * (lat_in1 + rud_trm); // in degrees
 
                 // Convert angular deflection commands to PWM commands
+                #ifdef CALICHECK_AIL
+                ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 3, ele_ang_cmd);
+                ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 2, cur_ail_ang);
+                rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 2, rud_ang_cmd);
+                #elif defined (CALICHECK_ELE)
+                ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 3, cur_ele_ang);
+                ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 2, ail_ang_cmd);
+                rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 2, rud_ang_cmd);
+                #elif defined (CALICHECK_RUD)
+                ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 3, ele_ang_cmd);
+                ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 2, ail_ang_cmd);
+                rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 2, cur_rud_ang);
+                #else
                 ele_PWM_cmd = (int) evl_exp(ele_PWM_con, 3, ele_ang_cmd);
                 ail_PWM_cmd = (int) evl_exp(ail_PWM_con, 2, ail_ang_cmd);
                 rud_PWM_cmd = (int) evl_exp(rud_PWM_con, 2, rud_ang_cmd);
+                #endif
 
                 // Convert throttle commands to PWM commands
                 tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr0_trm;
@@ -702,6 +714,10 @@ int main(int argc, char *argv[])
                         }
                 }
                 #elif defined(CALIBRATION_AIL)
+                if ((cur_itr - 1) % 1500 == 0)
+                {
+                    std::cout<<"Aileron PWM Command: " << ail_PWM_cal << " deg" << std::endl;
+                }
                 if (cur_itr % 1500 == 0)
                 {
                         if (ail_PWM_cal + ail_stp <= ail_PWM_max)
@@ -711,6 +727,10 @@ int main(int argc, char *argv[])
                         cur_itr = 1;
                 }
                 #elif defined(CALIBRATION_ELE)
+                if ((cur_itr - 1) % 1500 == 0)
+                {
+                    std::cout<<"Elevator PWM Command: " << ele_PWM_cal << " deg" << std::endl;
+                }
                 if (cur_itr % 1500 == 0)
                 {
                         if (ele_PWM_cal + ele_stp <= ele_PWM_max)
@@ -720,6 +740,10 @@ int main(int argc, char *argv[])
                         cur_itr = 1;
                 }
                 #elif defined(CALIBRATION_RUD)
+                if ((cur_itr - 1) % 1500 == 0)
+                {
+                    std::cout<<"Rudder PWM Command: " << rud_PWM_cal << " deg" << std::endl;
+                }
                 if (cur_itr % 1500 == 0)
                 {
                         if (rud_PWM_cal + rud_stp <= rud_PWM_max)
@@ -729,18 +753,42 @@ int main(int argc, char *argv[])
                         cur_itr = 1;
                 }
                 #elif defined(CALICHECK_AIL)
+                if ((cur_itr - 1) % 1500 == 0)
+                {
+                    std::cout<<"Aileron Angular Command: " << cur_ail_ang << " deg" << std::endl;
+                }
                 if (cur_itr % 1500 == 0)
                 {
+                        if (cur_ail_ang + ail_stp <= 10.0)
+                        {
+                                cur_ail_ang += ail_stp;
+                        }
                         cur_itr = 1;
                 }
                 #elif defined(CALICHECK_ELE)
+                if ((cur_itr - 1) % 1500 == 0)
+                {
+                    std::cout<<"Elevator Angular Command: " << cur_ele_ang << " deg" << std::endl;
+                }
                 if (cur_itr % 1500 == 0)
                 {
+                        if (cur_ele_ang + ele_stp <= 10.0)
+                        {
+                                cur_ele_ang += ele_stp;
+                        }
                         cur_itr = 1;
                 }
                 #elif defined(CALICHECK_RUD)
+                if ((cur_itr - 1) % 1500 == 0)
+                {
+                    std::cout<<"Rudder Angular Command: " << cur_rud_ang << " deg" << std::endl;
+                }
                 if (cur_itr % 1500 == 0)
                 {
+                        if (cur_rud_ang + rud_stp <= 10.0)
+                        {
+                                cur_rud_ang += rud_stp;
+                        }
                         cur_itr = 1;
                 }
                 #else
