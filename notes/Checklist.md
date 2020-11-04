@@ -71,13 +71,7 @@ Updated: 10/28/2020 10:39 CST*
 |Linux Laptop|X1|Used to interface with aircraft via SSH|N/A|
 
 - [ ] Remove protective cover from 5-hole probe
-- [ ] Conduct walkaround.
-  - [ ] Integrity of wheels
-  - [ ] Integrity of airframe
-  - [ ] Integrity of hall effect sensor tape coverings
-  - [ ] Integrity of control surfaces
-  - [ ] Integrity of propulsor blades
-  - [ ] Integrity of propulsor ducts
+- [ ] Conduct walkaround (defined in AP_Validation.md).
 - [ ] Turn on TX. Check battery status of TX. If it is below 80%, charge.
 - [ ] Move throttle stick all the way down.
 - [ ] Set all SC switches to the fully forward position.
@@ -93,10 +87,10 @@ Updated: 10/28/2020 10:39 CST*
   - [ ] On linux laptop: `ssh 192.168.0.100`
 - [ ] Login: `pi`
 - [ ] Password: `*********`
-- [ ] `cd adept-fc/`
+- [ ] Download most recent flight release: https://github.com/tbretl/adept-fc.git
+- [ ] `cd adept-fc`
 - [ ] `make clean`
 - [ ] `git clean -fxd`
-- [ ] `mkdir bin`
 - [ ] `make all`
 - [ ] `sudo ./run.sh`
 - [ ] `pwm arm`
