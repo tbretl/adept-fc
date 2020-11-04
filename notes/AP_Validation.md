@@ -88,10 +88,9 @@ These tests are conducted on single axis states only. They will not ensure prope
 
 **Procedure**
 
-- In `autopilot_main.cpp` set `debug_mode=true`.
 - In terminal `make clean`
 - In terminal `git clean -fxd`
-- In terminal `make all`
+- In terminal `make debug`
 - In terminal `sudo ./run.sh`
   - When autopilot module is loaded the text "WARNING: AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY." will appear
 - In terminal `pwm arm`
@@ -119,25 +118,24 @@ This test does not check AP command generation. All commands sent during the tes
 - Attach 3ft radius protractor to left aileron.
 - In terminal `make clean`
 - In terminal `git clean -fxd`
-- In terminal `make all`
+- In terminal `make ail_cc`
 - In terminal `sudo ./run.sh`
 - In terminal `pwm arm`
+- On TX, SC3 to manual
 - Adjust 3ft radius protractor so that the deflection reads 0 deg.
 - Move TX aileron stick all the up left and right. Ensure that the protractor needle does not scrape the radius at any point. If it does, adjust accordingly.
 - In terminal `pwm disarm`
 - In terminal `all exit`
-- In `autopilot_main.cpp` set `aileron_check=true`.
-- In terminal `make clean`
-- In terminal `git clean -fxd`
-- In terminal `make all`
 - In terminal `sudo ./run.sh`
   - When autopilot module is loaded the text "WARNING: AUTOPILOT STARTED IN CALIBRATION CHECK. DO NOT FLY." will appear
 - In terminal `pwm arm`
 - On TX, SC3 to AP
 - Angular tests will run in 15 second intervals. Each test will display the expected deflection angle. Compare the expected deflection to the actual deflection as measured by the 3ft radius protractor. Deflection directions are determined by Figure 1.
-- When all 5 tests are complete, in terminal `pwm disarm`
+- When all 5 angles are complete, in terminal `pwm disarm`
 - In terminal `all exit`
 - Repeat all above steps elevator and rudder control surfaces.
+  - `make ele_cc`
+  - `make rud_cc`
 
 ![Axes_Definition](Axes_Definition.png)
 
@@ -196,6 +194,7 @@ This inspection does not test the health of the software systems. It also does n
 - Inspect rudder surface. Ensure that there are no visible signs of cracking.
 - Ensure rudder moves freely.
 - Ensure the rudder hall effect sensor tape is in tact with no signs of tearing or delamination.
+- Download most recent flight release: https://github.com/tbretl/adept-fc.git
 - In terminal `make clean`
 - In terminal `git clean -fxd`
 - In terminal `make all`
