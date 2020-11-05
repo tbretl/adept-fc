@@ -4,24 +4,38 @@ Bretl Research Group\
 Aerodynamics and Unsteady Flow Group\
 ESAero\
 Created: 10/28/2020 10:39 CST\
-Updated: 10/28/2020 10:39 CST*
+Updated: 11/05/2020 12:58 CST*
+
+## Validation
+![Signature_Pane](Signature_Pane.png)
+
+## Materials
+
+| Check |  Item  |  Quantity  |  Purpose/Description  | Storage Location  |
+|:-----:|:------:|:----------:|-----------------------|-------------------|
+||ADEPT-FC Aircraft|X1|Test aircraft|On mobile storage cart: <br> Upper shelf|
+||Left Wing|X1|Left wing of the Adept-FC aircraft|On mobile storage cart: <br> Lower shelf|
+||Right Wing|X1|Right wing of the Adept-FC aircraft|On mobile storage cart: <br> Upper shelf|
+||Carbon Fiber Rod|X1|Loading bearing rod used to attach wings|On mobile storage cart: <br> Upper shelf|
+||Wing Nut|X2|Nut used to secure wings to body|On mobile storage cart:<br> In plastic bag on upper shelf|
+||Washer|X2|Washer used to spread load of wing nut(s)|On mobile storage cart:<br> In plastic bag on upper shelf|
+||ADEPT-FC Aircraft|X1|Test aircraft|On mobile storage cart: <br> Upper shelf|
+||Lipo Battery Voltage Tester|X1|Used to test the voltages of the Lipo batteries|In lipo pelican case in flammables cabinet|
+||Lipo Balance Charger|X2|Used to charge lipo batteries|On workbench|
+||7.4V Lipo|X5|Powers all avionics systems|In lipo pelican case in flammables cabinet|
+||18.5V Lipo|X4|Powers all propulsors|In lipo pelican case in flammables cabinet|
+||4-8 Power Cable Splitter|X1|Splits 18.5V connectors to 8 outputs (1 per propulsor)|On mobile storage cart: <br> Upper shelf|
+||General Tool Set|X1|Used in assembly and repair process|Personal storage|
+||HDMI Monitor|X1|Allows user to interface with Pi|On table near mobile storage cart|
+||HDMI Cable|X1|Connects Pi to Monitor|Stored with monitor|
+||USB Keyboard|X1|Allows user to interact with Pi|On table near mobile storage cart|
+||Wireless router|X1|Creates wireless network used to interface with aircraft|On table near mobile storage cart|
+||Ethernet cable|X1|Links aircraft to wireless network|On table near mobile storage cart|
+||TX|X1|Sends radio commands to aircraft|In storage box on mobile storage cart|
+||Linux Laptop|X1|Used to interface with aircraft via SSH|N/A|
+||Weather Station|X1|Measures weather conditions at flight location|Under workbench|
 
 ## Assembly
-
-|  Item  |  Quantity  |  Purpose/Description  | Storage Location  |
-|:------:|:----------:|-----------------------|-------------------|
-|ADEPT-FC Aircraft|X1|Test aircraft|On mobile storage cart: <br> Upper shelf|
-|Left Wing|X1|Left wing of the Adept-FC aircraft|On mobile storage cart: <br> Lower shelf|
-|Right Wing|X1|Right wing of the Adept-FC aircraft|On mobile storage cart: <br> Upper shelf|
-|Carbon Fiber Rod|X1|Loading bearing rod used to attach wings|On mobile storage cart: <br> Upper shelf|
-|Wing Nut|X2|Nut used to secure wings to body|On mobile storage cart:<br> In plastic bag on upper shelf|
-|Washer|X2|Washer used to spread load of wing nut(s)|On mobile storage cart:<br> In plastic bag on upper shelf|
-|ADEPT-FC Aircraft|X1|Test aircraft|On mobile storage cart: <br> Upper shelf|
-|Lipo Battery Voltage Tester|X1|Used to test the voltages of the Lipo batteries|In lipo pelican case in flammables cabinet|
-|7.4V Lipo|X5|Powers all avionics systems|In lipo pelican case in flammables cabinet|
-|18.5V Lipo|X4|Powers all propulsors|In lipo pelican case in flammables cabinet|
-|4-8 Power Cable Splitter|X1|Splits 18.5V connectors to 8 outputs (1 per propulsor)|On mobile storage cart: <br> Upper shelf|
-|Battery Charger|X2|Used to charge lipo batteries|On workbench|
 
 - [ ] Remove *ADEPT-FC Aircraft* from mobile storage cart and place on ground.
 - [ ] Remove both doors from *ADEPT-FC Aircraft*.
@@ -61,17 +75,6 @@ Updated: 10/28/2020 10:39 CST*
 
 ## Preflight
 
-|  Item  |  Quantity  |  Purpose/Description  | Storage Location  |
-|:------:|:----------:|-----------------------|-------------------|
-|HDMI Monitor|X1|Allows user to interface with Pi|On table near mobile storage cart|
-|HDMI Cable|X1|Connects Pi to Monitor|Stored with monitor|
-|USB Keyboard|X1|Allows user to interact with Pi|On table near mobile storage cart|
-|Wireless router|X1|Creates wireless network used to interface with aircraft|On table near mobile storage cart|
-|Ethernet cable|X1|Links aircraft to wireless network|On table near mobile storage cart|
-|TX|X1|Sends radio commands to aircraft|In storage box on mobile storage cart|
-|Linux Laptop|X1|Used to interface with aircraft via SSH|N/A|
-
-
 - [ ] Remove protective cover from 5-hole probe
 - [ ] Conduct walkaround (defined in AP_Validation.md).
 - [ ] Turn on TX. Check battery status of TX. If it is below 80%, charge.
@@ -108,10 +111,6 @@ Updated: 10/28/2020 10:39 CST*
 - [ ] `all exit`
 
 ## Taxi
-
-|  Item  |  Quantity  |  Purpose/Description  | Storage Location  |
-|:------:|:----------:|-----------------------|-------------------|
-|Weather Station|X1|Measures weather conditions at flight location|Under workbench|
 
 - [ ] Move aircraft to taxiway.
 - [ ] Record temperature, pressure, and wind data from weather station.
