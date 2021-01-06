@@ -271,17 +271,17 @@ int main(int argc, char *argv[])
         int ail_PWM_cal = ail_PWM_min;
         int ail_stp = (int)(((double)ail_PWM_max - (double)ail_PWM_min) / 15.0);
         bool done_initial_wait = false;
-	bool done = false;
-	#elif defined (CALIBRATION_ELE)
+        bool done = false;
+        #elif defined (CALIBRATION_ELE)
         int ele_PWM_cal = ele_PWM_min;
         int ele_stp = (int)(((double)ele_PWM_max - (double)ele_PWM_min) / 15.0);
         bool done_initial_wait = false;
-	bool done = false;
+        bool done = false;
         #elif defined (CALIBRATION_RUD)
         int rud_PWM_cal = rud_PWM_min;
         int rud_stp = (int)(((double)rud_PWM_max - (double)rud_PWM_min) / 15.0);
         bool done_initial_wait = false;
-	bool done = false;
+        bool done = false;
         #endif
 
         // Calibration check parameters
@@ -289,17 +289,17 @@ int main(int argc, char *argv[])
         double cur_ail_ang = -10.0; // in deg
         double ail_stp = 5.0; // in deg
         bool done_initial_wait = false;
-	bool done = false;
+        bool done = false;
         #elif defined (CALICHECK_ELE)
         double cur_ele_ang = -10.0; // in deg
         double ele_stp = 5.0; // in deg
         bool done_initial_wait = false;
-	bool done = false;
+        bool done = false;
         #elif defined (CALICHECK_RUD)
         double cur_rud_ang = -10.0; // in deg
         double rud_stp = 5.0; // in deg
         bool done_initial_wait = false;
-	bool done = false;
+        bool done = false;
         #endif
 
         // Initialize an iterator
@@ -724,14 +724,14 @@ int main(int argc, char *argv[])
                         }
                 }
                 #elif defined(CALIBRATION_AIL)
-		if (!done_initial_wait && cur_itr == 600)
-		{
-			done_initial_wait = true;
-			cur_itr = 0;
-		}
-		if (done_initial_wait && cur_itr == 1 && !done)
+                if (!done_initial_wait && cur_itr == 600)
                 {
-                    std::cout<<"Aileron PWM Command: " << ail_PWM_cal << std::endl;
+                        done_initial_wait = true;
+                        cur_itr = 0;
+                }
+                if (done_initial_wait && cur_itr == 1 && !done)
+                {
+                        std::cout<<"Aileron PWM Command: " << ail_PWM_cal << std::endl;
                 }
                 if (done_initial_wait && cur_itr == 1500)
                 {
@@ -739,21 +739,21 @@ int main(int argc, char *argv[])
                         {
                                 ail_PWM_cal += ail_stp;
                         }
-			else
-			{
-				done = true;
-			}
+                        else
+                        {
+                                done = true;
+                        }
                         cur_itr = 0;
                 }
                 #elif defined(CALIBRATION_ELE)
-		if (!done_initial_wait && cur_itr == 600)
-		{
-			done_initial_wait = true;
-			cur_itr = 0;
-		}
-		if (done_initial_wait && cur_itr == 1 && !done)
+                if (!done_initial_wait && cur_itr == 600)
                 {
-                    std::cout<<"Elevator PWM Command: " << ele_PWM_cal << std::endl;
+                        done_initial_wait = true;
+                        cur_itr = 0;
+                }
+                if (done_initial_wait && cur_itr == 1 && !done)
+                {
+                        std::cout<<"Elevator PWM Command: " << ele_PWM_cal << std::endl;
                 }
                 if (done_initial_wait && cur_itr == 1500)
                 {
@@ -761,21 +761,21 @@ int main(int argc, char *argv[])
                         {
                                 ele_PWM_cal += ele_stp;
                         }
-			else
-			{
-				done = true;
-			}
+                        else
+                        {
+                                done = true;
+                        }
                         cur_itr = 0;
                 }
                 #elif defined(CALIBRATION_RUD)
-		if (!done_initial_wait && cur_itr == 600)
-		{
-			done_initial_wait = true;
-			cur_itr = 0;
-		}
-		if (done_initial_wait && cur_itr == 1 && !done)
+                if (!done_initial_wait && cur_itr == 600)
                 {
-                    std::cout<<"Rudder PWM Command: " << rud_PWM_cal << std::endl;
+                        done_initial_wait = true;
+                        cur_itr = 0;
+                }
+                if (done_initial_wait && cur_itr == 1 && !done)
+                {
+                        std::cout<<"Rudder PWM Command: " << rud_PWM_cal << std::endl;
                 }
                 if (done_initial_wait && cur_itr == 1500)
                 {
@@ -783,21 +783,21 @@ int main(int argc, char *argv[])
                         {
                                 rud_PWM_cal += rud_stp;
                         }
-			else
-			{
-				done = true;
-			}
+                        else
+                        {
+                                done = true;
+                        }
                         cur_itr = 0;
                 }
                 #elif defined(CALICHECK_AIL)
-		if (!done_initial_wait && cur_itr == 600)
-		{
-			done_initial_wait = true;
-			cur_itr = 0;
-		}
-		if (done_initial_wait && cur_itr == 1 && !done)
+                if (!done_initial_wait && cur_itr == 600)
                 {
-                    std::cout<<"Aileron Angular Command: " << cur_ail_ang << " deg" << std::endl;
+                        done_initial_wait = true;
+                        cur_itr = 0;
+                }
+                if (done_initial_wait && cur_itr == 1 && !done)
+                {
+                        std::cout<<"Aileron Angular Command: " << cur_ail_ang << " deg" << std::endl;
                 }
                 if (done_initial_wait && cur_itr == 1500)
                 {
@@ -805,21 +805,21 @@ int main(int argc, char *argv[])
                         {
                                 cur_ail_ang += ail_stp;
                         }
-			else
-			{
-				done = true;
-			}
+                        else
+                        {
+                                done = true;
+                        }
                         cur_itr = 0;
                 }
                 #elif defined(CALICHECK_ELE)
-		if (!done_initial_wait && cur_itr == 600)
-		{
-			done_initial_wait = true;
-			cur_itr = 0;
-		}
-		if (done_initial_wait && cur_itr == 1 && !done)
+                if (!done_initial_wait && cur_itr == 600)
                 {
-                    std::cout<<"Elevator Angular Command: " << cur_ele_ang << " deg" << std::endl;
+                        done_initial_wait = true;
+                        cur_itr = 0;
+                }
+                if (done_initial_wait && cur_itr == 1 && !done)
+                {
+                        std::cout<<"Elevator Angular Command: " << cur_ele_ang << " deg" << std::endl;
                 }
                 if (done_initial_wait && cur_itr == 1500)
                 {
@@ -827,21 +827,21 @@ int main(int argc, char *argv[])
                         {
                                 cur_ele_ang += ele_stp;
                         }
-			else
-			{
-				done = true;
-			}
+                        else
+                        {
+                                done = true;
+                        }
                         cur_itr = 0;
                 }
                 #elif defined(CALICHECK_RUD)
-		if (!done_initial_wait && cur_itr == 600)
-		{
-			done_initial_wait = true;
-			cur_itr = 0;
-		}
-		if (done_initial_wait && cur_itr == 1 && !done)
+                if (!done_initial_wait && cur_itr == 600)
                 {
-                    std::cout<<"Rudder Angular Command: " << cur_rud_ang << " deg" << std::endl;
+                        done_initial_wait = true;
+                        cur_itr = 0;
+                }
+                if (done_initial_wait && cur_itr == 1 && !done)
+                {
+                        std::cout<<"Rudder Angular Command: " << cur_rud_ang << " deg" << std::endl;
                 }
                 if (done_initial_wait && cur_itr == 1500)
                 {
@@ -849,10 +849,10 @@ int main(int argc, char *argv[])
                         {
                                 cur_rud_ang += rud_stp;
                         }
-			else
-			{
-				done = true;
-			}
+                        else
+                        {
+                                done = true;
+                        }
                         cur_itr = 0;
                 }
                 #else
