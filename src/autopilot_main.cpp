@@ -651,7 +651,7 @@ int main(int argc, char *argv[])
 
                 // Debugging stuff
                 #ifdef DEBUGGING_MODE
-                if (cur_itr % 100 == 0)
+                if (cur_itr % 1500 == 0)
                 {
                         if (!done_debugging)
                         {
