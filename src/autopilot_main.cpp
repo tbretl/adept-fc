@@ -651,7 +651,7 @@ int main(int argc, char *argv[])
 
                 // Debugging stuff
                 #ifdef DEBUGGING_MODE
-                if (cur_itr % 1500 == 0)
+                if (cur_itr % 100 == 0)
                 {
                         if (!done_debugging)
                         {
@@ -667,7 +667,7 @@ int main(int argc, char *argv[])
                                         {
                                                 std::cout<< "DEBUG POINT " << debug_point+1<< "  |  ";
                                         }
-                                        std::cout<< std::setw(15) << description[debug_point+1] << "  |  " << std::flush;
+                                        std::cout<< std::setw(15) << description[debug_point] << "  |  " << std::flush;
                                         if (ele_ang_cmd >= 0.0 && ele_ang_cmd < 10.0)
                                         {
                                                 std::cout<< "Ele CMD =   " << ele_ang_cmd << " deg  |  ";
