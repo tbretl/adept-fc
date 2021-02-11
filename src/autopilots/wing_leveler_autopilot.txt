@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
                 {
                     cur_itr = 0;
                     debug_point++;
-                {
+                }
                 #elif defined(CALIBRATION_AIL)
                 if (!done_initial_wait && cur_itr == 600)
                 {
