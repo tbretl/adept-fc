@@ -733,7 +733,7 @@ int main(int argc, char *argv[])
                                         }
                                         std::cout<< std::endl;
                                 }
-                                else
+                                if (debug_point >= 21)
                                 {
                                         std::cout<<"ALL TESTS PASSED!"<<std::endl;
                                         done_debugging = true;
