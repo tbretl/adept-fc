@@ -155,8 +155,8 @@ int main(int argc, char *argv[])
         double cpt_con[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
  
         // Controller constants
-        double k_lon[2][4] = { {0.0044319, 0.3739, -0.10855, -0.37623}, {0.002028, -0.037446, -0.03146, -0.050771} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
-        double k_lat[2][5] = { {0.28352, 0.15235, 0.027579, 0.47091, 0.47523}, {0.33462, 0.01395, -0.23647, -0.020997, -0.12434} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
+        double k_lon[2][4] = { {-0.0013265, 0.36483, -0.10181, -0.32606}, {0.0092832, -0.034283, -0.058755, -0.10253} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
+        double k_lat[2][5] = { {1.0791, 0.1676, -0.077272, 0.60913, 0.88254}, {0.1868, 0.011637, -0.2121, 0.0079378, -0.1881} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
  
         // Trim conditions
         double vel_trm = 30.5755; // m/s
