@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
  
         // Controller constants
         double k_lon[2][4] = { {-0.0013265, 0.36483, -0.10181, -0.32606}, {0.0092832, -0.034283, -0.058755, -0.10253} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
-        double k_lat[2][5] = { {1.0791, 0.1676, -0.077272, 0.60913, 0.88254}, {0.1868, 0.011637, -0.2121, 0.0079378, -0.1881} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
+        double k_lat[2][5] = { {0.58218, 0.16525, -0.16885, 0.5261, 9.4796e-05}, {0.27988, 0.017973, -0.3526, 0.042546, -1.2735e-05} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
  
         // Trim conditions
         double vel_trm = 30.5755; // m/s
