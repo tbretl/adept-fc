@@ -40,7 +40,7 @@ double debug_bet[22] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.00000,  0.
 double debug_vel[22] = { 30.5755, -100.0, 100.0, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 40.0000, 20.0000, 30.5755};
 double debug_ele[22] = { 0.0, 0.0, 0.0, 1.0, -1.0,  0.0,  0.0,  0.0,  0.0, 1.0, -1.0,  0.0,  0.0,  0.0,  0.0, -1.0,  1.0,  0.0,  0.0, -1.0, 1.0, 0.0 };
 double debug_ail[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0, -1.0,  1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
-double debug_rud[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0, -1.0,  1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
+double debug_rud[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
 #endif
  
 // Class used to handle incoming ZCM messages
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
         double cpt_con[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
  
         // Controller constants
-        double k[5][9] = { {-0.00033247, 0.37986, -0.1059, -0.33969, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0.5079, 0.15771, -0.077114, 0.50067, 9.4393e-05}, {0, 0, 0, 0, 0.26509, 0.011913, -0.27456, 0.027442, -1.0536e-05}, {0.0053763, -0.0065081, -0.030985, -0.060616, -0.19395, -0.016043, 0.2257, -0.04011, 7.0366e-06}, {0.0053763, -0.0065081, -0.030985, -0.060616, 0.19395, 0.016043, -0.2257, 0.04011, -7.0366e-06} }; // Controller gains of form u = -k * x
+        double k[11][9] = { {0.00071904, 0.39523, -0.10911, -0.3529, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0.53983, 0.1609, -0.1442, 0.50422, 9.132e-05}, {0, 0, 0, 0, 0.27812, 0.016152, -0.32194, 0.039279, -1.1327e-05}, {0.0010098, -0.031443, -0.0037352, 0.0048619, -0.029352, 0.0028233, 0.068502, 0.012219, 7.0232e-06}, {0.002571, 0.054122, -0.0051417, -0.037864, -0.045476, -0.010684, 0.027193, -0.032646, -4.7195e-06}, {0.0022513, -0.0077044, -0.014789, -0.026673, -0.07077, -0.0037773, 0.10967, -0.0067928, 5.9675e-06}, {0.00032157, -0.0095811, -0.0086819, -0.011119, -0.056567, -0.0079787, 0.061665, -0.022417, -3.6828e-07}, {0.00032157, -0.0095811, -0.0086819, -0.011119, 0.056567, 0.0079787, -0.061665, 0.022417, 3.6828e-07}, {0.0022513, -0.0077044, -0.014789, -0.026673, 0.07077, 0.0037773, -0.10967, 0.0067928, -5.9675e-06}, {0.002571, 0.054122, -0.0051417, -0.037864, 0.045476, 0.010684, -0.027193, 0.032646, 4.7195e-06}, {0.0010098, -0.031443, -0.0037352, 0.0048619, 0.029352, -0.0028233, -0.068502, -0.012219, -7.0232e-06} }; // Controller gains of form u = -k * x
  
         // Trim conditions
         double vel_trm = 30.5755; // m/s
@@ -254,6 +254,12 @@ int main(int argc, char *argv[])
         double in2;
         double in3;
         double in4;
+        double in5;
+        double in6;
+        double in7;
+        double in8;
+        double in9;
+        double in10;
         double ele_ang_cmd;
         double ail_ang_cmd;
         double rud_ang_cmd;
@@ -437,6 +443,12 @@ int main(int argc, char *argv[])
                 in2 = k[2][0] * sts[0] + k[2][1] * sts[1] + k[2][2] * sts[2] + k[2][3] * sts[3] + k[2][4] * sts[4] + k[2][5] * sts[5] + k[2][6] * sts[6] + k[2][7] * sts[7] + k[2][8] * sts[8]; // u[2] - u_0[2] for the system
                 in3 = k[3][0] * sts[0] + k[3][1] * sts[1] + k[3][2] * sts[2] + k[3][3] * sts[3] + k[3][4] * sts[4] + k[3][5] * sts[5] + k[3][6] * sts[6] + k[3][7] * sts[7] + k[3][8] * sts[8]; // u[3] - u_0[3] for the system
                 in4 = k[4][0] * sts[0] + k[4][1] * sts[1] + k[4][2] * sts[2] + k[4][3] * sts[3] + k[4][4] * sts[4] + k[4][5] * sts[5] + k[4][6] * sts[6] + k[4][7] * sts[7] + k[4][8] * sts[8]; // u[4] - u_0[4] for the system
+                in5 = k[5][0] * sts[0] + k[5][1] * sts[1] + k[5][2] * sts[2] + k[5][3] * sts[3] + k[5][4] * sts[4] + k[5][5] * sts[5] + k[5][6] * sts[6] + k[5][7] * sts[7] + k[5][8] * sts[8]; // u[5] - u_0[5] for the system
+                in6 = k[6][0] * sts[0] + k[6][1] * sts[1] + k[6][2] * sts[2] + k[6][3] * sts[3] + k[6][4] * sts[4] + k[6][5] * sts[5] + k[6][6] * sts[6] + k[6][7] * sts[7] + k[6][8] * sts[8]; // u[6] - u_0[6] for the system
+                in7 = k[7][0] * sts[0] + k[7][1] * sts[1] + k[7][2] * sts[2] + k[7][3] * sts[3] + k[7][4] * sts[4] + k[7][5] * sts[5] + k[7][6] * sts[6] + k[7][7] * sts[7] + k[7][8] * sts[8]; // u[7] - u_0[7] for the system
+                in8 = k[8][0] * sts[0] + k[8][1] * sts[1] + k[8][2] * sts[2] + k[8][3] * sts[3] + k[8][4] * sts[4] + k[8][5] * sts[5] + k[8][6] * sts[6] + k[8][7] * sts[7] + k[8][8] * sts[8]; // u[8] - u_0[8] for the system
+                in9 = k[9][0] * sts[0] + k[9][1] * sts[1] + k[9][2] * sts[2] + k[9][3] * sts[3] + k[9][4] * sts[4] + k[9][5] * sts[5] + k[9][6] * sts[6] + k[9][7] * sts[7] + k[9][8] * sts[8]; // u[9] - u_0[9] for the system
+                in10 = k[10][0] * sts[0] + k[10][1] * sts[1] + k[10][2] * sts[2] + k[10][3] * sts[3] + k[10][4] * sts[4] + k[10][5] * sts[5] + k[10][6] * sts[6] + k[10][7] * sts[7] + k[10][8] * sts[8]; // u[10] - u_0[10] for the system
  
                 // Convert angle commands to degrees
                 ele_ang_cmd = 57.29578 * (in0 + ele_trm); // in degrees
@@ -464,13 +476,13 @@ int main(int argc, char *argv[])
  
                 // Convert throttle commands to PWM commands
                 tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr0_trm);
-                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr1_trm);
-                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr2_trm);
-                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr3_trm);
-                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr4_trm);
-                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr5_trm);
-                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr6_trm);
-                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr7_trm);
+                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr1_trm);
+                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in5 + tr2_trm);
+                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in6 + tr3_trm);
+                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in7 + tr4_trm);
+                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in8 + tr5_trm);
+                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in9 + tr6_trm);
+                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in10 + tr7_trm);
  
                 // Ensure PWM commands are within safe limits
                 ele_PWM_cmd = ele_PWM_cmd > ele_PWM_max ? ele_PWM_max : ele_PWM_cmd;
