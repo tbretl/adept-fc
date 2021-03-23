@@ -11,6 +11,8 @@ all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor red_flag
 
 debug: adc vnins pwm_out scribe rc_in adept_fc autopilot_debug hitl monitor red_flag
 
+log: adc vnins pwm_out scribe rc_in adept_fc autopilot_log hitl monitor red_flag
+
 ail_cal: adc vnins pwm_out scribe rc_in adept_fc autopilot_ail_cal hitl monitor red_flag
 
 ele_cal: adc vnins pwm_out scribe rc_in adept_fc autopilot_ele_cal hitl monitor red_flag
@@ -57,6 +59,9 @@ autopilot: $(SRC)/autopilot_main.cpp
 
 autopilot_debug: $(SRC)/autopilot_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DDEBUGGING_MODE
+	
+autopilot_log: $(SRC)/autopilot_main.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DLOG
 
 autopilot_ail_cal: $(SRC)/autopilot_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALIBRATION_AIL
