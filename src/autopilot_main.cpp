@@ -43,7 +43,7 @@ double debug_bet[22] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.00000,  0.
 double debug_vel[22] = { 30.5755, -100.0, 100.0, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 30.5755,  30.5755, 40.0000, 20.0000, 30.5755};
 double debug_ele[22] = { 0.0, 0.0, 0.0, 1.0, -1.0,  0.0,  0.0,  0.0,  0.0, 1.0, -1.0,  0.0,  0.0,  0.0,  0.0, -1.0,  1.0,  0.0,  0.0, -1.0, 1.0, 0.0 };
 double debug_ail[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0, -1.0,  1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
-double debug_rud[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
+double debug_rud[22] = { 0.0, 0.0, 0.0, 0.0,  0.0, -1.0,  1.0, -1.0,  1.0, 0.0,  0.0, -1.0,  1.0,  1.0, -1.0,  0.0,  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 };
 #endif
  
 // Class used to handle incoming ZCM messages
@@ -158,8 +158,7 @@ int main(int argc, char *argv[])
         double cpt_con[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
  
         // Controller constants
-        double k_lon[2][4] = { {-0.0013265, 0.36483, -0.10181, -0.32606}, {0.0092832, -0.034283, -0.058755, -0.10253} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
-        double k_lat[2][5] = { {0.58218, 0.16525, -0.16885, 0.5261, 9.4796e-05}, {0.27988, 0.017973, -0.3526, 0.042546, -1.2735e-05} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
+        double k[5][9] = { {-0.00033247, 0.37986, -0.1059, -0.33969, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0.5079, 0.15771, -0.077114, 0.50067, 9.4393e-05}, {0, 0, 0, 0, 0.26509, 0.011913, -0.27456, 0.027442, -1.0536e-05}, {0.0053763, -0.0065081, -0.030985, -0.060616, -0.19395, -0.016043, 0.2257, -0.04011, 7.0366e-06}, {0.0053763, -0.0065081, -0.030985, -0.060616, 0.19395, 0.016043, -0.2257, 0.04011, -7.0366e-06} }; // Controller gains of form u = -k * x
  
         // Trim conditions
         double vel_trm = 30.5755; // m/s
@@ -250,14 +249,14 @@ int main(int argc, char *argv[])
         double wxx;
         double wyy;
         double wzz;
-        double lon_sts[4];
-        double lat_sts[5];
+        double sts[9];
  
         // Declare all other input values used
-        double lon_in0;
-        double lon_in1;
-        double lat_in0;
-        double lat_in1;
+        double in0;
+        double in1;
+        double in2;
+        double in3;
+        double in4;
         double ele_ang_cmd;
         double ail_ang_cmd;
         double rud_ang_cmd;
@@ -331,23 +330,23 @@ int main(int argc, char *argv[])
         // Run zcm as a separate thread
         zcm.start();
         #ifdef DEBUGGING_MODE
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
         #elif defined (LOG)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN LOGGING MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN LOGGING MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_AIL)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_ELE)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_RUD)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_AIL)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_ELE)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_RUD)
-        std::cout << "WARNING: UNI AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: ASYM AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #else
-        std::cout << "UNI autopilot started" << std::endl;
+        std::cout << "ASYM autopilot started" << std::endl;
         #endif
  
         // Initialize data logger
@@ -438,26 +437,27 @@ int main(int argc, char *argv[])
                 rol_pre = rol; // rad
  
                 // Calculate -1.0 * (state errors)
-                lon_sts[0] = vel_trm - vel;
-                lon_sts[1] = AoA_trm - AoA;
-                lon_sts[2] = wyy_trm - wyy;
-                lon_sts[3] = pit_trm - pit;
-                lat_sts[0] = bet_trm - bet;
-                lat_sts[1] = wxx_trm - wxx;
-                lat_sts[2] = wzz_trm - wzz;
-                lat_sts[3] = rol_trm - rol;
-                lat_sts[4] = yaw_trm - yaw;
+                sts[0] = vel_trm - vel;
+                sts[1] = AoA_trm - AoA;
+                sts[2] = wyy_trm - wyy;
+                sts[3] = pit_trm - pit;
+                sts[4] = bet_trm - bet;
+                sts[5] = wxx_trm - wxx;
+                sts[6] = wzz_trm - wzz;
+                sts[7] = rol_trm - rol;
+                sts[8] = yaw_trm - yaw;
  
                 // Calculate input deltas based on state (u-u0) = -K * (x - x0)
-                lon_in0 = k_lon[0][0] * lon_sts[0] + k_lon[0][1] * lon_sts[1] + k_lon[0][2] * lon_sts[2] + k_lon[0][3] * lon_sts[3]; // u[0] - u_0[0] for the lon subsystem
-                lon_in1 = k_lon[1][0] * lon_sts[0] + k_lon[1][1] * lon_sts[1] + k_lon[1][2] * lon_sts[2] + k_lon[1][3] * lon_sts[3]; // u[1] - u_0[1] for the lon subsystem
-                lat_in0 = k_lat[0][0] * lat_sts[0] + k_lat[0][1] * lat_sts[1] + k_lat[0][2] * lat_sts[2] + k_lat[0][3] * lat_sts[3] + k_lat[0][4] * lat_sts[4]; // u[0] - u_0[0] for the lat subsystem
-                lat_in1 = k_lat[1][0] * lat_sts[0] + k_lat[1][1] * lat_sts[1] + k_lat[1][2] * lat_sts[2] + k_lat[1][3] * lat_sts[3] + k_lat[1][4] * lat_sts[4]; // u[1] - u_0[1] for the lat subsystem
+                in0 = k[0][0] * sts[0] + k[0][1] * sts[1] + k[0][2] * sts[2] + k[0][3] * sts[3] + k[0][4] * sts[4] + k[0][5] * sts[5] + k[0][6] * sts[6] + k[0][7] * sts[7] + k[0][8] * sts[8]; // u[0] - u_0[0] for the system
+                in1 = k[1][0] * sts[0] + k[1][1] * sts[1] + k[1][2] * sts[2] + k[1][3] * sts[3] + k[1][4] * sts[4] + k[1][5] * sts[5] + k[1][6] * sts[6] + k[1][7] * sts[7] + k[1][8] * sts[8]; // u[1] - u_0[1] for the system
+                in2 = k[2][0] * sts[0] + k[2][1] * sts[1] + k[2][2] * sts[2] + k[2][3] * sts[3] + k[2][4] * sts[4] + k[2][5] * sts[5] + k[2][6] * sts[6] + k[2][7] * sts[7] + k[2][8] * sts[8]; // u[2] - u_0[2] for the system
+                in3 = k[3][0] * sts[0] + k[3][1] * sts[1] + k[3][2] * sts[2] + k[3][3] * sts[3] + k[3][4] * sts[4] + k[3][5] * sts[5] + k[3][6] * sts[6] + k[3][7] * sts[7] + k[3][8] * sts[8]; // u[3] - u_0[3] for the system
+                in4 = k[4][0] * sts[0] + k[4][1] * sts[1] + k[4][2] * sts[2] + k[4][3] * sts[3] + k[4][4] * sts[4] + k[4][5] * sts[5] + k[4][6] * sts[6] + k[4][7] * sts[7] + k[4][8] * sts[8]; // u[4] - u_0[4] for the system
  
                 // Convert angle commands to degrees
-                ele_ang_cmd = 57.29578 * (lon_in0 + ele_trm); // in degrees
-                ail_ang_cmd = 57.29578 * (lat_in0 + ail_trm); // in degrees
-                rud_ang_cmd = 57.29578 * (lat_in1 + rud_trm); // in degrees
+                ele_ang_cmd = 57.29578 * (in0 + ele_trm); // in degrees
+                ail_ang_cmd = 57.29578 * (in1 + ail_trm); // in degrees
+                rud_ang_cmd = 57.29578 * (in2 + rud_trm); // in degrees
  
                 // Send data to log
                 #ifdef LOG
@@ -487,14 +487,14 @@ int main(int argc, char *argv[])
                 #endif
  
                 // Convert throttle commands to PWM commands
-                tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr0_trm);
-                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr1_trm);
-                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr2_trm);
-                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr3_trm);
-                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr4_trm);
-                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr5_trm);
-                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr6_trm);
-                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr7_trm);
+                tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr0_trm);
+                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr1_trm);
+                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr2_trm);
+                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in3 + tr3_trm);
+                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr4_trm);
+                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr5_trm);
+                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr6_trm);
+                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (in4 + tr7_trm);
  
                 // Ensure PWM commands are within safe limits
                 ele_PWM_cmd = ele_PWM_cmd > ele_PWM_max ? ele_PWM_max : ele_PWM_cmd;
