@@ -13,16 +13,15 @@
 #include <math.h>
 #include <assert.h>
 #include <iomanip>
+#ifdef LOG
+#include <fstream>
+#endif
  
 // Message types
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 #include "adc_data_t.hpp"
 #include "vnins_data_t.hpp"
- 
-#ifdef LOG
-#include <fstream>
-#endif
  
 using std::string;
  
@@ -332,35 +331,35 @@ int main(int argc, char *argv[])
         // Run zcm as a separate thread
         zcm.start();
         #ifdef DEBUGGING_MODE
-        std::cout << "WARNING: AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
-	#elif defined LOG
-        std::cout << "WARNING: AUTOPILOT STARTED IN LOGGING MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
+        #elif defined (LOG)
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN LOGGING MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_AIL)
-        std::cout << "WARNING: AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_ELE)
-        std::cout << "WARNING: AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_RUD)
-        std::cout << "WARNING: AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_AIL)
-        std::cout << "WARNING: AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_ELE)
-        std::cout << "WARNING: AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_RUD)
-        std::cout << "WARNING: AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #else
-        std::cout << "autopilot started" << std::endl;
+        std::cout << "UNI autopilot started" << std::endl;
         #endif
  
- 	// Initialize data logger
-	#ifdef LOG
-	const char* file = "AP_Log.txt";
-	std::ofstream logfile;
-	logfile.open(file,std::ofstream::out | std::ofstream::trunc);
-	logfile << "P_1 [dPSI], P_2 [dPSI], P_3 [dPSI], P_4 [dPSI], P_5 [dPSI], cof_AoA [-], cof_bet [-], ";
-	logfile << "cof_pt [-], cof_ps [-], AoA [rad], Beta [rad], P_Tot [Pa], P_Stat [Pa], Vel [m/s], Pitch [rad], ";
-	logfile << "Roll [rad], Yaw [rad], Pitch_Rate [rad/s], Roll_Rate [rad/s], Yaw_Rate [rad/s], Ele_Cmd [deg], ";
-	logfile << "Ail_Cmd [deg], Rud_Cmd [deg], GPS_Time" << std::endl;
-	#endif
+        // Initialize data logger
+        #ifdef LOG
+        const char* file = "AP_Log.txt";
+        std::ofstream logfile;
+        logfile.open(file,std::ofstream::out | std::ofstream::trunc);
+        logfile << "P_1 [dPSI], P_2 [dPSI], P_3 [dPSI], P_4 [dPSI], P_5 [dPSI], cof_AoA [-], cof_bet [-], ";
+        logfile << "cof_pt [-], cof_ps [-], AoA [rad], Beta [rad], P_Tot [Pa], P_Stat [Pa], Vel [m/s], Pitch [rad], ";
+        logfile << "Roll [rad], Yaw [rad], Pitch_Rate [rad/s], Roll_Rate [rad/s], Yaw_Rate [rad/s], Ele_Cmd [deg], ";
+        logfile << "Ail_Cmd [deg], Rud_Cmd [deg], GPS_Time" << std::endl;
+        #endif
  
         // Control loop:
         while (!handlerObject.stat.should_exit)
@@ -460,13 +459,13 @@ int main(int argc, char *argv[])
                 ail_ang_cmd = 57.29578 * (lat_in0 + ail_trm); // in degrees
                 rud_ang_cmd = 57.29578 * (lat_in1 + rud_trm); // in degrees
  
-		// Send data to log
-		#ifdef LOG
-		logfile << ps1 << ", " << ps2 << ", " << ps3 << ", " << ps4 << ", " << ps5 << ", " << cof_AoA << ", " << cof_bet << ", " << pes_tot << ", " << cof_pst << ", ";
-		logfile << AoA << ", " << bet << ", " << pes_tot << ", " << pes_stc << ", " << vel << ", ";
-		logfile << pit << ", " << rol << ", " << yaw << ", " << wyy << ", " << wxx << ", " << wzz << ", ";
-		logfile << ele_ang_cmd << ", " << ail_ang_cmd << ", " << rud_ang_cmd << ", " << get_gps_time(&handlerObject) << std::endl;
-		#endif
+                // Send data to log
+                #ifdef LOG
+                logfile << ps1 << ", " << ps2 << ", " << ps3 << ", " << ps4 << ", " << ps5 << ", " << cof_AoA << ", " << cof_bet << ", " << pes_tot << ", " << cof_pst << ", ";
+                logfile << AoA << ", " << bet << ", " << pes_tot << ", " << pes_stc << ", " << vel << ", ";
+                logfile << pit << ", " << rol << ", " << yaw << ", " << wyy << ", " << wxx << ", " << wzz << ", ";
+                logfile << ele_ang_cmd << ", " << ail_ang_cmd << ", " << rud_ang_cmd << ", " << get_gps_time(&handlerObject) << std::endl;
+                #endif
  
                 // Convert angular deflection commands to PWM commands
                 #ifdef CALICHECK_AIL
@@ -904,12 +903,12 @@ int main(int argc, char *argv[])
                 zcm.publish("ACTUATORS", &acts); 
  
         }
-	
-	// Close the log
-	#ifdef LOG
-	logfile.close();
-	#endif
-
+ 
+        // Close the log
+        #ifdef LOG
+        logfile.close();
+        #endif
+ 
         // Publish terminating status
         module_stat.module_status = 0;
         zcm.publish("STATUS4",&module_stat);
