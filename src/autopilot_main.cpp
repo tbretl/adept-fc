@@ -30,8 +30,8 @@ using std::string;
 bool done_debugging = false;
 int debug_point = 0;
 std::string description[22] = {"Trim","-Bad","+Bad","Pitch Up","Pitch Down","Roll Right","Roll Left","Yaw Right","Yaw Left","Pitch Rate Up", "Pitch Rate Down", "Roll Rate Right", "Roll Rate Left", "Yaw Rate Right", "Yaw Rate Left", "Positive AoA", "Negative AoA", "Right Slip", "Left Slip", "High Vel", "Low Vel", "Trim"};
-double controlled_input[3]  = { 0.0, 1.0, 0.0 };
-double controlled_state[22] = { 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
+double controlled_input[3]  = { 1.0, 1.0, 1.0 };
+double controlled_state[22] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 double debug_pit[22] = { 0.00000, -100.0, 100.0, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000, 0.00000};
 double debug_rol[22] = { 0.00000, -100.0, 100.0, 0.00000,  0.00000, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000, 0.00000};
 double debug_yaw[22] = { 0.00000,  0.000, 0.000, 0.00000,  0.00000, 0.00000,  0.00000, 0.50000, -0.50000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000,  0.00000, 0.00000, 0.00000, 0.00000};
@@ -158,7 +158,8 @@ int main(int argc, char *argv[])
         double cpt_con[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
  
         // Controller constants
-        double k_lat[2][5] = { {0, 0.14855, 0, 0.4, 0}, {0, 0, 0, 0, 0} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
+        double k_lon[2][4] = { {-0.0013265, 0.36483, -0.10181, -0.32606}, {0.0092832, -0.034283, -0.058755, -0.10253} }; // Longitudinal controller gains of form u_lon = -k_lon * x_lon
+        double k_lat[2][5] = { {0.58218, 0.16525, -0.16885, 0.5261, 9.4796e-05}, {0.27988, 0.017973, -0.3526, 0.042546, -1.2735e-05} }; // Lateral controller gains of form u_lat = -k_lat * x_lat
  
         // Trim conditions
         double vel_trm = 30.5755; // m/s
@@ -249,9 +250,12 @@ int main(int argc, char *argv[])
         double wxx;
         double wyy;
         double wzz;
+        double lon_sts[4];
         double lat_sts[5];
  
         // Declare all other input values used
+        double lon_in0;
+        double lon_in1;
         double lat_in0;
         double lat_in1;
         double ele_ang_cmd;
@@ -327,23 +331,23 @@ int main(int argc, char *argv[])
         // Run zcm as a separate thread
         zcm.start();
         #ifdef DEBUGGING_MODE
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN DEBUGGING MODE. DO NOT FLY. " << std::endl;
         #elif defined (LOG)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN LOGGING MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN LOGGING MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_AIL)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN AILERON CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_ELE)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN ELEVATOR CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALIBRATION_RUD)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN RUDDER CALIBRATION MODE. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_AIL)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN AILERON CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_ELE)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN ELEVATOR CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #elif defined (CALICHECK_RUD)
-        std::cout << "WARNING: WING AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
+        std::cout << "WARNING: UNI AUTOPILOT STARTED IN RUDDER CALIBRATION CHECK. DO NOT FLY. " << std::endl;
         #else
-        std::cout << "WING autopilot started" << std::endl;
+        std::cout << "UNI autopilot started" << std::endl;
         #endif
  
         // Initialize data logger
@@ -434,6 +438,10 @@ int main(int argc, char *argv[])
                 rol_pre = rol; // rad
  
                 // Calculate -1.0 * (state errors)
+                lon_sts[0] = vel_trm - vel;
+                lon_sts[1] = AoA_trm - AoA;
+                lon_sts[2] = wyy_trm - wyy;
+                lon_sts[3] = pit_trm - pit;
                 lat_sts[0] = bet_trm - bet;
                 lat_sts[1] = wxx_trm - wxx;
                 lat_sts[2] = wzz_trm - wzz;
@@ -441,11 +449,13 @@ int main(int argc, char *argv[])
                 lat_sts[4] = yaw_trm - yaw;
  
                 // Calculate input deltas based on state (u-u0) = -K * (x - x0)
+                lon_in0 = k_lon[0][0] * lon_sts[0] + k_lon[0][1] * lon_sts[1] + k_lon[0][2] * lon_sts[2] + k_lon[0][3] * lon_sts[3]; // u[0] - u_0[0] for the lon subsystem
+                lon_in1 = k_lon[1][0] * lon_sts[0] + k_lon[1][1] * lon_sts[1] + k_lon[1][2] * lon_sts[2] + k_lon[1][3] * lon_sts[3]; // u[1] - u_0[1] for the lon subsystem
                 lat_in0 = k_lat[0][0] * lat_sts[0] + k_lat[0][1] * lat_sts[1] + k_lat[0][2] * lat_sts[2] + k_lat[0][3] * lat_sts[3] + k_lat[0][4] * lat_sts[4]; // u[0] - u_0[0] for the lat subsystem
                 lat_in1 = k_lat[1][0] * lat_sts[0] + k_lat[1][1] * lat_sts[1] + k_lat[1][2] * lat_sts[2] + k_lat[1][3] * lat_sts[3] + k_lat[1][4] * lat_sts[4]; // u[1] - u_0[1] for the lat subsystem
  
                 // Convert angle commands to degrees
-                ele_ang_cmd = 57.29578 * ele_trm; // in degrees
+                ele_ang_cmd = 57.29578 * (lon_in0 + ele_trm); // in degrees
                 ail_ang_cmd = 57.29578 * (lat_in0 + ail_trm); // in degrees
                 rud_ang_cmd = 57.29578 * (lat_in1 + rud_trm); // in degrees
  
@@ -477,14 +487,14 @@ int main(int argc, char *argv[])
                 #endif
  
                 // Convert throttle commands to PWM commands
-                tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr0_trm;
-                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr1_trm;
-                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr2_trm;
-                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr3_trm;
-                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr4_trm;
-                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr5_trm;
-                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr6_trm;
-                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * tr7_trm;
+                tr0_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr0_trm);
+                tr1_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr1_trm);
+                tr2_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr2_trm);
+                tr3_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr3_trm);
+                tr4_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr4_trm);
+                tr5_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr5_trm);
+                tr6_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr6_trm);
+                tr7_PWM_cmd = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (lon_in1 + tr7_trm);
  
                 // Ensure PWM commands are within safe limits
                 ele_PWM_cmd = ele_PWM_cmd > ele_PWM_max ? ele_PWM_max : ele_PWM_cmd;
