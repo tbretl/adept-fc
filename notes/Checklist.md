@@ -4,7 +4,7 @@ Bretl Research Group\
 Aerodynamics and Unsteady Flow Group\
 ESAero\
 Created: 10/28/2020 10:39 CST\
-Updated: 11/05/2020 12:58 CST*
+Updated: 05/18/2021 21:45 CST*
 
 ## Validation
 ![Signature_Pane](Signature_Pane.png)
@@ -17,8 +17,10 @@ Updated: 11/05/2020 12:58 CST*
 ||Left Wing|X1|Left wing of the Adept-FC aircraft|On mobile storage cart: <br> Lower shelf|
 ||Right Wing|X1|Right wing of the Adept-FC aircraft|On mobile storage cart: <br> Upper shelf|
 ||Carbon Fiber Rod|X1|Loading bearing rod used to attach wings|On mobile storage cart: <br> Upper shelf|
+||Nose Gear|X1|Nose gear of aircraft|On mobile storage cart: <br> Upper shelf|
 ||Wing Nut|X2|Nut used to secure wings to body|On mobile storage cart:<br> In plastic bag on upper shelf|
 ||Washer|X2|Washer used to spread load of wing nut(s)|On mobile storage cart:<br> In plastic bag on upper shelf|
+||Nose screws|X2|Screws that hold nose of aircraft during flight|On mobile storage cart:<br> In plastic bag on upper shelf|
 ||ADEPT-FC Aircraft|X1|Test aircraft|On mobile storage cart: <br> Upper shelf|
 ||Lipo Battery Voltage Tester|X1|Used to test the voltages of the Lipo batteries|In lipo pelican case in flammables cabinet|
 ||Lipo Balance Charger|X2|Used to charge lipo batteries|On workbench|
@@ -26,14 +28,12 @@ Updated: 11/05/2020 12:58 CST*
 ||18.5V Lipo|X4|Powers all propulsors|In lipo pelican case in flammables cabinet|
 ||4-8 Power Cable Splitter|X1|Splits 18.5V connectors to 8 outputs (1 per propulsor)|On mobile storage cart: <br> Upper shelf|
 ||General Tool Set|X1|Used in assembly and repair process|Personal storage|
-||HDMI Monitor|X1|Allows user to interface with Pi|On table near mobile storage cart|
-||HDMI Cable|X1|Connects Pi to Monitor|Stored with monitor|
-||USB Keyboard|X1|Allows user to interact with Pi|On table near mobile storage cart|
 ||Wireless router|X1|Creates wireless network used to interface with aircraft|On table near mobile storage cart|
-||Ethernet cable|X1|Links aircraft to wireless network|On table near mobile storage cart|
+||Ethernet cable|X1|Links aircraft to wireless network|In TX case|
 ||TX|X1|Sends radio commands to aircraft|In storage box on mobile storage cart|
 ||Linux Laptop|X1|Used to interface with aircraft via SSH|N/A|
 ||Weather Station|X1|Measures weather conditions at flight location|Under workbench|
+||Weather Station Pole|X1|Holds weather station|Personal storage|
 
 ## Assembly
 
@@ -63,18 +63,20 @@ Updated: 11/05/2020 12:58 CST*
 - [ ] Replace the nut to the ADC board riser grounding bolt.
 - [ ] Inspect all batteries for any sign of external damage or swelling.
 - [ ] Test battery voltages. Voltages should be no less than design voltages and no greater than 1.0V over design voltages. If voltages are incorrect, charge batteries.
+- [ ] Record each battery voltage along with battery name.
 - [ ] Attach the *7.4V lipo* labeled "SE 1" to the servo power distribution board power header. This is the head nearest the left side of the aircraft on the front of the PDB. **BEFORE PLUGGING IN, CHECK POLARITY**. Secure on velcro strip near front right of aircraft.
 - [ ] Attach the *7.4V lipo* labeled "ProLite RX" to the servo power distribution board power header. This is the head nearest the left side of the aircraft on the back of the PDB. **BEFORE PLUGGING IN, CHECK POLARITY**. Secure on velcro strip near front right of aircraft.
 - [ ] Attach the *7.4V lipo* labeled "SE 2" to the ADC board power connector. Secure on velcro strip.
 - [ ] Attach the *7.4V lipo* labeled "Pi 1" to the the Pi's primary power source. Secure on velcro strip near front left of aircraft.
 - [ ] Attach the *7.4V lipo* labeled "Pi 2" to the the Pi's backup power source. Secure on velcro strip near front left of aircraft.
 - [ ] Attach the *4-8 Power Cable Splitter* to each of the 8 motor power connectors.
-- [ ] Place 2 18.5V lipos in the nose shield of the *ADEPT-FC Aircraft*. Ensure the selected 18.5V lipos are the ones with velcro on their skinny face. Be careful not to pinch or damage the pressure transducers or their cables. **Do NOT plug in yet.**
-- [ ] Place 1 *18.5V lipo* in the front of the aircraft on the center line (on a small piece of velcro). **Do NOT plug in yet.**
-- [ ] Place 1 *18.5V lipo* in the rear of the aircraft off of the center lines towards the right wing (on a small piece of velcro). **Do NOT plug in yet.**
+- [ ] Place NEWT and CHUG *18.5V lipos* in the nose shield of the *ADEPT-FC Aircraft*. Be careful not to pinch or damage the pressure transducers or their cables. **Do NOT plug in yet.**
+- [ ] Place LUMP *18.5V lipo* in the front of the aircraft on the center line (on a small piece of velcro). **Do NOT plug in yet.**
+- [ ] Place BROCK *18.5V lipo* in the rear of the aircraft off of the center lines towards the right wing (on a small piece of velcro). **Do NOT plug in yet.**
 
 ## Preflight
 
+- [ ] Record temperature, pressure, and wind data from weather station.
 - [ ] Remove protective cover from 5-hole probe
 - [ ] Conduct walkaround (defined in AP_Validation.md).
 - [ ] Turn on TX. Check battery status of TX. If it is below 80%, charge.
@@ -83,84 +85,82 @@ Updated: 11/05/2020 12:58 CST*
 - [ ] Attach ethernet cable to Pi.
 - [ ] Attach wireless router to ethernet cable connected to Pi. Power on the router.
 - [ ] Wait for Pi to boot. If it has not booted, leave the keyboard and monitor attached and restart the device by removing and reconnecting its batteries.
-- **IF WALL POWER AVAILABLE**
-  - [ ] Attach HDMI cable to Pi.
-  - [ ] Attach HDMI Monitor to HDMI cable connected to Pi.
-  - [ ] Attach keyboard to Pi.
-- **IF WALL POWER NOT AVAILABLE**
-  - [ ] On linux laptop: Connect to ADEPT-FC wireless network
-  - [ ] On linux laptop: `ssh 192.168.0.100`
-- [ ] Login: `pi`
+- [ ] On linux laptop: Connect to ADEPT-FC wireless network
+- [ ] On linux laptop: `ssh pi@192.168.0.100`
 - [ ] Password: `*********`
-- [ ] Download most recent flight release: https://github.com/tbretl/adept-fc.git
-- [ ] `cd adept-fc`
-- [ ] `make clean`
-- [ ] `git clean -fxd`
-- [ ] `make all`
+- [ ] On Linux laptop, download most recent flight release: https://github.com/tbretl/adept-fc.git
+- [ ] Rename flight release to `adept-fc`
+- [ ] `scp -r adept-fc pi@192.168.0.100:`
+- [ ] On PI, `cd adept-fc`
+- [ ] `cd config_files`
+- [ ] `vim autopilot_main.config`
+- [ ] `i`
+- [ ] Ensure proper AP gains are selected
+- [ ] Enter density (rho) in kg/m^3 based on temperature
+- [ ] `esc :wq enter`
+- [ ] `cd ..`
 - [ ] `sudo ./run.sh`
+- [ ] Ensure proper AP gains have been loaded in stdout
 - [ ] `pwm arm`
 - [ ] Check direction and throw of all control surfaces.
 - [ ] Check trim command on all control surfaces.
 - [ ] Check flap extension and retraction.
-- [ ] Zero throttle, control surface commands, flaps, and trim. Engage autopilot and check for expected behavior.
-- [ ] Zero throttle, control surface commands, flaps, and trim. Disengage autopilot.
 - [ ] `pwm disarm`
 - [ ] `all exit`
+- [ ] `sudo git clean -fxd`
+- [ ] `cd config_files`
+- [ ] `vim sequence.dat`
+- [ ] Set sequence number to flight number - 1
 - [ ] `sudo ./run.sh`
-- [ ] `monitor test`
-- [ ] `all exit`
+- [ ] AT disarm (SC3 to forward).
+- [ ] AP disarm (SC3 to forward).
+- [ ] `pwm arm`
+- [ ] Disconnect ethernet from Pi.
 
 ## Taxi
 
 - [ ] Move aircraft to taxiway.
-- [ ] Record temperature, pressure, and wind data from weather station.
-- [ ] Verify wind is less than 10 MPH.
-- [ ] Range check the TX.
-- [ ] Plug in all 4 propulsor batteries.
-- [ ] `sudo ./run.sh`
-- [ ] `pwm arm`
+- [ ] Verify crosswind is less than 7 MPH.
+- [ ] Plug in all 4 propulsor batteries. Ensure symmetric cross loading of each motor battery. Ensure audible beep from each motor.
+- [ ] Record each motor powered by each battery.
 - [ ] Conduct a fan run-up test.
-- [ ] Disconnect ethernet, HDMI, and keyboard from Pi.
 - [ ] Secure both doors.
 - [ ] Taxi to active.
 
 ## Before takeoff
 - [ ] Flaps set to takeoff.
 - [ ] Trim set to takeoff.
-- [ ] AP disengage.
 - [ ] Flight brief.
 - [ ] Clearance.
 
 ## Cruise / test
 - [ ] Flaps to flight.
 - [ ] Set rudder and elevator trim.
-- [ ] At steady level flight, engage AP.
+- [ ] At steady level flight, arm and engage AP (and AT).
 - [ ] Conduct test.
-- [ ] Disengage AP.
+- [ ] Disengage and disarm AP (and AT).
 
 ## Before landing
-- [ ] Ensure AP disengage.
-- [ ] Trim set to takeoff.
+- [ ] Ensure AP disarmed.
+- [ ] Trim set to landing.
 - [ ] Flaps set to landing.
 
-## Taxi to gate
+## Taxi off
 - [ ] Flaps up.
-- [ ] Trim set to 0.
+- [ ] Taxi off of runway.
 - [ ] Run propulsors on low throttle for 4 minutes.
 
 ## Shutdown, lockout
 - [ ] Plug in ethernet cable to aircraft.
 - [ ] On linux laptop: Connect to ADEPT-FC wireless network
-- [ ] On linux laptop: `ssh 192.168.0.100`
-- [ ] Login: `pi`
+- [ ] On linux laptop: `scp -r pi@192.168.0.100:~/adept-fc ~/Documents`
 - [ ] Password: `*********`
-- [ ] `cd adept-fc/`
-- [ ] Download ESC data
+- [ ] On linux laptop: `ssh pi@192.168.0.100`
 - [ ] `sudo ./bin/monitor`
 - [ ] `pwm disarm`
 - [ ] `all exit`
 - [ ] `sudo poweroff`
-- [ ] Disconnect propulsor batteries.
-- [ ] Disconnect ADC battery.
-- [ ] Disconnect both servo power distribution batteries
-- [ ] Disconnect both flight computer batteries.
+- [ ] Disconnect propulsor batteries. Measure and record post flight voltages.
+- [ ] Disconnect ADC battery. Measure and record post flight voltages.
+- [ ] Disconnect both servo power distribution batteries. Measure and record post flight voltages.
+- [ ] Disconnect both flight computer batteries. Measure and record post flight voltages.
