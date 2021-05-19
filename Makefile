@@ -9,21 +9,7 @@ TST = ./test
 
 all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor red_flag
 
-debug: adc vnins pwm_out scribe rc_in adept_fc autopilot_debug hitl monitor red_flag
-
-log: adc vnins pwm_out scribe rc_in adept_fc autopilot_log hitl monitor red_flag
-
-ail_cal: adc vnins pwm_out scribe rc_in adept_fc autopilot_ail_cal hitl monitor red_flag
-
-ele_cal: adc vnins pwm_out scribe rc_in adept_fc autopilot_ele_cal hitl monitor red_flag
-
-rud_cal: adc vnins pwm_out scribe rc_in adept_fc autopilot_rud_cal hitl monitor red_flag
-
-ail_cc: adc vnins pwm_out scribe rc_in adept_fc autopilot_ail_cc hitl monitor red_flag
-
-ele_cc: adc vnins pwm_out scribe rc_in adept_fc autopilot_ele_cc hitl monitor red_flag
-
-rud_cc: adc vnins pwm_out scribe rc_in adept_fc autopilot_rud_cc hitl monitor red_flag
+test: adc vnins pwm_out scribe rc_in adept_fc autopilot_test hitl monitor red_flag
 
 demos: subber demo udp_send udp_receive
 
@@ -56,30 +42,9 @@ adept_fc: $(SRC)/adept_fc_main.cpp
 
 autopilot: $(SRC)/autopilot_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot
-
-autopilot_debug: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DDEBUGGING_MODE
 	
-autopilot_log: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DLOG
-
-autopilot_ail_cal: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALIBRATION_AIL
-
-autopilot_ele_cal: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALIBRATION_ELE
-
-autopilot_rud_cal: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALIBRATION_RUD
-
-autopilot_ail_cc: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALICHECK_AIL
-
-autopilot_ele_cc: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALICHECK_ELE
-
-autopilot_rud_cc: $(SRC)/autopilot_main.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -o $(BIN)/autopilot -DCALICHECK_RUD
+autopilot_test: $(SRC)/autopilot_main.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/autopilot_main.cpp -DTEST -o $(BIN)/autopilot
 
 hitl: $(SRC)/interface_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) -lboost_system -lpthread $(SRC)/interface_main.cpp -o $(BIN)/hitl

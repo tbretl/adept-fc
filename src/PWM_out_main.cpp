@@ -16,6 +16,7 @@
 #include "Common/Util.h"
 #include <memory>
 #include <chrono>
+
 //message types:
 #include "pwm_t.hpp"
 #include "rc_t.hpp"
@@ -95,57 +96,10 @@ std::unique_ptr <RCOutput> get_rcout()
         return ptr;
 }
 
+// Converts RC in command to PWM command
 int output_scaling(const int& in_val, const double& s_min, const double& s_max, const int& in_min, const int& in_max)
 {
         return (s_min + (s_max-s_min)/(in_max-in_min)*(in_val-in_min));
-}
-
-//lookup table function (multisine overlay)
-void get_ctrl(int T_Lim, double current_time, double *time_vect, double *ele, double *ail, double *rud, double thr[][8], double ctr_out[11])
-{
-
-        if(current_time<T_Lim)
-        { // use the multisine manuver as a delta to the manual controls
-                bool foundtime = false;
-                int i = 0;
-                do //loop through the time vector until we have found the matching discrete value
-                {
-
-                        i++;
-
-                        if (current_time<time_vect[i]) //we have found the correct time bin
-                        {
-                                foundtime = true;
-                                //set the outputs:
-                                ctr_out[0]= ail[i-1];
-                                ctr_out[1] = ele[i-1];
-                                ctr_out[2] = rud[i-1];
-                                ctr_out[3] = thr[i-1][0];
-                                ctr_out[4] = thr[i-1][1];
-                                ctr_out[5] = thr[i-1][2];
-                                ctr_out[6] = thr[i-1][3];
-                                ctr_out[7] = thr[i-1][4];
-                                ctr_out[8] = thr[i-1][5];
-                                ctr_out[9] = thr[i-1][6];
-                                ctr_out[10] = thr[i-1][7];
-                        }
-                } while(!foundtime);
-        }
-        else //if the maneuver is done, apply a delta of 0.0 to the manual controls
-        {
-                ctr_out[0]= 0.0;
-                ctr_out[1] = 0.0;
-                ctr_out[2] = 0.0;
-                ctr_out[3] = 0.0;
-                ctr_out[4] = 0.0;
-                ctr_out[5] = 0.0;
-                ctr_out[6] = 0.0;
-                ctr_out[7] = 0.0;
-                ctr_out[8] = 0.0;
-                ctr_out[9] = 0.0;
-                ctr_out[10] = 0.0;
-        }
-        return;
 }
 
 double get_gps_time(Handler* adchandle)
@@ -159,110 +113,46 @@ double get_gps_time(Handler* adchandle)
 
 int main(int argc, char *argv[])
 {
-
-
-        //load configuration variables
-        string dump;
+		// Initialize pwm output mapping variables
         int mapping[11] = {0,1,2,3,3,3,3,3,3,3,3};
         int num_outputs = 11;
-        int pwm_freq = 50;
-        int disarm_pwm_servo = 1500;
-        int disarm_pwm_esc   = 1100;
-        int servo_min = 1100;
-        int servo_max = 1900;
-        int rc_min = 1000;
-        int rc_max = 1995;
-        float surface_max[11] = {0};
-        float surface_min[11] = {0};
-        int mode_chan = 4;
-        int mode_cutoff = 1500;
-        int maneuver_chan = 5;
-        int gain_chan = 6;
-        double ele_zero_cmd = 1516.0;
-        double ail_zero_cmd = 1494.0;
-        double rud_zero_cmd = 1546.0;
-        double thr_zero_cmd = 1085.0;
-        double null_zone = 0.005;
-        int pilot_cmd = 0;
-        int ap_cmd = 0;
-        int use_cmd = 0;
-        int itr_ail_zero = 0;
-        int itr_ele_zero = 0;
-        int itr_rud_zero = 0;
-        int wait_time = 3;
-        int itr = 1;
+
+        // Declare PWM output configuration variables
+        string dump;
         std::ifstream config_stream;
+		int pwm_freq;
+        int disarm_pwm_servo;
+        int disarm_pwm_esc;
+        int servo_min;
+        int servo_max;
+        int rc_min;
+        int rc_max;
+		int ap_arm_chan;
+		int ap_arm_cutoff;
+		int at_arm_cutoff;
+		int ap_engage_chan;
+		int ap_engage_cutoff;
 
-        // This function determines the scaling for PWM conversion
-        for(int i=3; i<11; i++)
-        {
-                surface_min[i] = (float)rc_min;
-                surface_max[i] = (float)rc_max;
-        }
-
-
+		// Load configuration variables
         config_stream.open("/home/pi/adept-fc/config_files/pwm_out.config");
         config_stream >> dump >> pwm_freq;
         config_stream >> dump >> disarm_pwm_servo;
         config_stream >> dump >> disarm_pwm_esc;
         config_stream >> dump >> servo_min;
         config_stream >> dump >> servo_max;
-        config_stream >> dump >> surface_min[0] >> surface_min[1] >> surface_min[2];
-        config_stream >> dump >> surface_max[0] >> surface_max[1] >> surface_max[2];
         config_stream >> dump >> rc_min;
         config_stream >> dump >> rc_max;
-        config_stream >> dump >> mode_chan;
-        config_stream >> dump >> mode_cutoff;
-        config_stream >> dump >> maneuver_chan;
-        config_stream >> dump >> gain_chan;
+        config_stream >> dump >> ap_arm_chan;
+        config_stream >> dump >> ap_arm_cutoff;
+		config_stream >> dump >> at_arm_cutoff;
+		config_stream >> dump >> ap_engage_chan;
+		config_stream >> dump >> ap_engage_cutoff;
         config_stream.close();
-        mode_chan--;
-        maneuver_chan--;
-        gain_chan--;
 
-        //load flight test maneuver:
-        float k[3][11] = {0};
-        int N = 501;
-        int Time_Limit = 10;
-
-        std::ifstream in_stream,gain_stream;
-        gain_stream.open("/home/pi/adept-fc/config_files/gains_multisine.dat");
-        gain_stream >> dump >> k[0][0] >> dump >> k[1][0] >> dump >> k[2][0];//Read aileron gains
-        gain_stream >> dump >> k[0][1] >> dump >> k[1][1] >> dump >> k[2][1];//Read elevator gains
-        gain_stream >> dump >> k[0][2] >> dump >> k[1][2] >> dump >> k[2][2];//Read rudder gains
-        gain_stream >> dump >> k[0][3] >> dump >> k[1][3] >> dump >> k[2][3];//Read throttle gains
-        gain_stream.close();
-        gain_stream.clear();
-
-        for (int i=4; i<11; i++)
-        {
-                k[0][i] = k[0][3];
-                k[1][i] = k[1][3];
-                k[2][i] = k[2][3];
-        }
-
-        in_stream.open("/home/pi/adept-fc/config_files/multisine.dat");
-        in_stream >> N;
-        in_stream >> Time_Limit;
-        double elevator[N],aileron[N],rudder[N],time_vect[N], Delta_Throttle[N][8];
-
-        for(int i=0; i<N; i++)
-        {
-                in_stream >> time_vect[i] >> elevator[i] >> rudder[i] >> aileron[i]
-                >> Delta_Throttle[i][0] >> Delta_Throttle[i][1] >> Delta_Throttle[i][2]
-                >> Delta_Throttle[i][3] >> Delta_Throttle[i][4] >> Delta_Throttle[i][5]
-                >> Delta_Throttle[i][6] >> Delta_Throttle[i][7];
-        }
-        in_stream.close();
-        in_stream.clear();
-
-        //initialize timing variables
-        std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> _T; //Local time since mode switch
-        int prev_status = 0;
-        int man_run = 0;
-        double multisine_output[11];
-        int gainpick = 0;
+		// Initialize ap arm and engage messege booleans
+		bool ap_arm_messege_thrown = false;
+		bool at_arm_messege_thrown = false;
+		bool ap_engage_messege_thrown = false;
 
         //initialize zcm
         zcm::ZCM zcm {"ipc"};
@@ -270,7 +160,6 @@ int main(int argc, char *argv[])
         //structures to publish
         pwm_t pwm_comm;
         memset(&pwm_comm, 0, sizeof(pwm_comm));
-
 
         //subscribe to incoming channels:
         Handler handlerObject,sens_handler;
@@ -285,10 +174,8 @@ int main(int argc, char *argv[])
         memset(&module_stat,0,sizeof(module_stat));
         module_stat.module_status = 1;//module running
 
-        //initialize PWM outputs
-        //************************************************************
+        //i Check PWM output channel status
         auto pwm = get_rcout();
-
         if (check_apm())
         {
                 return 1;
@@ -300,6 +187,7 @@ int main(int argc, char *argv[])
                         " Not root. Please launch with Sudo." << std::endl;
         }
 
+		// Initialize PWM output channels
         for (int i=0; i<num_outputs; i++)
         {
 
@@ -318,32 +206,34 @@ int main(int argc, char *argv[])
                 usleep(50000); //without this, initialization of multiple channels fails
         }
 
-        //set disarm pwm values
+        // Set output channels to disarm
         for (int i = 0; i<num_outputs; i++)
         {
+				// Surface disarm commands
                 if (i<=2)
                 {
                         pwm_comm.pwm_out[i] = disarm_pwm_servo;
                 }
+				
+				// Throttle disarm commands
                 else
                 {
                         pwm_comm.pwm_out[i] = disarm_pwm_esc;
                 }
         }
-        //************************************************************
 
+		// Start PWM module
         zcm.start();
-
         std::cout<< "pwm_out started" << std::endl;
 
-        //initialize emergency message loss detection
+        // Initialize emergency message loss detection
         bool message_thrown[2] = {false,false};
         handlerObject.last_act_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         handlerObject.last_rc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         sens_handler.last_adc_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         sens_handler.last_vnins_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-        //check for an emergency startup
+        // Check for an emergency startup
         std::ifstream f("/home/pi/adept-fc/emergency_startup");
         if (f.good())
         {
@@ -351,55 +241,25 @@ int main(int argc, char *argv[])
                 std::cout << "Armed on emergency startup" << std::endl;
         }
 
-
+		// Module main loop
         while (!handlerObject.stat.should_exit)
         {
+				// Publish status
                 zcm.publish("STATUS6",&module_stat);
-                //maneuver lookup
-                man_run = handlerObject.rc_in.rc_chan[maneuver_chan];
-                if (man_run >= 1500)
-                {
-                        if(prev_status < 1500)
-                        {
-                                start = std::chrono::high_resolution_clock::now();
-                        }
-                        //Compute time since mode switch:
-                        _T = std::chrono::duration_cast<std::chrono::duration<double> >(std::chrono::high_resolution_clock::now() - start);
 
-                        get_ctrl(Time_Limit, _T.count(),time_vect,elevator,aileron,rudder,Delta_Throttle,multisine_output);
-                }
-                else
-                {
-                        //normal operation
-                        memset(&multisine_output, 0, sizeof(multisine_output));
-                }
-
-                prev_status = man_run;
-
-                //get maneuver gain:
-                if (handlerObject.rc_in.rc_chan[gain_chan] > 1750)
-                {
-                        gainpick = 2;
-                }
-                else if (handlerObject.rc_in.rc_chan[gain_chan] < 1250)
-                {
-                        gainpick = 0;
-                }
-                else
-                {
-                        gainpick = 1;
-                }
-
-                //handle emergency logic:
+                // Collect current time (used to determine if communication link is still open between all other modules)
                 int64_t current_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-                //if we lose actuator, adc, or vnins data, autopilot cannot be in co
+                
+				// If we lose actuator, adc, or vnins data, flight mode is switched to manual
                 if ((current_time-handlerObject.last_act_time < 500000) && (current_time-sens_handler.last_adc_time < 500000) && (current_time-sens_handler.last_vnins_time < 500000))
                 {
+						// No emergency detected
                         handlerObject.mode_emergency = 0;
                         message_thrown[1] = false;
                 }
                 else
                 {
+						// At least one module is lost
                         handlerObject.mode_emergency = 1;
                         if (message_thrown[1] == false)
                         {
@@ -408,13 +268,17 @@ int main(int argc, char *argv[])
                                 message_thrown[1] = true;
                         }
                 }
+				
+				// If we lose the RC input, all surfaces and throttles are set to disarm
                 if (current_time-handlerObject.last_rc_time < 500000)
                 {
+						// No emergency detected
                         handlerObject.rc_emergency = 0;
                         message_thrown[0] = false;
                 }
                 else
                 {
+						// RC module is lost
                         handlerObject.rc_emergency = 1;
                         if (message_thrown[0] == false)
                         {
@@ -424,113 +288,151 @@ int main(int argc, char *argv[])
                         }
                 }
 
-                //pwm output logic
+                // If the PWM module is armed and the RC controller is detected, run PWM output logic
                 if (handlerObject.stat.armed && handlerObject.rc_emergency == 0)
                 {
-                        if (handlerObject.rc_in.rc_chan[mode_chan]<mode_cutoff || handlerObject.mode_emergency == 1) //manual flight mode:
+						// Manual flight mode (if arm or engage channels are below minimum cutoffs, or if acts, vnins, or adc is lost)
+                        if (handlerObject.rc_in.rc_chan[ap_arm_chan]<ap_arm_cutoff || handlerObject.rc_in.rc_chan[ap_engage_chan]<ap_engage_cutoff || handlerObject.mode_emergency == 1)
                         {
+							
+								// Send disarm messeges
+								if(at_arm_messege_thrown && handlerObject.rc_in.rc_chan[ap_arm_chan]<at_arm_cutoff)
+								{
+									std::cout<<"Autothrottle DISARMED." << std::endl;
+									at_arm_messege_thrown = false;
+								}
+								else if(ap_arm_messege_thrown  && handlerObject.rc_in.rc_chan[ap_arm_chan]<ap_arm_cutoff)
+								{
+									std::cout<<"Autopilot DISARMED." << std::endl;
+									ap_arm_messege_thrown = false;
+								}
+								
+								// Send disengage messeges
+								if(ap_engage_messege_thrown && at_arm_messege_thrown && handlerObject.rc_in.rc_chan[ap_engage_chan]<ap_engage_cutoff)
+								{
+									std::cout<<"Autopilot and Autothrottle DISENGAGED.\n" << std::endl;
+									ap_engage_messege_thrown = false;
+								}
+								else if (ap_engage_messege_thrown && handlerObject.rc_in.rc_chan[ap_engage_chan]<ap_engage_cutoff)
+								{
+									std::cout<<"Autopilot DISENGAGED.\n" << std::endl;
+									ap_engage_messege_thrown = false;
+								}
+								else if(ap_arm_messege_thrown && ap_engage_messege_thrown && handlerObject.rc_in.rc_chan[ap_arm_chan]<ap_arm_cutoff)
+								{
+									std::cout<<"Autopilot DISARMED WHILE ENGAGED." << std::endl;
+									ap_arm_messege_thrown = true;
+								}
+								
+								// Send armed messeges
+								if(!at_arm_messege_thrown && handlerObject.rc_in.rc_chan[ap_arm_chan]>=at_arm_cutoff)
+								{
+									std::cout<<"Autothrottle ARMED." << std::endl;
+									at_arm_messege_thrown = true;
+								}
+								else if(!ap_arm_messege_thrown  && handlerObject.rc_in.rc_chan[ap_arm_chan]>=ap_arm_cutoff)
+								{
+									std::cout<<"Autopilot ARMED." << std::endl;
+									ap_arm_messege_thrown = true;
+								}
+							
+								// Send pilot commands to aircraft
                                 for (int i=0; i<num_outputs; i++)
                                 {
-                                        pwm_comm.pwm_out[i] = k[gainpick][i]*multisine_output[i] + output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
+                                        pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min, servo_max, rc_min, rc_max);
                                         pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                                 }
-                                if (itr % 500 == 0)
-                                {
-                                        itr = 1;
-                                }
+								
+								
                         }
-                        else if (handlerObject.rc_in.rc_chan[mode_chan]>=mode_cutoff && handlerObject.mode_emergency == 0) //auto flight mode:
+						
+						// Autopilot flight mode
+                        else if (handlerObject.rc_in.rc_chan[ap_arm_chan]>=ap_arm_cutoff && handlerObject.rc_in.rc_chan[ap_arm_chan]<at_arm_cutoff && handlerObject.rc_in.rc_chan[ap_engage_chan]>=ap_engage_cutoff && handlerObject.mode_emergency == 0)
                         {
-                                for (int i=0; i<num_outputs; i++) // Ignore autopilot commands if pilot commands are present
+								// Send engage messeges
+								if (!ap_engage_messege_thrown && ap_arm_messege_thrown)
+								{
+									std::cout << "Autopilot ENGAGED WHILE ARMED." << std::endl;
+									ap_engage_messege_thrown = true;
+								}
+								else if (!ap_engage_messege_thrown && !ap_arm_messege_thrown)
+								{
+									std::cout << "Autopilot ARMED WHILE ENGAGED." << std::endl;
+									ap_engage_messege_thrown = true;
+									ap_arm_messege_thrown = true;
+								}
+								else if (ap_engage_messege_thrown && ap_arm_messege_thrown && at_arm_messege_thrown)
+								{
+									std::cout << "Autothrottle DISARMED WHILE ENGAGED Autopilot ENGAGED." << std::endl;
+									at_arm_messege_thrown = false;
+								}	
+								else if (ap_engage_messege_thrown && !ap_arm_messege_thrown)
+								{
+									std::cout << "Autopilot ARMED WHILE ENGAGED." << std::endl;
+									ap_arm_messege_thrown = true;
+								}
+								
+                                for (int i = 0; i<num_outputs; i++)
                                 {
-                                        // Gather Pilot and AP cmds
-                                        pilot_cmd = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min,servo_max,rc_min,rc_max);
-                                        ap_cmd = (int)(handlerObject.acts[i]);
-
-                                        if (i == 0) // Aileron command
-                                        {
-                                                if ((pilot_cmd > (int)((1.0+null_zone/2.0)*ail_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ail_zero_cmd)))
-                                                {
-                                                        use_cmd = pilot_cmd;
-                                                        itr_ail_zero = 0;
-                                                }
-                                                else
-                                                {
-                                                        if (itr_ail_zero < 100*wait_time) // Wait 2 seconds after 0 input to engage autopilot
-                                                        {
-                                                                use_cmd = pilot_cmd;
-                                                                itr_ail_zero++;
-                                                        }
-                                                        else
-                                                        {
-                                                                use_cmd = ap_cmd;
-                                                        }
-                                                }
-                                        }
-                                        else if (i == 1) // Elevator command
-                                        {
-                                                if ((pilot_cmd > (int)((1.0+null_zone/2.0)*ele_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*ele_zero_cmd)))
-                                                {
-                                                        use_cmd = pilot_cmd;
-                                                        itr_ele_zero = 0;
-                                                }
-                                                else
-                                                {
-                                                        if (itr_ele_zero < 100*wait_time) // Wait wait_time seconds after 0 input to engage autopilot
-                                                        {
-                                                                use_cmd = pilot_cmd;
-                                                                itr_ele_zero++;
-                                                        }
-                                                        else
-                                                        {
-                                                                use_cmd = ap_cmd;
-                                                        }
-                                                }
-                                        }
-                                        else if (i == 2) // Rudder command
-                                        {
-                                                if ((pilot_cmd > (int)((1.0+null_zone/2.0)*rud_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*rud_zero_cmd)))
-                                                {
-                                                        use_cmd = pilot_cmd;
-                                                        itr_rud_zero = 0;
-                                                }
-                                                else
-                                                {
-                                                        if (itr_rud_zero < 100*wait_time) // Wait wait_time seconds after 0 input to engage autopilot
-                                                        {
-                                                                use_cmd = pilot_cmd;
-                                                                itr_rud_zero++;
-                                                        }
-                                                        else
-                                                        {
-                                                                use_cmd = ap_cmd;
-                                                        }
-                                                }
-                                        }
-                                        else // Thrust command
-                                        {
-                                                use_cmd = (pilot_cmd > (int)((1.0+null_zone/2.0)*thr_zero_cmd)) || (pilot_cmd < (int)((1.0-null_zone/2.0)*thr_zero_cmd)) ? pilot_cmd : ap_cmd;
-                                        }
-
-                                        // Send cmd to PWM
-                                        pwm_comm.pwm_out[i] = use_cmd;
-                                        pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
-                                }
-                                if (itr % 500 == 0)
-                                {
-                                        itr = 1;
+										// Send AP surface commands to aircraft
+										if (i<=2)
+										{
+											pwm_comm.pwm_out[i] = (int)(handlerObject.acts[i]);
+											pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+										}
+										
+										// Send pilot throttle commands to aircraft
+										else
+										{
+											pwm_comm.pwm_out[i] = output_scaling(handlerObject.rc_in.rc_chan[mapping[i]],servo_min, servo_max, rc_min, rc_max);
+											pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+										}
                                 }
                         }
+						
+						// Autopilot and autothrottle flight mode
+						else if (handlerObject.rc_in.rc_chan[ap_arm_chan]>=at_arm_cutoff && handlerObject.rc_in.rc_chan[ap_engage_chan]>=ap_engage_cutoff && handlerObject.mode_emergency == 0)
+						{
+								// Send engage messeges
+								if (!ap_engage_messege_thrown && ap_arm_messege_thrown && at_arm_messege_thrown)
+								{
+									std::cout << "Autopilot and Autothrottle ENGAGED WHILE ARMED." << std::endl;
+									ap_engage_messege_thrown = true;
+								}
+								else if (ap_engage_messege_thrown && ap_arm_messege_thrown && !at_arm_messege_thrown)
+								{
+									std::cout << "Autothrottle ARMED WHILE ENGAGED." << std::endl;
+									at_arm_messege_thrown = true;
+								}
+							
+							    // Send AP surface and throttle commands to aircraft
+								for (int i = 0; i<num_outputs; i++)
+                                {
+									pwm_comm.pwm_out[i] = (int)(handlerObject.acts[i]);
+									pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
+                                }
+						}
                 }
-                else //disarmed
+				
+				// If the PWM module is not armed, or the RC controller is not detected, set all outputs to disarm
+                else
                 {
+						// Reset AP messeges
+						ap_arm_messege_thrown = false;
+						at_arm_messege_thrown = false;
+						ap_engage_messege_thrown = false;
+						
+						// Disarm
                         for (int i = 0; i<num_outputs; i++)
                         {
+								// Disarm surfaces
                                 if (i<=2)
                                 {
                                         pwm_comm.pwm_out[i] = disarm_pwm_servo;
                                         pwm->set_duty_cycle(i, pwm_comm.pwm_out[i]);
                                 }
+								
+								// Disarm throttles
                                 else
                                 {
                                         pwm_comm.pwm_out[i] = disarm_pwm_esc;
@@ -539,18 +441,18 @@ int main(int argc, char *argv[])
                         }
 
                 }
-                //timestamp the data
+				
+                // Timestamp the data
                 pwm_comm.time_gps = get_gps_time(&sens_handler);
-                itr++;
 
-                //publish pwm values for logging
+                // Publish pwm values for logging
                 zcm.publish("PWM_OUT", &pwm_comm);
                 usleep(10000);
         }
 
+		// Finish and close
         module_stat.module_status = 0;
         zcm.publish("STATUS6",&module_stat);
-
         zcm.stop();
         std::cout << "pwm_out module exiting..." << std::endl;
         return 0;
