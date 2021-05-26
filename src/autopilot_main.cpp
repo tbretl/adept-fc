@@ -543,10 +543,13 @@ int main(int argc, char *argv[])
 
 				// Set initial states
 				vel = initial_states[curr_test_number][0];
+				unfiltered_vel = initial_states[curr_test_number][0];
 				AoA = initial_states[curr_test_number][1];
+				unfiltered_AoA = initial_states[curr_test_number][1];
 				wyy = initial_states[curr_test_number][2];
 				pit = initial_states[curr_test_number][3];
 				bet = initial_states[curr_test_number][4];
+				unfiltered_bet = initial_states[curr_test_number][4];
 				wxx = initial_states[curr_test_number][5];
 				wzz = initial_states[curr_test_number][6];
 				rol = initial_states[curr_test_number][7];
@@ -597,11 +600,6 @@ int main(int argc, char *argv[])
 			{
 				unfiltered_vel = sqrt((2.0 * (abs(total_pressure) - abs(static_pressure))) / (rho)); // in m/s
 			}
-			
-			// Apply single-pole low-pass filter to all 5 hole probe wind data
-			AoA += alpha * (unfiltered_AoA - AoA);  // in rad
-			bet += alpha * (unfiltered_bet - bet);  // in rad
-			vel += alpha * (unfiltered_vel - vel);  // in m/s
 
 			// Gather INS data
 			rol = 0.017453 * handlerObject.vnins.roll;  // in rad
@@ -611,6 +609,11 @@ int main(int argc, char *argv[])
 			wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
 			wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 		#endif
+		
+		// Apply single-pole low-pass filter to all 5 hole probe wind data
+		AoA += alpha * (unfiltered_AoA - AoA);  // in rad
+		bet += alpha * (unfiltered_bet - bet);  // in rad
+		vel += alpha * (unfiltered_vel - vel);  // in m/s
 
 		// Bad state rejection (Assign previous good value of state if measured state is out of range)
 		vel = (vel < vel_min || vel > vel_max) ? vel_prev : vel;
@@ -701,11 +704,11 @@ int main(int argc, char *argv[])
 			if(trim_values_set && initial_state_set && curr_test_number<=num_tests)
 			{
 				step_states( A, B, &states, inputs, delta_t);
-				vel = states[0] + vel_trim + get_rand()*state_noise[0];
-				AoA = states[1] + AoA_trim + get_rand()*state_noise[1];
+				unfiltered_vel = states[0] + vel_trim + get_rand()*state_noise[0];
+				unfiltered_AoA = states[1] + AoA_trim + get_rand()*state_noise[1];
 				wyy = states[2] + wyy_trim + get_rand()*state_noise[2];
 				pit = states[3] + pit_trim + get_rand()*state_noise[3];
-				bet = states[4] + bet_trim + get_rand()*state_noise[4];
+				unfiltered_bet = states[4] + bet_trim + get_rand()*state_noise[4];
 				wxx = states[5] + wxx_trim + get_rand()*state_noise[5];
 				wzz = states[6] + wzz_trim + get_rand()*state_noise[6];
 				rol = states[7] + rol_trim + get_rand()*state_noise[7];
