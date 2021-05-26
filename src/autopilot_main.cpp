@@ -290,8 +290,8 @@ int main(int argc, char *argv[])
 	#ifdef TEST
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
 		// State noise
-		double state_noise[9] = { 0.05, 0.05, 0.01, 0.01, 0.05, 0.01, 0.01, 0.01, 0.01 }; 
-					// vel,  AoA,  wxx,  pit,  bet,  wxx,  wzz,  rol,  yaw
+		double state_noise[9] = { 0.02, 0.02, 0.001, 0.001, 0.02, 0.001, 0.001, 0.001, 0.001 }; 
+					// vel,  AoA,   wxx,   pit,  bet,   wxx,   wzz,   rol,   yaw
 		srand (time(NULL));
 		
 		// Sequencing file numbers
