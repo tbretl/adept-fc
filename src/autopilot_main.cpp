@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
 	#ifdef TEST
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
 		// State noise
-		double state_noise[9] = { 0.02, 0.02, 0.001, 0.001, 0.02, 0.001, 0.001, 0.001, 0.001 }; 
+		double state_noise[9] = { 0.03, 0.05, 0.001, 0.001, 0.05, 0.001, 0.001, 0.001, 0.001 }; 
 					// vel,  AoA,   wxx,   pit,  bet,   wxx,   wzz,   rol,   yaw
 		srand (time(NULL));
 		
@@ -495,11 +495,27 @@ int main(int argc, char *argv[])
 			double rud_trim_PWM = (double) output_scaling(handlerObject.rc_in.rc_chan[2],servo_min, servo_max, rc_min, rc_max);
 			double thr_trim_PWM = (double) output_scaling(handlerObject.rc_in.rc_chan[3],servo_min, servo_max, rc_min, rc_max);
 
+			// Ensure trim commands are within acceptable range
+			ail_trim_PWM = ail_trim_PWM < ail_PWM_min ? ail_PWM_min : ail_trim_PWM;
+			ail_trim_PWM = ail_trim_PWM > ail_PWM_max ? ail_PWM_max : ail_trim_PWM;
+			ele_trim_PWM = ele_trim_PWM < ele_PWM_min ? ele_PWM_min : ele_trim_PWM;
+			ele_trim_PWM = ele_trim_PWM > ele_PWM_max ? ele_PWM_max : ele_trim_PWM;
+			rud_trim_PWM = rud_trim_PWM < rud_PWM_min ? rud_PWM_min : rud_trim_PWM;
+			rud_trim_PWM = rud_trim_PWM > rud_PWM_max ? rud_PWM_max : rud_trim_PWM;
+			thr_trim_PWM = thr_trim_PWM < thr_PWM_min ? thr_PWM_min : thr_trim_PWM;
+			thr_trim_PWM = thr_trim_PWM > thr_PWM_max ? thr_PWM_max : thr_trim_PWM;
+
 			// Convert to rad and percent throttle commands
 			unfiltered_RC_ele_cmd = 0.01745*((-ele_PWM_consts[1]+sqrt(ele_PWM_consts[1]*ele_PWM_consts[1]-4.0*ele_PWM_consts[0]*(ele_PWM_consts[2]-ele_trim_PWM)))/(2.0*ele_PWM_consts[0])); // rad
 			unfiltered_RC_ail_cmd = 0.01745*((ail_trim_PWM - ail_PWM_consts[1])/ail_PWM_consts[0]); // rad
 			unfiltered_RC_rud_cmd = 0.01745*((rud_trim_PWM - rud_PWM_consts[1])/rud_PWM_consts[0]); // rad
 			unfiltered_RC_thr_cmd = ((thr_trim_PWM-(double)thr_PWM_min)/((double)thr_PWM_max-(double)thr_PWM_min)); // percent throttle
+			
+			// Check unfiltered cmds are valid
+			unfiltered_RC_ele_cmd = isnan(unfiltered_RC_ele_cmd) ? ele_trim : unfiltered_RC_ele_cmd;
+			unfiltered_RC_ail_cmd = isnan(unfiltered_RC_ail_cmd) ? ail_trim : unfiltered_RC_ail_cmd;
+			unfiltered_RC_rud_cmd = isnan(unfiltered_RC_rud_cmd) ? rud_trim : unfiltered_RC_rud_cmd;
+			unfiltered_RC_thr_cmd = isnan(unfiltered_RC_thr_cmd) ? thr_trim : unfiltered_RC_thr_cmd;
 			
 			// Single-pole low-pass filter
 			ele_trim += alpha * (unfiltered_RC_ele_cmd - ele_trim);
