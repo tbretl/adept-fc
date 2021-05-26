@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
 		// Create log for artificial state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		logfile_ap_test << "gps_time[s] test vel[m/s] AoA[rad] wyy[rad/s] pit[rad] bet[rad] wxx[rad/s] wzz[rad/s] rol[rad] yaw[rad]" << std::endl;
+		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] raw_AoA[rad] AoA[rad] wyy[rad/s] pit[rad] raw_bet[rad] bet[rad] wxx[rad/s] wzz[rad/s] rol[rad] yaw[rad]" << std::endl;
 
 		// Generate test parameters
 		int num_tests=16;
@@ -698,21 +698,21 @@ int main(int argc, char *argv[])
 
 		#ifdef TEST
 			// Log current simulated stats
-			logfile_ap_test << acts.time_gps << " " << curr_test_number << " " << vel << " " << AoA << " " << wyy << " " << pit << " " << bet << " " << wxx << " " << wzz << " " << rol << " " << yaw << std::endl;
+			logfile_ap_test << acts.time_gps << " " << curr_test_number << " " << unfiltered_vel << " " << vel << " " << unfiltered_AoA << " " << AoA << " " << wyy << " " << pit << " " << unfiltered_bet << " " << bet << " " << wxx << " " << wzz << " " << rol << " " << yaw << std::endl;
 
 			// If the initial states are already set and a test is running, update the states based on the linear dynamics of the system
 			if(trim_values_set && initial_state_set && curr_test_number<=num_tests)
 			{
 				step_states( A, B, &states, inputs, delta_t);
-				unfiltered_vel = states[0] + vel_trim + get_rand()*state_noise[0];
-				unfiltered_AoA = states[1] + AoA_trim + get_rand()*state_noise[1];
-				wyy = states[2] + wyy_trim + get_rand()*state_noise[2];
-				pit = states[3] + pit_trim + get_rand()*state_noise[3];
-				unfiltered_bet = states[4] + bet_trim + get_rand()*state_noise[4];
-				wxx = states[5] + wxx_trim + get_rand()*state_noise[5];
-				wzz = states[6] + wzz_trim + get_rand()*state_noise[6];
-				rol = states[7] + rol_trim + get_rand()*state_noise[7];
-				yaw = states[8] + yaw_trim + get_rand()*state_noise[8];
+				unfiltered_vel = states[0] + vel_trim + get_rand()*state_noise[0]*(vel_max-vel_min);
+				unfiltered_AoA = states[1] + AoA_trim + get_rand()*state_noise[1]*AoA_lim;
+				wyy = states[2] + wyy_trim + get_rand()*state_noise[2]*wyy_lim;
+				pit = states[3] + pit_trim + get_rand()*state_noise[3]*pit_lim;
+				unfiltered_bet = states[4] + bet_trim + get_rand()*state_noise[4]*bet_lim;
+				wxx = states[5] + wxx_trim + get_rand()*state_noise[5]*wxx_lim;
+				wzz = states[6] + wzz_trim + get_rand()*state_noise[6]*wzz_lim;
+				rol = states[7] + rol_trim + get_rand()*state_noise[7]*rol_lim;
+				yaw = states[8] + yaw_trim + get_rand()*state_noise[8]*pit_lim;
 
 			}
 		#endif
