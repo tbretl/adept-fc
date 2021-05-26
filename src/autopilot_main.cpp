@@ -14,6 +14,10 @@
 #include <iomanip>
 #include <fstream>
 #include <vector>
+#ifdef TEST
+	#include <stdlib.h>
+	#include <time.h>
+#endif
 
 // Message types
 #include "actuators_t.hpp"
@@ -156,6 +160,12 @@ int output_scaling(const int& in_val, const double& s_min, const double& s_max, 
 		}
 
 	}
+	
+	// Gets a random double between -1.0 and 1.0
+	double get_rand()
+	{
+		return 2.0 * ((double) rand() / (double) RAND_MAX) - 1.0;
+	}
 #endif
 
 int main(int argc, char *argv[])
@@ -279,6 +289,11 @@ int main(int argc, char *argv[])
 
 	#ifdef TEST
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
+		// State noise
+		double state_noise[9] = { 0.05, 0.05, 0.01, 0.01, 0.05, 0.01, 0.01, 0.01, 0.01 }; 
+					// vel,  AoA,  wxx,  pit,  bet,  wxx,  wzz,  rol,  yaw
+		srand (time(NULL));
+		
 		// Sequencing file numbers
 		std::ifstream seqFile ("config_files/sequence.dat", std::ifstream::in);
 		int fileNum;
@@ -686,15 +701,15 @@ int main(int argc, char *argv[])
 			if(trim_values_set && initial_state_set && curr_test_number<=num_tests)
 			{
 				step_states( A, B, &states, inputs, delta_t);
-				vel = states[0] + vel_trim;
-				AoA = states[1] + AoA_trim;
-				wyy = states[2] + wyy_trim;
-				pit = states[3] + pit_trim;
-				bet = states[4] + bet_trim;
-				wxx = states[5] + wxx_trim;
-				wzz = states[6] + wzz_trim;
-				rol = states[7] + rol_trim;
-				yaw = states[8] + yaw_trim;
+				vel = states[0] + vel_trim + get_rand()*state_noise[0];
+				AoA = states[1] + AoA_trim + get_rand()*state_noise[1];
+				wyy = states[2] + wyy_trim + get_rand()*state_noise[2];
+				pit = states[3] + pit_trim + get_rand()*state_noise[3];
+				bet = states[4] + bet_trim + get_rand()*state_noise[4];
+				wxx = states[5] + wxx_trim + get_rand()*state_noise[5];
+				wzz = states[6] + wzz_trim + get_rand()*state_noise[6];
+				rol = states[7] + rol_trim + get_rand()*state_noise[7];
+				yaw = states[8] + yaw_trim + get_rand()*state_noise[8];
 
 			}
 		#endif
