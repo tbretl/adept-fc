@@ -398,8 +398,8 @@ int main(int argc, char *argv[])
 	double unfiltered_RC_thr_cmd;  // percent throttle
 	
 	// Time constant variables
-	double delta_t = 0.01    // seconds
-	double time_const = 0.1  // seconds
+	double delta_t = 0.01;    // seconds
+	double time_const = 0.1;  // seconds
 	double alpha = 1.0 - exp(-delta_t / time_const);
 	
 
