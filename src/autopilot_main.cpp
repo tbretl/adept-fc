@@ -633,28 +633,28 @@ int main(int argc, char *argv[])
 			wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
 			wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 		#endif
+
+		// Bad state rejection (Assign previous good value of state if measured state is out of range)
+		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
+		unfiltered_AoA = (unfiltered_AoA < -AoA_lim || unfiltered_AoA > AoA_lim) ? AoA_prev : unfiltered_AoA;
+		wyy = (wyy < -wyy_lim || wyy > wyy_lim) ? wyy_prev : wyy;
+		pit = (pit < -pit_lim || pit > pit_lim) ? pit_prev : pit;
+		unfiltered_bet = (unfiltered_bet < -bet_lim || unfiltered_bet > bet_lim) ? bet_prev : unfiltered_bet;
+		wxx = (wxx < -wxx_lim || wxx > wxx_lim) ? wxx_prev : wxx;
+		wzz = (wzz < -wzz_lim || wzz > wzz_lim) ? wzz_prev : wzz;
+		rol = (rol < -rol_lim || rol > rol_lim) ? rol_prev : rol;
 		
 		// Apply single-pole low-pass filter to all 5 hole probe wind data
 		AoA += alpha * (unfiltered_AoA - AoA);  // in rad
 		bet += alpha * (unfiltered_bet - bet);  // in rad
 		vel += alpha * (unfiltered_vel - vel);  // in m/s
 
-		// Bad state rejection (Assign previous good value of state if measured state is out of range)
-		vel = (vel < vel_min || vel > vel_max) ? vel_prev : vel;
-		AoA = (AoA < -AoA_lim || AoA > AoA_lim) ? AoA_prev : AoA;
-		wyy = (wyy < -wyy_lim || wyy > wyy_lim) ? wyy_prev : wyy;
-		pit = (pit < -pit_lim || pit > pit_lim) ? pit_prev : pit;
-		bet = (bet < -bet_lim || bet > bet_lim) ? bet_prev : bet;
-		wxx = (wxx < -wxx_lim || wxx > wxx_lim) ? wxx_prev : wxx;
-		wzz = (wzz < -wzz_lim || wzz > wzz_lim) ? wzz_prev : wzz;
-		rol = (rol < -rol_lim || rol > rol_lim) ? rol_prev : rol;
-
 		// Collect previous state values
-		vel_prev = vel; // m/s
-		AoA_prev = AoA; // rad
+		vel_prev = unfiltered_vel; // m/s
+		AoA_prev = unfiltered_AoA; // rad
 		wyy_prev = wyy; // rad/s
 		pit_prev = pit; // rad
-		bet_prev = bet; // rad
+		bet_prev = unfiltered_bet; // rad
 		wxx_prev = wxx; // rad/s
 		wzz_prev = wzz; // rad/s
 		rol_prev = rol; // rad
