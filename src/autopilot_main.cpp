@@ -290,8 +290,8 @@ int main(int argc, char *argv[])
 	#ifdef TEST
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
 		// Absolute state noise magnitude
-		double state_noise[9] = { 9.00e-1,  8.73e-3,  8.73e-4,  3.49e-4,  8.73e-3,  8.73e-4,  8.73e-4,  3.49e-4,  3.49e-4 }; 
-					//vel m/s,  AoA rad,  wxx 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
+		double state_noise[9] = { 9.00e-1,  8.73e-3,  5.24e-4,  5.24e-4,  8.73e-3,  5.24e-4,  3.49e-3,  5.24e-4,  3.49e-3 }; 
+								//vel m/s,  AoA rad,  wxx 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
 		srand (time(NULL));
 		
 		// Sequencing file numbers
