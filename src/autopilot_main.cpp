@@ -671,23 +671,27 @@ int main(int argc, char *argv[])
 			for (int i = 0; i < 11; i++)
 			{
 				inputs[i] = 0.0;
+				double noisy_states[9];
+				
 				for (int j = 0; j < 9; j++)
 				{
-					// Get the noisy state
-					double noisy_state_j = states[j] + get_rand()*state_noise[j];
-					
-					// Log simulated noisy state
-					if (i != 10)
-					{
-						logfile_ap_test << noisy_state_j << " ";
+					// Get and log the noisy state	
+					if (i == 0)
+					{					
+						noisy_states[j] = states[j] + get_rand()*state_noise[j];
+						if (j != 8)
+						{
+							logfile_ap_test << noisy_states[j] << " ";
+						}
+						else
+						{
+							logfile_ap_test << noisy_states[j] << std::endl;
+						}
 					}
-					else
-					{
-						logfile_ap_test << noisy_state_j << std::endl;
-					}
+	
 					
 					// Calculate input from noisy state
-					inputs[i] += -1.0*k[i][j] * noisy_state_j;
+					inputs[i] += -1.0*k[i][j] * noisy_states[j];
 				}
 			}
 		#else
