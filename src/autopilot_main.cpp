@@ -434,11 +434,11 @@ int main(int argc, char *argv[])
 
 	// Declare all other state values used
 	double unfiltered_AoA;
-	double AoA = 0.0;
+	double AoA = AoA_trim;
 	double unfiltered_bet;
-	double bet = 0.0;
+	double bet = bet_trim;
 	double unfiltered_vel;
-	double vel = 0.0;
+	double vel = vel_trim;
 	double yaw;
 	double pit;
 	double rol;
@@ -567,13 +567,13 @@ int main(int argc, char *argv[])
 				
 				// Read the true absolute states with sensor noise
 				unfiltered_vel = true_absolute_states[0] + get_rand()*state_noise[0];
-				vel = 0.0;
+				vel = vel_trim;
 				unfiltered_AoA = true_absolute_states[1] + get_rand()*state_noise[1];
-				AoA = 0.0;
+				AoA = AoA_trim;
 				wyy = true_absolute_states[2] + get_rand()*state_noise[2];
 				pit = true_absolute_states[3] + get_rand()*state_noise[3];
 				unfiltered_bet = true_absolute_states[4] + get_rand()*state_noise[4];
-				bet = 0.0;
+				bet = bet_trim;
 				wxx = true_absolute_states[5] + get_rand()*state_noise[5];
 				wzz = true_absolute_states[6] + get_rand()*state_noise[6];
 				rol = true_absolute_states[7] + get_rand()*state_noise[7];
@@ -726,7 +726,7 @@ int main(int argc, char *argv[])
 				// Log current unfiltered noisy states, filtered noisy states, and ground truth
 				logfile_ap_test << acts.time_gps << " " << curr_test_number << " ";
 				logfile_ap_test << unfiltered_vel << " " << vel << " " << true_absolute_states[0] << " ";
-				logfile_ap_test << unfiltered_vel << " " << vel << " " << true_absolute_states[1] << " ";
+				logfile_ap_test << unfiltered_AoA << " " << AoA << " " << true_absolute_states[1] << " ";
 				logfile_ap_test << wyy << " " << true_absolute_states[2] << " ";
 				logfile_ap_test << pit << " " << true_absolute_states[3] << " ";
 				logfile_ap_test << unfiltered_bet << " " << bet << " " << true_absolute_states[4] << " ";
