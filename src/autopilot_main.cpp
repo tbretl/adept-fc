@@ -326,13 +326,13 @@ int main(int argc, char *argv[])
 			{vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//AoA down
 			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//Beta right
 			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//Beta left
-			{0.8333*vel_max, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Velocity up
-			{1.5000*vel_min, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Velocity down
+			{0.6*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Velocity up
+			{1.4*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Velocity down
 			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim},	//Longitudinal perturbation
 			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},	//Lateral perturbation
 			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},		//Wind state perturbation
-			{0.8333*vel_max, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},	//Full state + perturbation
-			{1.5000*vel_min, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim}	//Full state - perturbation
+			{0.6*vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},	//Full state + perturbation
+			{1.4*vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim}	//Full state - perturbation
 		};
 
 		// **************************************************** SYSTEM DYNAMICS **************************************************** //
