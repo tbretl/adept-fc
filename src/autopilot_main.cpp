@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
 		double state_noise[9] = { 9.00e-1,  8.73e-3,  5.24e-4,  5.24e-4,  8.73e-3,  5.24e-4,  3.49e-3,  5.24e-4,  3.49e-3 }; 
 								//vel m/s,  AoA rad,  wyy 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
 		double true_absolute_states[9] = { vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }; 
-		double true_state_errors[9] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+		vector<double> true_state_errors = vector<double>(9, 0.0);
 		srand (time(NULL));
 		
 		// Sequencing file numbers
