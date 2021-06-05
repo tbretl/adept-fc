@@ -289,9 +289,9 @@ int main(int argc, char *argv[])
 
 	#ifdef TEST
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
-		// State noise
-		double state_noise[9] = { 0.03, 0.05, 0.001, 0.001, 0.05, 0.001, 0.001, 0.001, 0.001 }; 
-					// vel,  AoA,   wxx,   pit,  bet,   wxx,   wzz,   rol,   yaw
+		// Absolute state noise magnitude
+		double state_noise[9] = { 9.00e-1,  8.73e-3,  8.73e-4,  3.49e-4,  8.73e-3,  8.73e-4,  8.73e-4,  3.49e-4,  3.49e-4 }; 
+					//vel m/s,  AoA rad,  wxx 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
 		srand (time(NULL));
 		
 		// Sequencing file numbers
@@ -662,17 +662,47 @@ int main(int argc, char *argv[])
 		states[7] = (rol - rol_trim);
 		states[8] = (yaw - yaw_trim);
 
-		// Calculate input deltas based on state (u-u0) = -K * (x - x0)
-		for (int i = 0; i < 11; i++)
-		{
-			inputs[i] = 0.0;
-			for (int j = 0; j < 9; j++)
+		// Input logic
+		#ifdef TEST
+			// Log
+			logfile_ap_test << acts.time_gps << " " << curr_test_number << " ";
+		
+			// Calculate input deltas based on generated state (u-u0) = -K * (x - x0) + some random error
+			for (int i = 0; i < 11; i++)
 			{
-				inputs[i] += -1.0*k[i][j]*states[j];
+				inputs[i] = 0.0;
+				for (int j = 0; j < 9; j++)
+				{
+					// Get the noisy state
+					double noisy_state_j = states[j] + get_rand()*state_noise[j];
+					
+					// Log simulated noisy state
+					if (i != 10)
+					{
+						logfile_ap_test << noisy_state_j << " ";
+					}
+					else
+					{
+						logfile_ap_test << noisy_state_j << std::endl;
+					}
+					
+					// Calculate input from noisy state
+					inputs[i] += -1.0*k[i][j] * noisy_state_j;
+				}
 			}
-		}
+		#else
+			// Calculate input deltas based on state (u-u0) = -K * (x - x0)
+			for (int i = 0; i < 11; i++)
+			{
+				inputs[i] = 0.0;
+				for (int j = 0; j < 9; j++)
+				{
+					inputs[i] += -1.0*k[i][j]*states[j];
+				}
+			}
+		#endif
 
-		// Convert angle commands to PWM
+		// Convert angle commands to surface PWM
 		ele_ang_cmd = 57.29578 * (inputs[0] + ele_trim); // in degrees
 		ail_ang_cmd = 57.29578 * (inputs[1] + ail_trim); // in degrees
 		rud_ang_cmd = 57.29578 * (inputs[2] + rud_trim); // in degrees
@@ -680,15 +710,7 @@ int main(int argc, char *argv[])
 		ail_PWM_cmd = (int) eval_1D_poly(ail_PWM_consts, 2, ail_ang_cmd); // in PWM 
 		rud_PWM_cmd = (int) eval_1D_poly(rud_PWM_consts, 2, rud_ang_cmd); // in PWM
 
-		// Convert throttle commands to PWM commands
-		for (int i = 0; i < 8; i++)
-		{
-			thr_PWM_cmd[i] = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (inputs[i+3] + thr_trim);
-			thr_PWM_cmd[i] = thr_PWM_cmd[i] > thr_PWM_max ? thr_PWM_max : thr_PWM_cmd[i];
-			thr_PWM_cmd[i] = thr_PWM_cmd[i] < thr_PWM_min ? thr_PWM_min : thr_PWM_cmd[i];
-		}
-
-		// Ensure PWM commands are within safe limits
+		// Ensure surface PWM commands are within safe limits
 		ele_PWM_cmd = ele_PWM_cmd > ele_PWM_max ? ele_PWM_max : ele_PWM_cmd;
 		ele_PWM_cmd = ele_PWM_cmd < ele_PWM_min ? ele_PWM_min : ele_PWM_cmd;
 		ail_PWM_cmd = ail_PWM_cmd > ail_PWM_max ? ail_PWM_max : ail_PWM_cmd;
@@ -696,8 +718,15 @@ int main(int argc, char *argv[])
 		rud_PWM_cmd = rud_PWM_cmd > rud_PWM_max ? rud_PWM_max : rud_PWM_cmd;
 		rud_PWM_cmd = rud_PWM_cmd < rud_PWM_min ? rud_PWM_min : rud_PWM_cmd;
 
+		// Convert throttle commands to PWM commands and ensure within safe limits
+		for (int i = 0; i < 8; i++)
+		{
+			thr_PWM_cmd[i] = (int) thr_PWM_min + (thr_PWM_max - thr_PWM_min) * (inputs[i+3] + thr_trim);
+			thr_PWM_cmd[i] = thr_PWM_cmd[i] > thr_PWM_max ? thr_PWM_max : thr_PWM_cmd[i];
+			thr_PWM_cmd[i] = thr_PWM_cmd[i] < thr_PWM_min ? thr_PWM_min : thr_PWM_cmd[i];
+		}
 
-		// Assign actuator values
+		// Send input PWM commands to PWM module
 		acts.de = ele_PWM_cmd;
 		acts.da = ail_PWM_cmd;
 		acts.dr = rud_PWM_cmd;
@@ -713,23 +742,19 @@ int main(int argc, char *argv[])
 		zcm.publish("ACTUATORS", &acts);
 
 		#ifdef TEST
-			// Log current simulated stats
-			logfile_ap_test << acts.time_gps << " " << curr_test_number << " " << unfiltered_vel << " " << vel << " " << unfiltered_AoA << " " << AoA << " " << wyy << " " << pit << " " << unfiltered_bet << " " << bet << " " << wxx << " " << wzz << " " << rol << " " << yaw << std::endl;
-
 			// If the initial states are already set and a test is running, update the states based on the linear dynamics of the system
 			if(trim_values_set && initial_state_set && curr_test_number<=num_tests)
 			{
 				step_states( A, B, &states, inputs, delta_t);
-				unfiltered_vel = states[0] + vel_trim + get_rand()*state_noise[0]*(vel_max-vel_min);
-				unfiltered_AoA = states[1] + AoA_trim + get_rand()*state_noise[1]*AoA_lim;
-				wyy = states[2] + wyy_trim + get_rand()*state_noise[2]*wyy_lim;
-				pit = states[3] + pit_trim + get_rand()*state_noise[3]*pit_lim;
-				unfiltered_bet = states[4] + bet_trim + get_rand()*state_noise[4]*AoA_lim;
-				wxx = states[5] + wxx_trim + get_rand()*state_noise[5]*wyy_lim;
-				wzz = states[6] + wzz_trim + get_rand()*state_noise[6]*wyy_lim;
-				rol = states[7] + rol_trim + get_rand()*state_noise[7]*pit_lim;
-				yaw = states[8] + yaw_trim + get_rand()*state_noise[8]*pit_lim;
-
+				unfiltered_vel = states[0];
+				unfiltered_AoA = states[1];
+				wyy = states[2] + wyy_trim;
+				pit = states[3] + pit_trim;
+				unfiltered_bet = states[4] + bet_trim;
+				wxx = states[5] + wxx_trim;
+				wzz = states[6] + wzz_trim;
+				rol = states[7] + rol_trim;
+				yaw = states[8] + yaw_trim;
 			}
 		#endif
 
