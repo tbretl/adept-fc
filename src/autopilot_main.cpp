@@ -724,10 +724,10 @@ int main(int argc, char *argv[])
 				unfiltered_AoA = states[1] + AoA_trim + get_rand()*state_noise[1]*AoA_lim;
 				wyy = states[2] + wyy_trim + get_rand()*state_noise[2]*wyy_lim;
 				pit = states[3] + pit_trim + get_rand()*state_noise[3]*pit_lim;
-				unfiltered_bet = states[4] + bet_trim + get_rand()*state_noise[4]*bet_lim;
-				wxx = states[5] + wxx_trim + get_rand()*state_noise[5]*wxx_lim;
-				wzz = states[6] + wzz_trim + get_rand()*state_noise[6]*wzz_lim;
-				rol = states[7] + rol_trim + get_rand()*state_noise[7]*rol_lim;
+				unfiltered_bet = states[4] + bet_trim + get_rand()*state_noise[4]*AoA_lim;
+				wxx = states[5] + wxx_trim + get_rand()*state_noise[5]*wyy_lim;
+				wzz = states[6] + wzz_trim + get_rand()*state_noise[6]*wyy_lim;
+				rol = states[7] + rol_trim + get_rand()*state_noise[7]*pit_lim;
 				yaw = states[8] + yaw_trim + get_rand()*state_noise[8]*pit_lim;
 
 			}
