@@ -291,7 +291,9 @@ int main(int argc, char *argv[])
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
 		// Absolute state noise magnitude
 		double state_noise[9] = { 9.00e-1,  8.73e-3,  5.24e-4,  5.24e-4,  8.73e-3,  5.24e-4,  3.49e-3,  5.24e-4,  3.49e-3 }; 
-								//vel m/s,  AoA rad,  wxx 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
+								//vel m/s,  AoA rad,  wyy 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
+		double true_absolute_states[9] = { vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }; 
+		double true_state_errors[9] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 		srand (time(NULL));
 		
 		// Sequencing file numbers
@@ -308,7 +310,7 @@ int main(int argc, char *argv[])
 		// Create log for artificial state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] raw_AoA[rad] AoA[rad] wyy[rad/s] pit[rad] raw_bet[rad] bet[rad] wxx[rad/s] wzz[rad/s] rol[rad] yaw[rad]" << std::endl;
+		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad]" << std::endl;
 
 		// Generate test parameters
 		int num_tests=16;
@@ -558,18 +560,24 @@ int main(int argc, char *argv[])
 				std::cout << "Autopilot test " << curr_test_number+1 << " / " << num_tests << "..." << std::endl;
 
 				// Set initial states
-				vel = initial_states[curr_test_number][0];
-				unfiltered_vel = initial_states[curr_test_number][0];
-				AoA = initial_states[curr_test_number][1];
-				unfiltered_AoA = initial_states[curr_test_number][1];
-				wyy = initial_states[curr_test_number][2];
-				pit = initial_states[curr_test_number][3];
-				bet = initial_states[curr_test_number][4];
-				unfiltered_bet = initial_states[curr_test_number][4];
-				wxx = initial_states[curr_test_number][5];
-				wzz = initial_states[curr_test_number][6];
-				rol = initial_states[curr_test_number][7];
-				yaw = initial_states[curr_test_number][8];
+				for (int i = 0; i < 9; i++)
+				{
+					true_absolute_states[i] = initial_states[curr_test_number][i];
+				}
+				
+				// Read the true absolute states with sensor noise
+				unfiltered_vel = true_absolute_states[0] + get_rand()*state_noise[0];
+				vel = 0.0;
+				unfiltered_AoA = true_absolute_states[1] + get_rand()*state_noise[1];
+				AoA = 0.0;
+				wyy = true_absolute_states[2] + get_rand()*state_noise[2];
+				pit = true_absolute_states[3] + get_rand()*state_noise[3];
+				unfiltered_bet = true_absolute_states[4] + get_rand()*state_noise[4];
+				bet = 0.0;
+				wxx = true_absolute_states[5] + get_rand()*state_noise[5];
+				wzz = true_absolute_states[6] + get_rand()*state_noise[6];
+				rol = true_absolute_states[7] + get_rand()*state_noise[7];
+				yaw = true_absolute_states[8] + get_rand()*state_noise[8];
 
 				// Reset previous state memory
 				vel_prev = 0.0;
@@ -651,7 +659,7 @@ int main(int argc, char *argv[])
 		wzz_prev = wzz; // rad/s
 		rol_prev = rol; // rad
 
-		// Calculate -1.0 * (state errors)
+		// Calculate state errors
 		states[0] = (vel - vel_trim);
 		states[1] = (AoA - AoA_trim);
 		states[2] = (wyy - wyy_trim);
@@ -662,49 +670,15 @@ int main(int argc, char *argv[])
 		states[7] = (rol - rol_trim);
 		states[8] = (yaw - yaw_trim);
 
-		// Input logic
-		#ifdef TEST
-			// Log
-			logfile_ap_test << acts.time_gps << " " << curr_test_number << " ";
-		
-			// Calculate input deltas based on generated state (u-u0) = -K * (x - x0) + some random error
-			for (int i = 0; i < 11; i++)
+		// Calculate input deltas based on state (u - u0) = -K * (x - x0)
+		for (int i = 0; i < 11; i++)
+		{
+			inputs[i] = 0.0;
+			for (int j = 0; j < 9; j++)
 			{
-				inputs[i] = 0.0;
-				double noisy_states[9];
-				
-				for (int j = 0; j < 9; j++)
-				{
-					// Get and log the noisy state	
-					if (i == 0)
-					{					
-						noisy_states[j] = states[j] + get_rand()*state_noise[j];
-						if (j != 8)
-						{
-							logfile_ap_test << noisy_states[j] << " ";
-						}
-						else
-						{
-							logfile_ap_test << noisy_states[j] << std::endl;
-						}
-					}
-	
-					
-					// Calculate input from noisy state
-					inputs[i] += -1.0*k[i][j] * noisy_states[j];
-				}
+				inputs[i] += -1.0*k[i][j]*states[j];
 			}
-		#else
-			// Calculate input deltas based on state (u-u0) = -K * (x - x0)
-			for (int i = 0; i < 11; i++)
-			{
-				inputs[i] = 0.0;
-				for (int j = 0; j < 9; j++)
-				{
-					inputs[i] += -1.0*k[i][j]*states[j];
-				}
-			}
-		#endif
+		}
 
 		// Convert angle commands to surface PWM
 		ele_ang_cmd = 57.29578 * (inputs[0] + ele_trim); // in degrees
@@ -749,16 +723,53 @@ int main(int argc, char *argv[])
 			// If the initial states are already set and a test is running, update the states based on the linear dynamics of the system
 			if(trim_values_set && initial_state_set && curr_test_number<=num_tests)
 			{
-				step_states( A, B, &states, inputs, delta_t);
-				unfiltered_vel = states[0];
-				unfiltered_AoA = states[1];
-				wyy = states[2] + wyy_trim;
-				pit = states[3] + pit_trim;
-				unfiltered_bet = states[4] + bet_trim;
-				wxx = states[5] + wxx_trim;
-				wzz = states[6] + wzz_trim;
-				rol = states[7] + rol_trim;
-				yaw = states[8] + yaw_trim;
+				// Log current unfiltered noisy states, filtered noisy states, and ground truth
+				logfile_ap_test << acts.time_gps << " " << curr_test_number << " ";
+				logfile_ap_test << unfiltered_vel << " " << vel << " " << true_absolute_states[0] << " ";
+				logfile_ap_test << unfiltered_vel << " " << vel << " " << true_absolute_states[1] << " ";
+				logfile_ap_test << wyy << " " << true_absolute_states[2] << " ";
+				logfile_ap_test << pit << " " << true_absolute_states[3] << " ";
+				logfile_ap_test << unfiltered_bet << " " << bet << " " << true_absolute_states[4] << " ";
+				logfile_ap_test << wxx << " " << true_absolute_states[5] << " ";
+				logfile_ap_test << wzz << " " << true_absolute_states[6] << " ";
+				logfile_ap_test << rol << " " << true_absolute_states[7] << " ";
+				logfile_ap_test << yaw << " " << true_absolute_states[8] << std::endl;
+				
+				// Calculate state errors of ground truth
+				true_state_errors[0] = (true_absolute_states[0] - vel_trim);
+				true_state_errors[1] = (true_absolute_states[1] - AoA_trim);
+				true_state_errors[2] = (true_absolute_states[2] - wyy_trim);
+				true_state_errors[3] = (true_absolute_states[3] - pit_trim);
+				true_state_errors[4] = (true_absolute_states[4] - bet_trim);
+				true_state_errors[5] = (true_absolute_states[5] - wxx_trim);
+				true_state_errors[6] = (true_absolute_states[6] - wzz_trim);
+				true_state_errors[7] = (true_absolute_states[7] - rol_trim);
+				true_state_errors[8] = (true_absolute_states[8] - yaw_trim);
+				
+				// Step the ground truth state errors based on the linear system dynamics
+				step_states( A, B, &true_state_errors, inputs, delta_t);
+				
+				// Update the ground truth from the ground truth state errors
+				true_absolute_states[0] = (true_state_errors[0] + vel_trim);
+				true_absolute_states[1] = (true_state_errors[1] + AoA_trim);
+				true_absolute_states[2] = (true_state_errors[2] + wyy_trim);
+				true_absolute_states[3] = (true_state_errors[3] + pit_trim);
+				true_absolute_states[4] = (true_state_errors[4] + bet_trim);
+				true_absolute_states[5] = (true_state_errors[5] + wxx_trim);
+				true_absolute_states[6] = (true_state_errors[6] + wzz_trim);
+				true_absolute_states[7] = (true_state_errors[7] + rol_trim);
+				true_absolute_states[8] = (true_state_errors[8] + yaw_trim);
+				
+				// Apply noise to the ground truth for AP sensors
+				unfiltered_vel = true_absolute_states[0] + get_rand()*state_noise[0];
+				unfiltered_AoA = true_absolute_states[1] + get_rand()*state_noise[1];
+				wyy = true_absolute_states[2] + get_rand()*state_noise[2];
+				pit = true_absolute_states[3] + get_rand()*state_noise[3];
+				unfiltered_bet = true_absolute_states[4] + get_rand()*state_noise[4];
+				wxx = true_absolute_states[5] + get_rand()*state_noise[5];
+				wzz = true_absolute_states[6] + get_rand()*state_noise[6];
+				rol = true_absolute_states[7] + get_rand()*state_noise[7];
+				yaw = true_absolute_states[8] + get_rand()*state_noise[8];
 			}
 		#endif
 
