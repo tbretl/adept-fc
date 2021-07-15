@@ -14,9 +14,10 @@
 #include <iomanip>
 #include <fstream>
 #include <vector>
+
 #ifdef TEST
-	#include <stdlib.h>
-	#include <time.h>
+#include <stdlib.h>
+#include <time.h>
 #endif
 
 // Message types
@@ -134,38 +135,38 @@ int output_scaling(const int& in_val, const double& s_min, const double& s_max, 
 }
 
 #ifdef TEST
-	// FE steps states based on dynamics, inputs, and current states
-	void step_states(vector<vector<double>> A, vector<vector<double>> B, vector<double>* states, vector<double> inputs, double delta_t)
+// FE steps states based on dynamics, inputs, and current states
+void step_states(vector<vector<double>> A, vector<vector<double>> B, vector<double>* states, vector<double> inputs, double delta_t)
+{
+	double Axi = 0.0;
+	double Bui = 0.0;
+	vector<double> new_states = vector<double>(9,0.0);
+	for(int i = 0; i < 9; i++)
 	{
-		double Axi = 0.0;
-		double Bui = 0.0;
-		vector<double> new_states = vector<double>(9,0.0);
-		for(int i = 0; i < 9; i++)
+		for(int j = 0; j < 9; j++)
 		{
-			for(int j = 0; j < 9; j++)
-			{
-				Axi+=A[i][j] * states->at(j);
-			}
-			for(int j = 0; j < 11; j++)
-			{
-				Bui+=B[i][j] * inputs[j];
-			}
-			new_states[i] = states->at(i) + delta_t * (Axi + Bui);
-			Axi = 0.0;
-			Bui = 0.0;
+			Axi+=A[i][j] * states->at(j);
 		}
-		for (int i = 0; i < 9; i++)
+		for(int j = 0; j < 11; j++)
 		{
-			states->at(i) = new_states[i];
+			Bui+=B[i][j] * inputs[j];
 		}
+		new_states[i] = states->at(i) + delta_t * (Axi + Bui);
+		Axi = 0.0;
+		Bui = 0.0;
+	}
+	for (int i = 0; i < 9; i++)
+	{
+		states->at(i) = new_states[i];
+	}
 
-	}
-	
-	// Gets a random double between -1.0 and 1.0
-	double get_rand()
-	{
-		return 2.0 * ((double) rand() / (double) RAND_MAX) - 1.0;
-	}
+}
+
+// Gets a random double between -1.0 and 1.0
+double get_rand()
+{
+	return 2.0 * ((double) rand() / (double) RAND_MAX) - 1.0;
+}
 #endif
 
 int main(int argc, char *argv[])
@@ -264,7 +265,7 @@ int main(int argc, char *argv[])
 
 	// **************************************************** GAIN DATA **************************************************** //
 	// Controller constants
-	double k[11][9];
+	double k[11][12];
 
 	// Loading variables
 	std::ifstream gain_stream;
@@ -280,7 +281,7 @@ int main(int argc, char *argv[])
 	}
 	for (int i = 0; i < 11; i++)
 	{
-		for (int j = 0; j < 9; j++)
+		for (int j = 0; j < 12; j++)
 		{
 			gain_stream >> k[i][j];
 		}
@@ -291,7 +292,7 @@ int main(int argc, char *argv[])
 		// **************************************************** AUTOPILOT TEST DATA **************************************************** //
 		// Absolute state noise magnitude
 		double state_noise[9] = { 9.00e-1,  8.73e-3,  5.24e-4,  5.24e-4,  8.73e-3,  5.24e-4,  3.49e-3,  5.24e-4,  3.49e-3 }; 
-								//vel m/s,  AoA rad,  wyy 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
+					//vel m/s,  AoA rad,  wyy 1/s,  pit rad,  bet rad,  wxx 1/s,  wzz 1/s,  rol rad,  yaw rad
 		double true_absolute_states[9] = { vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }; 
 		vector<double> true_state_errors = vector<double>(9, 0.0);
 		srand (time(NULL));
@@ -310,29 +311,30 @@ int main(int argc, char *argv[])
 		// Create log for artificial state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad]" << std::endl;
+		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad] AoA_int[rad*s] rol_int[rad*s] yaw_int[rad*s]" << std::endl;
 
 		// Generate test parameters
 		int num_tests=16;
 		int curr_test_number = 0;
 		bool initial_state_set = false;
-		double initial_states[16][9]{
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Trim conditions
-			{vel_trim, AoA_trim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim},	//Nose up
-			{vel_trim, AoA_trim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim},	//Nose down	
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},	//Roll right
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim},	//Roll left
-			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//AoA up
-			{vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//AoA down
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//Beta right
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 	//Beta left
-			{0.6*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Velocity up
-			{1.4*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim}, 			//Velocity down
-			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim},	//Longitudinal perturbation
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},	//Lateral perturbation
-			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},		//Wind state perturbation
-			{0.6*vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim},	//Full state + perturbation
-			{1.4*vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim}	//Full state - perturbation
+		double initial_states[16][9]
+		{
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 			//Trim conditions
+			{vel_trim, AoA_trim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Nose up
+			{vel_trim, AoA_trim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Nose down	
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Roll right
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim },	//Roll left
+			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//AoA up
+			{vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//AoA down
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//Beta right
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//Beta left
+			{0.6*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 		//Velocity up
+			{1.4*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 		//Velocity down
+			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Longitudinal perturbation
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Lateral perturbation
+			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Wind state perturbation
+			{0.6*vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Full state + perturbation
+			{1.4*vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim }	//Full state - perturbation
 		};
 
 		// **************************************************** SYSTEM DYNAMICS **************************************************** //
@@ -367,6 +369,8 @@ int main(int argc, char *argv[])
 	int servo_max;
 	int rc_min;
 	int rc_max;
+	int ap_arm_chan;
+	int ap_arm_cutoff;
 	int ap_engage_chan;
 	int ap_engage_cutoff;
 
@@ -379,8 +383,8 @@ int main(int argc, char *argv[])
 	rc_config_stream >> dump >> servo_max;
 	rc_config_stream >> dump >> rc_min;
 	rc_config_stream >> dump >> rc_max;
-	rc_config_stream >> dump >> rc_dump;
-	rc_config_stream >> dump >> rc_dump;
+	rc_config_stream >> dump >> ap_arm_chan;
+	rc_config_stream >> dump >> ap_arm_cutoff;
 	rc_config_stream >> dump >> rc_dump;
 	rc_config_stream >> dump >> ap_engage_chan;
 	rc_config_stream >> dump >> ap_engage_cutoff;
@@ -416,6 +420,12 @@ int main(int argc, char *argv[])
 	double wzz_prev = 0.0; // rad/s
 	double rol_prev = 0.0; // rad
 
+	// State integrals
+	bool AP_armed_engaged = false;
+	double AoA_int = 0.0; // rad * s
+	double rol_int = 0.0; // rad * s
+	double yaw_int = 0.0; // rad * s
+
 	// Pressure values used in ADC to state conversion
 	double ps1;
 	double ps2;
@@ -445,7 +455,7 @@ int main(int argc, char *argv[])
 	double wxx;
 	double wyy;
 	double wzz;
-	vector<double> states = vector<double>(9, 0.0);
+	vector<double> states = vector<double>(12, 0.0);
 
 	// Declare all other input values used
 	vector<double> inputs = vector<double>(11, 0.0);
@@ -488,6 +498,9 @@ int main(int argc, char *argv[])
 		// Publish the status of this module
 		zcm.publish("STATUS4", &module_stat);
 
+		// Check if the AP is both armed and engaged (to prevent integral windup when AP is not running)
+		AP_armed_engaged = (handlerObject.rc_in.rc_chan[ap_engage_chan]>=ap_engage_cutoff) && (handlerObject.rc_in.rc_chan[ap_arm_chan]>=ap_arm_cutoff);
+
 		// Every loop update the trim values
 		if(!trim_values_set)
 		{
@@ -524,10 +537,18 @@ int main(int argc, char *argv[])
 			ail_trim += alpha * (unfiltered_RC_ail_cmd - ail_trim);
 			rud_trim += alpha * (unfiltered_RC_rud_cmd - rud_trim);
 			thr_trim += alpha * (unfiltered_RC_thr_cmd - thr_trim);
+			
+			// Set the yaw trim value to current heading
+			yaw_trim = 0.017453 * handlerObject.vnins.yaw;   // in rad
+			
+			// Reset the integration to prevent windup while AP is disarmed or disengaged
+			AoA_int = 0.0; // rad * s
+			rol_int = 0.0; // rad * s
+			yaw_int = 0.0; // rad * s
 		}	
 
-		// When AP engages, lock trim values
-		if(handlerObject.rc_in.rc_chan[ap_engage_chan]>=ap_engage_cutoff && !trim_values_set)
+		// When AP arms and engages, lock trim values
+		if(AP_armed_engaged && !trim_values_set)
 		{
 			// Wait for PWM module to complete its messeges
 			usleep(5000);	
@@ -537,18 +558,19 @@ int main(int argc, char *argv[])
 			std::cout<<"Aileron trim: " << ail_trim*180.0/3.14159 << " deg" <<  std::endl;
 			std::cout<<"Rudder trim: " << rud_trim*180.0/3.14159 << " deg" <<  std::endl;
 			std::cout<<"Throttle trim: " << 100.0*thr_trim << " %" <<  std::endl;
+			std::cout<<"Heading Lock: " << yaw_trim*180.0/3.14159 << " deg" <<  std::endl;
 
 			// Lock trim values
 			trim_values_set = true;
 		}
 
-		// When AP disengages, unlock trim values
-		else if(handlerObject.rc_in.rc_chan[ap_engage_chan]<ap_engage_cutoff && trim_values_set)
+		// When AP disengages or disarms, unlock trim values
+		else if(!AP_armed_engaged && trim_values_set)
 		{
 			trim_values_set = false;
 
 			#ifdef TEST
-				initial_state_set = false;
+			initial_state_set = false;
 			#endif
 		}
 
@@ -659,6 +681,11 @@ int main(int argc, char *argv[])
 		wzz_prev = wzz; // rad/s
 		rol_prev = rol; // rad
 
+		// Integrate angle of attack, roll, and yaw error
+		AoA_int += (AoA_trim - AoA) * delta_t;
+		rol_int += (rol_trim - rol) * delta_t;
+		yaw_int += (yaw_trim - yaw) * delta_t;
+
 		// Calculate state errors
 		states[0] = (vel - vel_trim);
 		states[1] = (AoA - AoA_trim);
@@ -669,12 +696,15 @@ int main(int argc, char *argv[])
 		states[6] = (wzz - wzz_trim);
 		states[7] = (rol - rol_trim);
 		states[8] = (yaw - yaw_trim);
+		states[9]  = AoA_int;
+		states[10] = rol_int;
+		states[11] = yaw_int;
 
 		// Calculate input deltas based on state (u - u0) = -K * (x - x0)
 		for (int i = 0; i < 11; i++)
 		{
 			inputs[i] = 0.0;
-			for (int j = 0; j < 9; j++)
+			for (int j = 0; j < 12; j++)
 			{
 				inputs[i] += -1.0*k[i][j]*states[j];
 			}
@@ -733,7 +763,10 @@ int main(int argc, char *argv[])
 				logfile_ap_test << wxx << " " << true_absolute_states[5] << " ";
 				logfile_ap_test << wzz << " " << true_absolute_states[6] << " ";
 				logfile_ap_test << rol << " " << true_absolute_states[7] << " ";
-				logfile_ap_test << yaw << " " << true_absolute_states[8] << std::endl;
+				logfile_ap_test << yaw << " " << true_absolute_states[8] << " ";
+				logfile_ap_test << AoA_int << " ";
+				logfile_ap_test << rol_int << " ";
+				logfile_ap_test << yaw_int << std::endl;
 				
 				// Calculate state errors of ground truth
 				true_state_errors[0] = (true_absolute_states[0] - vel_trim);
