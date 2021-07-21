@@ -556,7 +556,7 @@ int main(int argc, char *argv[])
 			usleep(5000);	
 
 			// Send trim value message to user
-			std::cout<< "Elevator trim: " << ele_trim*180.0/3.14159 << " deg" << std::endl; 
+			std::cout<< "\nElevator trim: " << ele_trim*180.0/3.14159 << " deg" << std::endl; 
 			std::cout<< "Aileron trim: " << ail_trim*180.0/3.14159 << " deg" <<  std::endl;
 			std::cout<< "Rudder trim: " << rud_trim*180.0/3.14159 << " deg" <<  std::endl;
 			std::cout<< "Throttle trim: " << 100.0*thr_trim << " %" <<  std::endl;
