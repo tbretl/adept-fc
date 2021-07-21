@@ -593,6 +593,9 @@ int main(int argc, char *argv[])
 					true_absolute_states[i] = initial_states[curr_test_number][i];
 				}
 				
+				// Set the yaw trim value
+				yaw_trim = true_absolute_states[8];   // in rad
+				
 				// Read the true absolute states with sensor noise
 				unfiltered_vel = true_absolute_states[0] + get_rand()*state_noise[0];
 				vel = vel_trim;
