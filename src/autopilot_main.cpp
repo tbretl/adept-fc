@@ -659,6 +659,12 @@ int main(int argc, char *argv[])
 			wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
 			wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 		#endif
+		
+		// Update the yaw trim value based on pilot RC inputs
+		double rc_rud_delta =  ((double)handlerObject.rc_in.rc_chan[2] - (double)rc_rud_trim) / ((double)rc_max - (double)rc_min);
+		rc_rud_delta = rc_rud_delta > 1.0 ? 1.0 : rc_rud_delta;
+		rc_rud_delta = rc_rud_delta < -1.0 ? -1.0 : rc_rud_delta;
+		std::cout<< "\n" << rc_rud_delta;
 
 		// Bad state rejection (Assign previous good value of state if measured state is out of range)
 		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
