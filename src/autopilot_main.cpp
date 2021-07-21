@@ -671,7 +671,6 @@ int main(int argc, char *argv[])
 		// Update the yaw trim value based on pilot RC inputs
 		double yaw_trim_rate = yaw_trim_rate_max * rc_rud_delta;
 		yaw_trim += yaw_trim_rate * delta_t;
-		std::cout << yaw_trim << " - " << yaw_trim_rate << " - " << rc_rud_delta << std::endl;
 
 		// Bad state rejection (Assign previous good value of state if measured state is out of range)
 		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
