@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 		// Create log for artificial state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad] AoA_int[rad*s] rol_int[rad*s] yaw_int[rad*s]" << std::endl;
+		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw_trim[rad] yaw[rad] true_yaw[rad] AoA_int[rad*s] rol_int[rad*s] yaw_int[rad*s]" << std::endl;
 
 		// Generate test parameters
 		int num_tests=16;
@@ -779,6 +779,7 @@ int main(int argc, char *argv[])
 				logfile_ap_test << wxx << " " << true_absolute_states[5] << " ";
 				logfile_ap_test << wzz << " " << true_absolute_states[6] << " ";
 				logfile_ap_test << rol << " " << true_absolute_states[7] << " ";
+				logfile_ap_test << yaw_trim;
 				logfile_ap_test << yaw << " " << true_absolute_states[8] << " ";
 				logfile_ap_test << AoA_int << " ";
 				logfile_ap_test << rol_int << " ";
