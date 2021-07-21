@@ -215,6 +215,7 @@ int main(int argc, char *argv[])
 	double rol_trim; // rad
 	double yaw_trim; // rad
 	int rc_rud_trim;
+	double yaw_trim_rate_max; // rad/s
 
 	// State limits. Any higher or lower values are considered faulty readings.
 	double vel_min; // m/s
@@ -236,6 +237,7 @@ int main(int argc, char *argv[])
 	ap_config_stream.open("/home/pi/adept-fc/config_files/autopilot_main.config");
 	ap_config_stream >> dump >> ap_type;
 	ap_config_stream >> dump >> rho;
+	ap_config_stream >> dump >> yaw_trim_rate_max;
 	ap_config_stream >> dump >> ele_PWM_min;
 	ap_config_stream >> dump >> ele_PWM_max;
 	ap_config_stream >> dump >> ail_PWM_min;
@@ -660,11 +662,16 @@ int main(int argc, char *argv[])
 			wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 		#endif
 		
-		// Update the yaw trim value based on pilot RC inputs
-		double rc_rud_delta =  ((double)handlerObject.rc_in.rc_chan[2] - (double)rc_rud_trim) / ((double)rc_max - (double)rc_min);
+		// Calculate the pilot commanded stick delta
+		double rc_rud_delta =  2.0 * ((double)handlerObject.rc_in.rc_chan[2] - (double)rc_rud_trim) / ((double)rc_max - (double)rc_min);
 		rc_rud_delta = rc_rud_delta > 1.0 ? 1.0 : rc_rud_delta;
 		rc_rud_delta = rc_rud_delta < -1.0 ? -1.0 : rc_rud_delta;
-		std::cout<< "\n" << rc_rud_delta;
+		rc_rud_delta = abs(rc_rud_delta) < 0.10 ? 0.0 : rc_rud_delta;
+		
+		// Update the yaw trim value based on pilot RC inputs
+		double yaw_trim_rate = yaw_trim_rate_max * rc_rud_delta;
+		yaw_trim += yaw_trim_rate * delta_t;
+		std::cout << yaw_trim << std::endl;
 
 		// Bad state rejection (Assign previous good value of state if measured state is out of range)
 		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
