@@ -779,7 +779,7 @@ int main(int argc, char *argv[])
 				logfile_ap_test << wxx << " " << true_absolute_states[5] << " ";
 				logfile_ap_test << wzz << " " << true_absolute_states[6] << " ";
 				logfile_ap_test << rol << " " << true_absolute_states[7] << " ";
-				logfile_ap_test << yaw_trim;
+				logfile_ap_test << yaw_trim << " ";
 				logfile_ap_test << yaw << " " << true_absolute_states[8] << " ";
 				logfile_ap_test << AoA_int << " ";
 				logfile_ap_test << rol_int << " ";
