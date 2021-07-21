@@ -214,6 +214,7 @@ int main(int argc, char *argv[])
 	double wzz_trim; // rad/s
 	double rol_trim; // rad
 	double yaw_trim; // rad
+	int rc_rud_trim;
 
 	// State limits. Any higher or lower values are considered faulty readings.
 	double vel_min; // m/s
@@ -540,6 +541,7 @@ int main(int argc, char *argv[])
 			
 			// Set the yaw trim value to current heading
 			yaw_trim = 0.017453 * handlerObject.vnins.yaw;   // in rad
+			rc_rud_trim = handlerObject.rc_in.rc_chan[2];
 			
 			// Reset the integration to prevent windup while AP is disarmed or disengaged
 			AoA_int = 0.0; // rad * s
@@ -554,11 +556,13 @@ int main(int argc, char *argv[])
 			usleep(5000);	
 
 			// Send trim value message to user
-			std::cout<<"Elevator trim: " << ele_trim*180.0/3.14159 << " deg" << std::endl; 
-			std::cout<<"Aileron trim: " << ail_trim*180.0/3.14159 << " deg" <<  std::endl;
-			std::cout<<"Rudder trim: " << rud_trim*180.0/3.14159 << " deg" <<  std::endl;
-			std::cout<<"Throttle trim: " << 100.0*thr_trim << " %" <<  std::endl;
-			std::cout<<"Heading Lock: " << yaw_trim*180.0/3.14159 << " deg" <<  std::endl;
+			std::cout<< "Elevator trim: " << ele_trim*180.0/3.14159 << " deg" << std::endl; 
+			std::cout<< "Aileron trim: " << ail_trim*180.0/3.14159 << " deg" <<  std::endl;
+			std::cout<< "Rudder trim: " << rud_trim*180.0/3.14159 << " deg" <<  std::endl;
+			std::cout<< "Throttle trim: " << 100.0*thr_trim << " %" <<  std::endl;
+			std::cout<< "***********************************" <<  std::endl;
+			std::cout<< "Heading Lock: " << yaw_trim*180.0/3.14159 << " deg" <<  std::endl;
+			std::cout<< "RC Rud Trim: " << rc_min << " - " << rc_rud_trim << " - " << rc_max << std::endl;
 
 			// Lock trim values
 			trim_values_set = true;
