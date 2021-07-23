@@ -734,7 +734,7 @@ int main(int argc, char *argv[])
 		states[5] = (wxx - wxx_trim);
 		states[6] = (wzz - wzz_trim);
 		states[7] = (rol - rol_trim);
-		states[8] = (yaw - yaw_trim);
+		states[8] = yaw_error;
 		states[9]  = AoA_int;
 		states[10] = rol_int;
 		states[11] = yaw_int;
