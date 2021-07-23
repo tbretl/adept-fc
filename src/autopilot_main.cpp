@@ -593,6 +593,10 @@ int main(int argc, char *argv[])
 					true_absolute_states[i] = initial_states[curr_test_number][i];
 				}
 				
+				// Loop yaw between -pi and pi
+				true_absolute_states[8] = true_absolute_states[8] > 3.1416 ? true_absolute_states[8] - 6.2832 : true_absolute_states[8];
+				true_absolute_states[8] = true_absolute_states[8] < -3.1416 ? true_absolute_states[8] + 6.2832 : true_absolute_states[8];
+				
 				// Set the yaw trim value
 				yaw_trim = true_absolute_states[8];   // in rad
 				
@@ -609,6 +613,10 @@ int main(int argc, char *argv[])
 				wzz = true_absolute_states[6] + get_rand()*state_noise[6];
 				rol = true_absolute_states[7] + get_rand()*state_noise[7];
 				yaw = true_absolute_states[8] + get_rand()*state_noise[8];
+
+				// Loop yaw between -pi and pi
+				yaw = yaw > 3.1416 ? yaw - 6.2832 : yaw;
+				yaw = yaw < -3.1416 ? yaw + 6.2832 : yaw;
 
 				// Reset previous state memory
 				vel_prev = 0.0;
@@ -674,7 +682,9 @@ int main(int argc, char *argv[])
 		// Update the yaw trim value based on pilot RC inputs
 		double yaw_trim_rate = yaw_trim_rate_max * rc_rud_delta;
 		yaw_trim += yaw_trim_rate * delta_t;
-
+		yaw_trim = yaw_trim > 3.1416 ? yaw_trim - 6.2832 : yaw_trim;
+		yaw_trim = yaw_trim < -3.1416 ? yaw_trim + 6.2832 : yaw_trim;
+				
 		// Bad state rejection (Assign previous good value of state if measured state is out of range)
 		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
 		unfiltered_AoA = (unfiltered_AoA < -AoA_lim || unfiltered_AoA > AoA_lim) ? AoA_prev : unfiltered_AoA;
@@ -700,10 +710,20 @@ int main(int argc, char *argv[])
 		wzz_prev = wzz; // rad/s
 		rol_prev = rol; // rad
 
+		// Calculate the yaw integral error ensuring that it's magnitude is always less than pi
+		double yaw_int_error = yaw_trim - yaw;
+		yaw_int_error = yaw_int_error > 3.1416 ? yaw_int_error - 6.2832 : yaw_int_error;
+		yaw_int_error = yaw_int_error < -3.1416 ? yaw_int_error + 6.2832 : yaw_int_error;
+		
 		// Integrate angle of attack, roll, and yaw error
 		AoA_int += (AoA_trim - AoA) * delta_t;
 		rol_int += (rol_trim - rol) * delta_t;
-		yaw_int += (yaw_trim - yaw) * delta_t;
+		yaw_int += yaw_int_error * delta_t;
+
+		// Calculate the yaw error ensuring that it's magnitude is always less than pi
+		double yaw_error = yaw - yaw_trim;
+		yaw_error = yaw_error > 3.1416 ? yaw_error - 6.2832 : yaw_error;
+		yaw_error = yaw_error < -3.1416 ? yaw_error + 6.2832 : yaw_error;
 
 		// Calculate state errors
 		states[0] = (vel - vel_trim);
@@ -788,6 +808,11 @@ int main(int argc, char *argv[])
 				logfile_ap_test << rol_int << " ";
 				logfile_ap_test << yaw_int << std::endl;
 				
+				// Calculate ground truth yaw error and loop between -pi and pi
+				double yaw_test_error = true_absolute_states[8] - yaw_trim;
+				yaw_test_error = yaw_test_error > 3.1416 ? yaw_test_error - 6.2832 : yaw_test_error;
+				yaw_test_error = yaw_test_error < -3.1416 ? yaw_test_error + 6.2832 : yaw_test_error;
+				
 				// Calculate state errors of ground truth
 				true_state_errors[0] = (true_absolute_states[0] - vel_trim);
 				true_state_errors[1] = (true_absolute_states[1] - AoA_trim);
@@ -797,7 +822,7 @@ int main(int argc, char *argv[])
 				true_state_errors[5] = (true_absolute_states[5] - wxx_trim);
 				true_state_errors[6] = (true_absolute_states[6] - wzz_trim);
 				true_state_errors[7] = (true_absolute_states[7] - rol_trim);
-				true_state_errors[8] = (true_absolute_states[8] - yaw_trim);
+				true_state_errors[8] = yaw_test_error;
 				
 				// Step the ground truth state errors based on the linear system dynamics
 				step_states( A, B, &true_state_errors, inputs, delta_t);
@@ -813,6 +838,10 @@ int main(int argc, char *argv[])
 				true_absolute_states[7] = (true_state_errors[7] + rol_trim);
 				true_absolute_states[8] = (true_state_errors[8] + yaw_trim);
 				
+				// Loop yaw between -pi and pi
+				true_absolute_states[8] = true_absolute_states[8] > 3.1416 ? true_absolute_states[8] - 6.2832 : true_absolute_states[8];
+				true_absolute_states[8] = true_absolute_states[8] < -3.1416 ? true_absolute_states[8] + 6.2832 : true_absolute_states[8];
+				
 				// Apply noise to the ground truth for AP sensors
 				unfiltered_vel = true_absolute_states[0] + get_rand()*state_noise[0];
 				unfiltered_AoA = true_absolute_states[1] + get_rand()*state_noise[1];
@@ -823,6 +852,10 @@ int main(int argc, char *argv[])
 				wzz = true_absolute_states[6] + get_rand()*state_noise[6];
 				rol = true_absolute_states[7] + get_rand()*state_noise[7];
 				yaw = true_absolute_states[8] + get_rand()*state_noise[8];
+				
+				// Loop yaw between -pi and pi
+				yaw = yaw > 3.1416 ? yaw - 6.2832 : yaw;
+				yaw = yaw < -3.1416 ? yaw + 6.2832 : yaw;
 			}
 		#endif
 
