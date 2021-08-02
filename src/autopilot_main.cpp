@@ -323,21 +323,21 @@ int main(int argc, char *argv[])
 		double initial_states[16][9]
 		{
 			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 			//Trim conditions
-			{vel_trim, AoA_trim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Nose up
-			{vel_trim, AoA_trim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Nose down	
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Roll right
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim },	//Roll left
-			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//AoA up
-			{vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//AoA down
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//Beta right
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//Beta left
-			{0.6*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 		//Velocity up
-			{1.4*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 		//Velocity down
-			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Longitudinal perturbation
-			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Lateral perturbation
-			{vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Wind state perturbation
-			{0.6*vel_trim, AoA_trim+0.75*AoA_lim, wyy_trim, pit_trim+0.75*pit_lim, bet_trim+0.75*bet_lim, wxx_trim, wzz_trim, rol_trim+0.75*rol_lim, yaw_trim },	//Full state + perturbation
-			{1.4*vel_trim, AoA_trim-0.75*AoA_lim, wyy_trim, pit_trim-0.75*pit_lim, bet_trim-0.75*bet_lim, wxx_trim, wzz_trim, rol_trim-0.75*rol_lim, yaw_trim }	//Full state - perturbation
+			{vel_trim, AoA_trim, wyy_trim, pit_trim+0.25*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Nose up
+			{vel_trim, AoA_trim, wyy_trim, pit_trim-0.25*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Nose down	
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim+0.25*rol_lim, yaw_trim },	//Roll right
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim-0.25*rol_lim, yaw_trim },	//Roll left
+			{vel_trim, AoA_trim+0.25*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//AoA up
+			{vel_trim, AoA_trim-0.25*AoA_lim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//AoA down
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.25*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//Beta right
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim-0.25*bet_lim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 	//Beta left
+			{0.75*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 		//Velocity up
+			{1.25*vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim }, 		//Velocity down
+			{vel_trim, AoA_trim+0.25*AoA_lim, wyy_trim, pit_trim+0.25*pit_lim, bet_trim, wxx_trim, wzz_trim, rol_trim, yaw_trim },	//Longitudinal perturbation
+			{vel_trim, AoA_trim, wyy_trim, pit_trim, bet_trim+0.25*bet_lim, wxx_trim, wzz_trim, rol_trim+0.25*rol_lim, yaw_trim },	//Lateral perturbation
+			{vel_trim, AoA_trim+0.25*AoA_lim, wyy_trim, pit_trim+0.25*pit_lim, bet_trim+0.25*bet_lim, wxx_trim, wzz_trim, rol_trim+0.25*rol_lim, yaw_trim },	//Wind state perturbation
+			{0.75*vel_trim, AoA_trim+0.25*AoA_lim, wyy_trim, pit_trim+0.25*pit_lim, bet_trim+0.25*bet_lim, wxx_trim, wzz_trim, rol_trim+0.25*rol_lim, yaw_trim },	//Full state + perturbation
+			{1.25*vel_trim, AoA_trim-0.25*AoA_lim, wyy_trim, pit_trim-0.25*pit_lim, bet_trim-0.25*bet_lim, wxx_trim, wzz_trim, rol_trim-0.25*rol_lim, yaw_trim }	//Full state - perturbation
 		};
 
 		// **************************************************** SYSTEM DYNAMICS **************************************************** //
