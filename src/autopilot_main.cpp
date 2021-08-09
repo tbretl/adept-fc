@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 		// Create log for artificial state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw_trim[rad] yaw[rad] true_yaw[rad] AoA_int[rad*s] rol_int[rad*s] yaw_int[rad*s]" << std::endl;
+		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw_trim[rad] yaw[rad] true_yaw[rad] pit_int[rad*s] rol_int[rad*s] yaw_int[rad*s]" << std::endl;
 
 		// Generate test parameters
 		int num_tests=16;
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 
 	// State integrals
 	bool AP_armed_engaged = false;
-	double AoA_int = 0.0; // rad * s
+	double pit_int = 0.0; // rad * s
 	double rol_int = 0.0; // rad * s
 	double yaw_int = 0.0; // rad * s
 
@@ -546,7 +546,7 @@ int main(int argc, char *argv[])
 			rc_rud_trim = handlerObject.rc_in.rc_chan[2];
 			
 			// Reset the integration to prevent windup while AP is disarmed or disengaged
-			AoA_int = 0.0; // rad * s
+			pit_int = 0.0; // rad * s
 			rol_int = 0.0; // rad * s
 			yaw_int = 0.0; // rad * s
 		}	
@@ -715,8 +715,8 @@ int main(int argc, char *argv[])
 		yaw_int_error = yaw_int_error > 3.1416 ? yaw_int_error - 6.2832 : yaw_int_error;
 		yaw_int_error = yaw_int_error < -3.1416 ? yaw_int_error + 6.2832 : yaw_int_error;
 		
-		// Integrate angle of attack, roll, and yaw error
-		AoA_int += (AoA_trim - AoA) * delta_t;
+		// Integrate pitch, roll, and yaw error
+		pit_int += (pit_trim - pit) * delta_t;
 		rol_int += (rol_trim - rol) * delta_t;
 		yaw_int += yaw_int_error * delta_t;
 
@@ -735,7 +735,7 @@ int main(int argc, char *argv[])
 		states[6] = (wzz - wzz_trim);
 		states[7] = (rol - rol_trim);
 		states[8] = yaw_error;
-		states[9]  = AoA_int;
+		states[9]  = pit_int;
 		states[10] = rol_int;
 		states[11] = yaw_int;
 
@@ -804,7 +804,7 @@ int main(int argc, char *argv[])
 				logfile_ap_test << rol << " " << true_absolute_states[7] << " ";
 				logfile_ap_test << yaw_trim << " ";
 				logfile_ap_test << yaw << " " << true_absolute_states[8] << " ";
-				logfile_ap_test << AoA_int << " ";
+				logfile_ap_test << pit_int << " ";
 				logfile_ap_test << rol_int << " ";
 				logfile_ap_test << yaw_int << std::endl;
 				
