@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 		// Create log for artificial state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw_trim[rad] yaw[rad] true_yaw[rad] pit_int[rad*s] rol_int[rad*s] yaw_int[rad*s]" << std::endl;
+		logfile_ap_test << "gps_time[s] test raw_vel[m/s] vel[m/s] true_vel[m/s] raw_AoA[rad] AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] raw_bet[rad] bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw_trim[rad] yaw[rad] true_yaw[rad] vel_int[m] pit_int[rad*s] yaw_int[rad*s]" << std::endl;
 
 		// Generate test parameters
 		int num_tests=16;
@@ -425,8 +425,8 @@ int main(int argc, char *argv[])
 
 	// State integrals
 	bool AP_armed_engaged = false;
+	double vel_int = 0.0; // m
 	double pit_int = 0.0; // rad * s
-	double rol_int = 0.0; // rad * s
 	double yaw_int = 0.0; // rad * s
 
 	// Pressure values used in ADC to state conversion
@@ -546,8 +546,8 @@ int main(int argc, char *argv[])
 			rc_rud_trim = handlerObject.rc_in.rc_chan[2];
 			
 			// Reset the integration to prevent windup while AP is disarmed or disengaged
+			vel_int = 0.0; // m
 			pit_int = 0.0; // rad * s
-			rol_int = 0.0; // rad * s
 			yaw_int = 0.0; // rad * s
 		}	
 
@@ -672,7 +672,32 @@ int main(int argc, char *argv[])
 			wyy = handlerObject.vnins.wy;    // in rad/s (pitch rate)
 			wzz = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 		#endif
+
+		// Bad state rejection (Assign previous good value of state if measured state is out of range)
+		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
+		unfiltered_AoA = (unfiltered_AoA < -AoA_lim || unfiltered_AoA > AoA_lim) ? AoA_prev : unfiltered_AoA;
+		wyy = (wyy < -wyy_lim || wyy > wyy_lim) ? wyy_prev : wyy;
+		pit = (pit < -pit_lim || pit > pit_lim) ? pit_prev : pit;
+		unfiltered_bet = (unfiltered_bet < -bet_lim || unfiltered_bet > bet_lim) ? bet_prev : unfiltered_bet;
+		wxx = (wxx < -wxx_lim || wxx > wxx_lim) ? wxx_prev : wxx;
+		wzz = (wzz < -wzz_lim || wzz > wzz_lim) ? wzz_prev : wzz;
+		rol = (rol < -rol_lim || rol > rol_lim) ? rol_prev : rol;
 		
+		// Collect previous state values
+		vel_prev = unfiltered_vel; // m/s
+		AoA_prev = unfiltered_AoA; // rad
+		wyy_prev = wyy; // rad/s
+		pit_prev = pit; // rad
+		bet_prev = unfiltered_bet; // rad
+		wxx_prev = wxx; // rad/s
+		wzz_prev = wzz; // rad/s
+		rol_prev = rol; // rad
+		
+		// Apply single-pole low-pass filter to all 5 hole probe wind data
+		AoA += alpha * (unfiltered_AoA - AoA);  // in rad
+		bet += alpha * (unfiltered_bet - bet);  // in rad
+		vel += alpha * (unfiltered_vel - vel);  // in m/s
+
 		// Calculate the pilot commanded stick delta
 		double rc_rud_delta =  2.0 * ((double)handlerObject.rc_in.rc_chan[2] - (double)rc_rud_trim) / ((double)rc_max - (double)rc_min);
 		rc_rud_delta = rc_rud_delta > 1.0 ? 1.0 : rc_rud_delta;
@@ -684,44 +709,25 @@ int main(int argc, char *argv[])
 		yaw_trim += yaw_trim_rate * delta_t;
 		yaw_trim = yaw_trim > 3.1416 ? yaw_trim - 6.2832 : yaw_trim;
 		yaw_trim = yaw_trim < -3.1416 ? yaw_trim + 6.2832 : yaw_trim;
-				
-		// Bad state rejection (Assign previous good value of state if measured state is out of range)
-		unfiltered_vel = (unfiltered_vel < vel_min || unfiltered_vel > vel_max) ? vel_prev : unfiltered_vel;
-		unfiltered_AoA = (unfiltered_AoA < -AoA_lim || unfiltered_AoA > AoA_lim) ? AoA_prev : unfiltered_AoA;
-		wyy = (wyy < -wyy_lim || wyy > wyy_lim) ? wyy_prev : wyy;
-		pit = (pit < -pit_lim || pit > pit_lim) ? pit_prev : pit;
-		unfiltered_bet = (unfiltered_bet < -bet_lim || unfiltered_bet > bet_lim) ? bet_prev : unfiltered_bet;
-		wxx = (wxx < -wxx_lim || wxx > wxx_lim) ? wxx_prev : wxx;
-		wzz = (wzz < -wzz_lim || wzz > wzz_lim) ? wzz_prev : wzz;
-		rol = (rol < -rol_lim || rol > rol_lim) ? rol_prev : rol;
+
+		// Update the pitch and yaw trim based on angle of attack and sideslip angle
+		double aoa_corrected_pit_trim = AoA;
+		double bet_corrected_yaw_trim = yaw_trim - bet;
+		bet_corrected_yaw_trim = bet_corrected_yaw_trim > 3.1416 ? bet_corrected_yaw_trim - 6.2832 : bet_corrected_yaw_trim;
+		bet_corrected_yaw_trim = bet_corrected_yaw_trim < -3.1416 ? bet_corrected_yaw_trim + 6.2832 : bet_corrected_yaw_trim;
 		
-		// Apply single-pole low-pass filter to all 5 hole probe wind data
-		AoA += alpha * (unfiltered_AoA - AoA);  // in rad
-		bet += alpha * (unfiltered_bet - bet);  // in rad
-		vel += alpha * (unfiltered_vel - vel);  // in m/s
-
-		// Collect previous state values
-		vel_prev = unfiltered_vel; // m/s
-		AoA_prev = unfiltered_AoA; // rad
-		wyy_prev = wyy; // rad/s
-		pit_prev = pit; // rad
-		bet_prev = unfiltered_bet; // rad
-		wxx_prev = wxx; // rad/s
-		wzz_prev = wzz; // rad/s
-		rol_prev = rol; // rad
-
 		// Calculate the yaw integral error ensuring that it's magnitude is always less than pi
-		double yaw_int_error = yaw_trim - yaw;
+		double yaw_int_error = bet_corrected_yaw_trim - yaw;
 		yaw_int_error = yaw_int_error > 3.1416 ? yaw_int_error - 6.2832 : yaw_int_error;
 		yaw_int_error = yaw_int_error < -3.1416 ? yaw_int_error + 6.2832 : yaw_int_error;
 		
 		// Integrate pitch, roll, and yaw error
-		pit_int += (pit_trim - pit) * delta_t;
-		rol_int += (rol_trim - rol) * delta_t;
+		vel_int += (vel_trim - vel) * delta_t;
+		pit_int += (aoa_corrected_pit_trim - pit) * delta_t;
 		yaw_int += yaw_int_error * delta_t;
 
-		// Calculate the yaw error ensuring that it's magnitude is always less than pi
-		double yaw_error = yaw - yaw_trim;
+		// Calculate the yaw error ensuring that its magnitude is always less than pi
+		double yaw_error = yaw - bet_corrected_yaw_trim;
 		yaw_error = yaw_error > 3.1416 ? yaw_error - 6.2832 : yaw_error;
 		yaw_error = yaw_error < -3.1416 ? yaw_error + 6.2832 : yaw_error;
 
@@ -729,15 +735,15 @@ int main(int argc, char *argv[])
 		states[0] = (vel - vel_trim);
 		states[1] = (AoA - AoA_trim);
 		states[2] = (wyy - wyy_trim);
-		states[3] = (pit - pit_trim);
+		states[3] = (pit - aoa_corrected_pit_trim);
 		states[4] = (bet - bet_trim);
 		states[5] = (wxx - wxx_trim);
 		states[6] = (wzz - wzz_trim);
 		states[7] = (rol - rol_trim);
 		states[8] = yaw_error;
-		states[9]  = pit_int;
-		states[10] = rol_int;
-		states[11] = yaw_int;
+		states[9] = vel_int;
+		states[10]= pit_int;
+		states[11]= yaw_int;
 
 		// Calculate input deltas based on state (u - u0) = -K * (x - x0)
 		for (int i = 0; i < 11; i++)
@@ -802,14 +808,14 @@ int main(int argc, char *argv[])
 				logfile_ap_test << wxx << " " << true_absolute_states[5] << " ";
 				logfile_ap_test << wzz << " " << true_absolute_states[6] << " ";
 				logfile_ap_test << rol << " " << true_absolute_states[7] << " ";
-				logfile_ap_test << yaw_trim << " ";
+				logfile_ap_test << bet_corrected_yaw_trim << " ";
 				logfile_ap_test << yaw << " " << true_absolute_states[8] << " ";
+				logfile_ap_test << vel_int << " ";
 				logfile_ap_test << pit_int << " ";
-				logfile_ap_test << rol_int << " ";
 				logfile_ap_test << yaw_int << std::endl;
 				
 				// Calculate ground truth yaw error and loop between -pi and pi
-				double yaw_test_error = true_absolute_states[8] - yaw_trim;
+				double yaw_test_error = true_absolute_states[8] - bet_corrected_yaw_trim;
 				yaw_test_error = yaw_test_error > 3.1416 ? yaw_test_error - 6.2832 : yaw_test_error;
 				yaw_test_error = yaw_test_error < -3.1416 ? yaw_test_error + 6.2832 : yaw_test_error;
 				
@@ -817,7 +823,7 @@ int main(int argc, char *argv[])
 				true_state_errors[0] = (true_absolute_states[0] - vel_trim);
 				true_state_errors[1] = (true_absolute_states[1] - AoA_trim);
 				true_state_errors[2] = (true_absolute_states[2] - wyy_trim);
-				true_state_errors[3] = (true_absolute_states[3] - pit_trim);
+				true_state_errors[3] = (true_absolute_states[3] - aoa_corrected_pit_trim);
 				true_state_errors[4] = (true_absolute_states[4] - bet_trim);
 				true_state_errors[5] = (true_absolute_states[5] - wxx_trim);
 				true_state_errors[6] = (true_absolute_states[6] - wzz_trim);
@@ -831,12 +837,12 @@ int main(int argc, char *argv[])
 				true_absolute_states[0] = (true_state_errors[0] + vel_trim);
 				true_absolute_states[1] = (true_state_errors[1] + AoA_trim);
 				true_absolute_states[2] = (true_state_errors[2] + wyy_trim);
-				true_absolute_states[3] = (true_state_errors[3] + pit_trim);
+				true_absolute_states[3] = (true_state_errors[3] + aoa_corrected_pit_trim);
 				true_absolute_states[4] = (true_state_errors[4] + bet_trim);
 				true_absolute_states[5] = (true_state_errors[5] + wxx_trim);
 				true_absolute_states[6] = (true_state_errors[6] + wzz_trim);
 				true_absolute_states[7] = (true_state_errors[7] + rol_trim);
-				true_absolute_states[8] = (true_state_errors[8] + yaw_trim);
+				true_absolute_states[8] = (true_state_errors[8] + bet_corrected_yaw_trim);
 				
 				// Loop yaw between -pi and pi
 				true_absolute_states[8] = true_absolute_states[8] > 3.1416 ? true_absolute_states[8] - 6.2832 : true_absolute_states[8];
