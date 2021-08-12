@@ -136,28 +136,28 @@ int output_scaling(const int& in_val, const double& s_min, const double& s_max, 
 
 #ifdef TEST
 // FE steps states based on dynamics, inputs, and current states
-void step_states(vector<vector<double>> A, vector<vector<double>> B, vector<double>* states, vector<double> inputs, double delta_t)
+void step_states(vector<vector<double>> A, vector<vector<double>> B, vector<double>* state_errors, vector<double> input_deltas, double delta_t)
 {
 	double Axi = 0.0;
 	double Bui = 0.0;
-	vector<double> new_states = vector<double>(9,0.0);
+	vector<double> new_state_errors = vector<double>(9,0.0);
 	for(int i = 0; i < 9; i++)
 	{
 		for(int j = 0; j < 9; j++)
 		{
-			Axi+=A[i][j] * states->at(j);
+			Axi+=A[i][j] * state_errors->at(j);
 		}
 		for(int j = 0; j < 11; j++)
 		{
-			Bui+=B[i][j] * inputs[j];
+			Bui+=B[i][j] * input_deltas[j];
 		}
-		new_states[i] = states->at(i) + delta_t * (Axi + Bui);
+		new_state_errors[i] = state_errors->at(i) + delta_t * (Axi + Bui);
 		Axi = 0.0;
 		Bui = 0.0;
 	}
 	for (int i = 0; i < 9; i++)
 	{
-		states->at(i) = new_states[i];
+		state_errors->at(i) = new_state_errors[i];
 	}
 
 }
@@ -735,7 +735,7 @@ int main(int argc, char *argv[])
 		states[0] = (vel - vel_trim);
 		states[1] = (AoA - AoA_trim);
 		states[2] = (wyy - wyy_trim);
-		states[3] = (pit - aoa_corrected_pit_trim);
+		states[3] = (pit - pit_trim);
 		states[4] = (bet - bet_trim);
 		states[5] = (wxx - wxx_trim);
 		states[6] = (wzz - wzz_trim);
@@ -823,7 +823,7 @@ int main(int argc, char *argv[])
 				true_state_errors[0] = (true_absolute_states[0] - vel_trim);
 				true_state_errors[1] = (true_absolute_states[1] - AoA_trim);
 				true_state_errors[2] = (true_absolute_states[2] - wyy_trim);
-				true_state_errors[3] = (true_absolute_states[3] - aoa_corrected_pit_trim);
+				true_state_errors[3] = (true_absolute_states[3] - pit_trim);
 				true_state_errors[4] = (true_absolute_states[4] - bet_trim);
 				true_state_errors[5] = (true_absolute_states[5] - wxx_trim);
 				true_state_errors[6] = (true_absolute_states[6] - wzz_trim);
@@ -837,7 +837,7 @@ int main(int argc, char *argv[])
 				true_absolute_states[0] = (true_state_errors[0] + vel_trim);
 				true_absolute_states[1] = (true_state_errors[1] + AoA_trim);
 				true_absolute_states[2] = (true_state_errors[2] + wyy_trim);
-				true_absolute_states[3] = (true_state_errors[3] + aoa_corrected_pit_trim);
+				true_absolute_states[3] = (true_state_errors[3] + pit_trim);
 				true_absolute_states[4] = (true_state_errors[4] + bet_trim);
 				true_absolute_states[5] = (true_state_errors[5] + wxx_trim);
 				true_absolute_states[6] = (true_state_errors[6] + wzz_trim);
