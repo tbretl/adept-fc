@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 		// Create log for simulated state data
 		std::ofstream logfile_ap_test;
 		logfile_ap_test.open(file_ap_test, ofstream::out | ofstream::trunc | ofstream::binary);
-		logfile_ap_test << "gps_time[s] test_num measured_vel[m/s] filtered_vel[m/s] true_vel[m/s] measured_AoA[rad] filtered_AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] measured_bet[rad] filtered_bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad] vel_int[m] pit_int[rad*s] yaw_int[rad*s] pit_ref[rad] yaw_ref[rad]" << endl;
+		logfile_ap_test << "gps_time[s] test_num measured_vel[m/s] filtered_vel[m/s] true_vel[m/s] measured_AoA[rad] filtered_AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] measured_bet[rad] filtered_bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad] vel_int[m] pit_int[rad*s] yaw_int[rad*s] pit_ref[rad] yaw_ref[rad] ele_trim[rad] ail_trim[rad] rud_trim[rad] thr_trim[-]" << endl;
 
 		// Test parameters
 		int num_tests=5;
@@ -611,7 +611,7 @@ int main(int argc, char *argv[])
 			input_trim[2] = 0.01745*((input_pmw_trim[2] - rud_PWM_consts[1])/rud_PWM_consts[0]); // rad
 			for (int i = 3; i < 11; i++)
 			{
-				input_trim[i] = ((input_pmw_trim[i] - input_pwm_limits[i][0]) / (input_pwm_limits[i][1] - input_pwm_limits[i][0])); // percent throttle
+				input_trim[i] = ((input_pmw_trim[i] - input_pwm_limits[i][0]) / (input_pwm_limits[i][1] - input_pwm_limits[i][0])); // decimal percent throttle
 			}
 			
 			// Check unfiltered cmds are valid and SPLP filter
@@ -864,9 +864,11 @@ int main(int argc, char *argv[])
 			acts.dt[i] = input_pwm_cmd[i+3];
 		}
 
+		// Timestamp the actuator values
+		acts.time_gps = get_gps_time(&handlerObject);
+
+		// Log simulated data
 		#ifdef TEST
-		
-			// Log current unfiltered noisy states, filtered noisy states, and ground truth
 			logfile_ap_test << acts.time_gps << " " << curr_test_number << " ";
 			logfile_ap_test << measured_state[0] << " " << filtered_state[0] << " " << true_state[0] << " ";
 			logfile_ap_test << measured_state[1] << " " << filtered_state[1] << " " << true_state[1] << " ";
@@ -881,12 +883,9 @@ int main(int argc, char *argv[])
 			logfile_ap_test << filtered_state_error[10] << " ";
 			logfile_ap_test << filtered_state_error[11] << " ";
 			logfile_ap_test << filtered_state[1] << " ";
-			logfile_ap_test << ( trim_state[8] - filtered_state[4] ) << endl;
-			
+			logfile_ap_test << ( trim_state[8] - filtered_state[4] ) << " ";
+			logfile_ap_test << filtered_input_trim[0] << " " << filtered_input_trim[1] << " " << filtered_input_trim[2] << " " << filtered_input_trim[3] << endl;
 		#endif
-
-		// Timestamp the actuator values
-		acts.time_gps = get_gps_time(&handlerObject);
 
 		// Publish the actuator values
 		zcm.publish("ACTUATORS", &acts);
