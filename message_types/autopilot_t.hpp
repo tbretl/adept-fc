@@ -64,6 +64,8 @@ class autopilot_t
 
         double     time_gps;
 
+        double     true_state[9];
+
     public:
         /**
          * Destructs a message properly if anything inherits from it
@@ -234,6 +236,9 @@ int autopilot_t::_encodeNoHash(void* buf, uint32_t offset, uint32_t maxlen) cons
     thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->true_state[0], 9);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -308,6 +313,9 @@ int autopilot_t::_decodeNoHash(const void* buf, uint32_t offset, uint32_t maxlen
     thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->time_gps, 1);
     if(thislen < 0) return thislen; else pos += thislen;
 
+    thislen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->true_state[0], 9);
+    if(thislen < 0) return thislen; else pos += thislen;
+
     return pos;
 }
 
@@ -336,12 +344,13 @@ uint32_t autopilot_t::_getEncodedSizeNoHash() const
     enc_size += __double_encoded_array_size(NULL, 3);
     enc_size += __double_encoded_array_size(NULL, 11);
     enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 9);
     return enc_size;
 }
 
 uint64_t autopilot_t::_computeHash(const __zcm_hash_ptr*)
 {
-    uint64_t hash = (uint64_t)0x4f1cae79a4069b2bLL;
+    uint64_t hash = (uint64_t)0x81565e64a9b639cfLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 
