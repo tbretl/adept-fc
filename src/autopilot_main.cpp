@@ -869,7 +869,7 @@ int main(int argc, char *argv[])
 		autopilot.yaw_trim_rate = max_yaw_trim_rate * rc_rud_delta * 57.29577951;  // In deg/s
 		
 		// Gather AP module status
-		autopilot.ap_armed_and_engaged = AP_armed_engaged;
+		autopilot.ap_armed_and_engaged = AP_armed_engaged ? 1 : 0;
 		
 		// Gather ADC conversion data
 		for ( int i = 0; i < 5; i++)

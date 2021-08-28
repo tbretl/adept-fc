@@ -4,14 +4,14 @@
 // Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
 //
 
-struct actuators_t
+struct autopilot_t
 {
     double ele_trim;
     double ail_trim;
     double rud_trim;
     double thr_trim[8];
     double yaw_trim_rate;
-    bool ap_armed_and_engaged;
+    int32_t ap_armed_and_engaged;
     double adc_pres_raw[5];
     double adc_pres_dPSI[5];
     double p_bar_dPSI;
