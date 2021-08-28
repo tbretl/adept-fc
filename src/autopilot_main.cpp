@@ -755,7 +755,7 @@ int main(int argc, char *argv[])
 			// Convert back calculated calibration consts to 5 hole probe absolute pressures
 			back_calculated_p_bar = ( back_calculated_coeff_ps * back_calculated_total_pressure - ( back_calculated_coeff_pt - 1.0 ) * back_calculated_static_pressure ) / ( back_calculated_coeff_ps - back_calculated_coeff_pt + 1.0 );
 			back_calculated_adc_pres[0] = ( back_calculated_coeff_ps * back_calculated_total_pressure - back_calculated_coeff_pt * back_calculated_static_pressure + back_calculated_total_pressure) / ( back_calculated_coeff_ps - back_calculated_coeff_pt + 1.0 );
-			back_calculated_adc_pres[1] = 14.5202;
+			back_calculated_adc_pres[1] = 0.0164 + back_calculated_static_pressure;
 			back_calculated_adc_pres[2] = back_calculated_adc_pres[1] - back_calculated_coeff_bet * ( back_calculated_adc_pres[0] - back_calculated_p_bar );
 			back_calculated_adc_pres[3] = ( back_calculated_coeff_AoA * ( back_calculated_adc_pres[0] - back_calculated_p_bar ) - back_calculated_adc_pres[1] - back_calculated_adc_pres[2] + 4.0 * back_calculated_p_bar ) / ( 2.0 );
 			back_calculated_adc_pres[4] = back_calculated_adc_pres[3] - back_calculated_coeff_AoA * ( back_calculated_adc_pres[0] - back_calculated_p_bar );
@@ -918,11 +918,19 @@ int main(int argc, char *argv[])
 		autopilot.ap_armed_and_engaged = AP_armed_engaged ? 1 : 0;
 		
 		// Gather ADC conversion data
-		for ( int i = 0; i < 5; i++)
-		{
-			autopilot.adc_pres_raw[i] = (double)handlerObject.adc.data[i];
-			autopilot.adc_pres_dPSI[i] = adc_pres[i];
-		}
+		#ifdef TEST
+			for ( int i = 0; i < 5; i++)
+			{
+				autopilot.adc_pres_raw[i] = back_calculated_adc_raw[i];
+				autopilot.adc_pres_dPSI[i] = adc_pres[i];
+			}
+		#else
+			for ( int i = 0; i < 5; i++)
+			{
+				autopilot.adc_pres_raw[i] = (double)handlerObject.adc.data[i];
+				autopilot.adc_pres_dPSI[i] = adc_pres[i];
+			}
+		#endif
 		autopilot.p_bar_dPSI = p_bar;
 		autopilot.Ca = coeff_AoA;
 		autopilot.Cb = coeff_bet;
