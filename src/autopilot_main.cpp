@@ -186,11 +186,26 @@ int main(int argc, char *argv[])
 	double ele_PWM_consts[3] = { 0.027712, 10.6043, 1517.7811 };  // From deflection in degrees to PWM CMD
 	double rud_PWM_consts[2] = { -12.3453, 1550.7985 };           // From deflection in degrees to PWM CMD
 
-	// Conversion constants for the converted adc data
+	// Conversion constants to convert adc raw data to state data
 	double AoA_consts[15] = { 0.14417, -14.0401, -0.48222, -0.82991, -0.39334, -0.065129, 0.29331, 0.10864, 0.57212, 0.12463, 0.022992, 0.029209, 0.089836, 0.057237, 0.016901 };
 	double bet_consts[15] = { -0.045676, 0.090171, 13.8048, 0.002027, 0.94476, 0.29254, 0.12192, -0.66955, -0.020875, -0.33687, 0.023934, -0.10505, -0.019041, -0.054968, -0.018293 };
 	double coeff_ps_consts[21] = { 0.59235, -0.0032055, -0.0045759, -0.098045, 0.010147, -0.0977, -0.015851, -0.0024914, -0.022443, -0.0037574, -0.0042317, -0.0039405, 0.01926, -0.0014971, -0.0014967, -0.0007027, -0.0010546, 0.0041895, 6.6051e-05, 0.00048148, -0.00022731 };
 	double coeff_pt_consts[15] = { -0.21483, 0.036139, 0.0037369, -0.12377, -0.034201, -0.11844, 0.0022027, 0.0040131, 0.0047189, 0.0026645, 0.00010707, 0.0023433, 0.0079094, 0.0034925, -0.001166 };
+	
+	// Conversion constants to convert state data to adc raw data
+	# ifdef TEST
+		double coeff_AoA_consts[15] = { -0.001689, -0.0679, -0.002198, 1.259e-05, -6.857e-05, 8.384e-05, -2.092e-05, 1.418e-05, -3.892e-05, 3.884e-06, -7.469e-07, 7.793e-07, -1.543e-06, 5.301e-07, -8.372e-08 };
+		double coeff_bet_consts[15] = { -0.004587, 0.003425, 0.06899, 5.962e-05, -0.0001265, 4.261e-05, 1.1e-06, 5.222e-05, -1.504e-05, 1.728e-05, 2.712e-09, 1.189e-06, -9.848e-07, 1.32e-06, -2.776e-07 };
+		double back_calculated_coeff_AoA = 0.0;
+		double back_calculated_coeff_bet = 0.0;
+		double back_calculated_coeff_pt = 0.0;
+		double back_calculated_coeff_ps = 0.0;
+		double back_calculated_total_pressure = 0.0;
+		double back_calculated_static_pressure = 0.0;
+		double back_calculated_p_bar = 0.0;
+		double back_calculated_adc_pres[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+		double back_calculated_adc_raw[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+	#endif
 
 	// ******************************************************************************************************** AUTOPILOT CONFIG DATA ******************************************************************************************************** //
 	// Atmospheric conditions
@@ -727,36 +742,38 @@ int main(int argc, char *argv[])
 			measured_state[8] = measured_state[8] > 3.1416 ? measured_state[8] - 6.2832 : measured_state[8];
 			measured_state[8] = measured_state[8] < -3.1416 ? measured_state[8] + 6.2832 : measured_state[8];
 			
-		#else
-			// Gather raw data from ADC and convert it to readable data
+			// Convert vel, aoa, and bet measured state data to ADC calibration consts
+			back_calculated_coeff_AoA = eval_2D_poly(coeff_AoA_consts, 15, 57.29578 * measured_state[1], 57.29578 * measured_state[4]);    // unitless
+			back_calculated_coeff_bet = eval_2D_poly(coeff_bet_consts, 15, 57.29578 * measured_state[1], 57.29578 * measured_state[4]);    // unitless
+			back_calculated_coeff_pt = eval_2D_poly(coeff_pt_consts, 15, back_calculated_Ca, back_calculated_Cb);    // unitless
+			back_calculated_coeff_ps = eval_2D_poly(coeff_ps_consts, 21, back_calculated_Ca, back_calculated_Cb);    // unitless
+			
+			// Calculate static and total pressure based on state
+			back_calculated_total_pressure = (0.5 * rho * measured_state[0]*measured_state[0] + 101325.0) * 0.000145038;  // in PSI
+			back_calculated_static_pressure = 101325.0 * 0.000145038;  // in PSI
+			
+			// Convert back calculated calibration consts to 5 hole probe absolute pressures
+			back_calculated_p_bar = ( back_calculated_coeff_ps * back_calculated_total_pressure - ( back_calculated_coeff_pt - 1.0 ) * back_calculated_static_pressure ) / ( back_calculated_coeff_ps - back_calculated_coeff_pt + 1.0 );
+			back_calculated_adc_pres[0] = ( back_calculated_coeff_ps * back_calculated_total_pressure - back_calculated_coeff_pt * back_calculated_static_pressure + back_calculated_total_pressure) / ( back_calculated_coeff_ps - back_calculated_coeff_pt + 1.0 );
+			back_calculated_adc_pres[1] = 14.5202;
+			back_calculated_adc_pres[2] = back_calculated_adc_pres[1] - back_calculated_coeff_bet * ( back_calculated_adc_pres[0] - back_calculated_p_bar );
+			back_calculated_adc_pres[3] = ( back_calculated_coeff_AoA * ( back_calculated_adc_pres[0] - back_calculated_p_bar ) - back_calculated_adc_pres[1] - back_calculated_adc_pres[2] + 4.0 * back_calculated_p_bar ) / ( 2.0 );
+			back_calculated_adc_pres[4] = back_calculated_adc_pres[3] - back_calculated_coeff_AoA * ( back_calculated_adc_pres[0] - back_calculated_p_bar );
+			
+			// Convert back calculated 5 hole probe pressures to ADC raw values
+			for( int i = 0; i < 5; i++ )
+			{
+				back_calculated_adc_pres[i] -= back_calculated_static_pressure;
+				back_calculated_adc_raw[i] = round(( back_calculated_adc_pres[i] - adc_pres_consts[i][1] ) / adc_pres_consts[i][0]);
+			}
+			
+			// Gather raw data from backwards ADC and convert it to dPSI valuesa
 			for (int i = 0; i < 5; i++)
 			{
-				adc_pres[i] = eval_1D_poly(adc_pres_consts[i], 2, (double)handlerObject.adc.data[i] );  // in dPSI
+				adc_pres[i] = eval_1D_poly(adc_pres_consts[i], 2, back_calculated_adc_raw[i] );  // in dPSI
 			}
-
-			// Calculate 5 hole probe coefficients
-			p_bar = (adc_pres[1] + adc_pres[2] + adc_pres[3] + adc_pres[4])* 0.25; // in dPSI
-			coeff_AoA = (adc_pres[3] - adc_pres[4]) / (adc_pres[0] - p_bar);       // unitless
-			coeff_bet = (adc_pres[1] - adc_pres[2]) / (adc_pres[0] - p_bar);       // unitless
-			coeff_pt = eval_2D_poly(coeff_pt_consts, 15, coeff_AoA, coeff_bet);    // unitless
-			coeff_ps = eval_2D_poly(coeff_ps_consts, 21, coeff_AoA, coeff_bet);    // unitless
-
-			// Use pressure coefficient data to calculate AoA, beta
-			measured_state[1] = 0.01745 * eval_2D_poly(AoA_consts, 15, coeff_AoA, coeff_bet);    // in rad
-			measured_state[4] = 0.01745 * eval_2D_poly(bet_consts, 15, coeff_AoA, coeff_bet);    // in rad
-
-			// If the pressure readings indicate imaginary velocity, assign the velocity as the previous good value
-			total_pressure = (adc_pres[0] - coeff_pt * (adc_pres[0] - p_bar)) * 6894.76; // in Pa
-			static_pressure = (p_bar - coeff_ps * (adc_pres[0] - p_bar)) * 6894.76;      // in Pa
-			if (total_pressure >= 0.0 || static_pressure >= 0.0 || abs(total_pressure) <= abs(static_pressure))
-			{
-				measured_state[0] = prev_state[0]; // in m/s
-			}
-			else
-			{
-				measured_state[0] = sqrt((2.0 * (abs(total_pressure) - abs(static_pressure))) / (rho)); // in m/s
-			}
-
+			
+		#else
 			// Gather INS data
 			measured_state[3] = 0.017453 * handlerObject.vnins.pitch; // in rad
 			measured_state[7] = 0.017453 * handlerObject.vnins.roll;  // in rad
@@ -765,7 +782,36 @@ int main(int argc, char *argv[])
 			measured_state[5] = handlerObject.vnins.wx;    // in rad/s (roll rate)
 			measured_state[6] = handlerObject.vnins.wz;    // in rad/s (yaw rate)
 			
+			// Gather raw data from ADC and convert it to dPSI values
+			for (int i = 0; i < 5; i++)
+			{
+				adc_pres[i] = eval_1D_poly(adc_pres_consts[i], 2, (double)handlerObject.adc.data[i] );  // in dPSI
+			}
+			
 		#endif
+			
+		// Calculate 5 hole probe coefficients
+		p_bar = (adc_pres[1] + adc_pres[2] + adc_pres[3] + adc_pres[4])* 0.25; // in dPSI
+		coeff_AoA = (adc_pres[3] - adc_pres[4]) / (adc_pres[0] - p_bar);       // unitless
+		coeff_bet = (adc_pres[1] - adc_pres[2]) / (adc_pres[0] - p_bar);       // unitless
+		coeff_pt = eval_2D_poly(coeff_pt_consts, 15, coeff_AoA, coeff_bet);    // unitless
+		coeff_ps = eval_2D_poly(coeff_ps_consts, 21, coeff_AoA, coeff_bet);    // unitless
+
+		// Use pressure coefficient data to calculate AoA, beta
+		measured_state[1] = 0.01745 * eval_2D_poly(AoA_consts, 15, coeff_AoA, coeff_bet);    // in rad
+		measured_state[4] = 0.01745 * eval_2D_poly(bet_consts, 15, coeff_AoA, coeff_bet);    // in rad
+
+		// If the pressure readings indicate imaginary velocity, assign the velocity as the previous good value
+		total_pressure = (adc_pres[0] - coeff_pt * (adc_pres[0] - p_bar)) * 6894.76; // in Pa
+		static_pressure = (p_bar - coeff_ps * (adc_pres[0] - p_bar)) * 6894.76;      // in Pa
+		if (total_pressure >= 0.0 || static_pressure >= 0.0 || abs(total_pressure) <= abs(static_pressure))
+		{
+			measured_state[0] = prev_state[0]; // in m/s
+		}
+		else
+		{
+			measured_state[0] = sqrt((2.0 * (abs(total_pressure) - abs(static_pressure))) / (rho)); // in m/s
+		}
 
 		// Bad state rejection, collect previous state values, filter 5-hole probe data
 		for (int i = 0 ; i < 9; i++)
