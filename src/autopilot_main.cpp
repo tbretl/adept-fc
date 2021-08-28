@@ -745,8 +745,8 @@ int main(int argc, char *argv[])
 			// Convert vel, aoa, and bet measured state data to ADC calibration consts
 			back_calculated_coeff_AoA = eval_2D_poly(coeff_AoA_consts, 15, 57.29578 * measured_state[1], 57.29578 * measured_state[4]);    // unitless
 			back_calculated_coeff_bet = eval_2D_poly(coeff_bet_consts, 15, 57.29578 * measured_state[1], 57.29578 * measured_state[4]);    // unitless
-			back_calculated_coeff_pt = eval_2D_poly(coeff_pt_consts, 15, back_calculated_Ca, back_calculated_Cb);    // unitless
-			back_calculated_coeff_ps = eval_2D_poly(coeff_ps_consts, 21, back_calculated_Ca, back_calculated_Cb);    // unitless
+			back_calculated_coeff_pt = eval_2D_poly(coeff_pt_consts, 15, back_calculated_coeff_AoA, back_calculated_coeff_bet);    // unitless
+			back_calculated_coeff_ps = eval_2D_poly(coeff_ps_consts, 21, back_calculated_coeff_AoA, back_calculated_coeff_bet);    // unitless
 			
 			// Calculate static and total pressure based on state
 			back_calculated_total_pressure = (0.5 * rho * measured_state[0]*measured_state[0] + 101325.0) * 0.000145038;  // in PSI
