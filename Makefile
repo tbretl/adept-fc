@@ -9,7 +9,7 @@ TST = ./test
 
 all: adc vnins pwm_out scribe rc_in adept_fc autopilot hitl monitor red_flag
 
-test: adc vnins pwm_out scribe rc_in adept_fc autopilot_test hitl monitor red_flag
+test: adc vnins pwm_out scribe_test rc_in adept_fc autopilot_test hitl monitor red_flag
 
 demos: subber demo udp_send udp_receive
 
@@ -33,6 +33,9 @@ pwm_out: $(SRC)/PWM_out_main.cpp
 
 scribe: $(SRC)/scribe_main.cpp
 	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/scribe_main.cpp -o $(BIN)/scribe
+	
+scribe_test: $(SRC)/scribe_main.cpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LIBS) $(SRC)/scribe_main.cpp -DTEST -o $(BIN)/scribe
 
 rc_in: $(SRC)/RC_in_main.cpp
 	$(CXX) $(CXXFLAGS) $(SRC)/RC_in_main.cpp $(LIBS) $(INCS) -o $(BIN)/rc_in

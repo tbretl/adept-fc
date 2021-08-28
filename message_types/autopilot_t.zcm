@@ -32,4 +32,6 @@ struct autopilot_t
     
     double time_gps;
     
+    double true_state[9];
+    
 }

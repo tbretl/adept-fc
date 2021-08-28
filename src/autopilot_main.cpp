@@ -966,6 +966,14 @@ int main(int argc, char *argv[])
 			}
 		}
 		
+		// Gather the true states if running in test mode
+		#ifdef TEST
+		for ( int i = 0; i < 9; i++ )
+		{
+			autopilot.true_state[i] = true_state[i];
+		}
+		#endif
+		
 		// Time stamp data
 		autopilot.time_gps = get_gps_time(&handlerObject);
 

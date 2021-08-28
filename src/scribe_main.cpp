@@ -172,25 +172,48 @@ class Handler
         void read_autopilot(const zcm::ReceiveBuffer* rbuf,const string& chan,const autopilot_t *msg)
         {
             if (can_buff == 1){
+		    
                 can_write = 0;
-                if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << std::setprecision(6) << " "
-                              << msg->ele_trim << " " << msg->ail_trim << " " << msg->rud_trim << " " 
-			      << msg->thr_trim[0] << " " << msg->thr_trim[1] << " " << msg->thr_trim[2] << " " << msg->thr_trim[3] << " " << msg->thr_trim[4] << " " << msg->thr_trim[5] << " " << msg->thr_trim[6] << " " << msg->thr_trim[7] << " "
-			      << msg->yaw_trim_rate << " " 
-			      << msg->adc_pres_raw[0] << " " << msg->adc_pres_raw[1] << " " << msg->adc_pres_raw[2] << " " << msg->adc_pres_raw[3] << " " << msg->adc_pres_raw[4] << " "
-			      << msg->adc_pres_dPSI[0] << " " << msg->adc_pres_dPSI[1] << " " << msg->adc_pres_dPSI[2] << " " << msg->adc_pres_dPSI[3] << " " << msg->adc_pres_dPSI[4] << " "
-			      << msg->p_bar_dPSI << " " << msg->Ca << " " << msg->Cb << " " << msg->Cpt << " " << msg->Cps << " " << msg->Pt_Pa << " " << msg->Ps_Pa << " " << msg->rho << " " 
-			      << msg->state[0] << " " << msg->state[1] << " " << msg->state[2] << " " << msg->state[3] << " " << msg->state[4] << " " << msg->state[5] << " " << msg->state[6] << " " << msg->state[7] << " " << msg->state[8] << " " 
-			      << msg->state_error[0] << " " << msg->state_error[1] << " " << msg->state_error[2] << " " << msg->state_error[3] << " " << msg->state_error[4] << " " << msg->state_error[5] << " " << msg->state_error[6] << " " << msg->state_error[7] << " " << msg->state_error[8] << " " 
-			      << msg->integral_ref[0] << " " << msg->integral_ref[1] << " " << msg->integral_ref[2] << " " << msg->integral[0] << " " << msg->integral[1] << " " << msg->integral[2] << " " 
-			      << msg->input_cmd[0] << " " << msg->input_cmd[1] << " " << msg->input_cmd[2] << " " 
-			      << msg->input_cmd[3] << " " << msg->input_cmd[4] << " " << msg->input_cmd[5] << " " << msg->input_cmd[6] << " " << msg->input_cmd[7] << " " << msg->input_cmd[8] << " " << msg->input_cmd[9] << " " << msg->input_cmd[10]
-			      << std::endl ){
-		}else{
-                    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
-                    " SCRIBE ERROR: message buffer overflow on autopilot." << std::endl;
-                }
-                can_write = 1;
+		#ifdef TEST
+			if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << std::setprecision(6) << " "
+				      << msg->ele_trim << " " << msg->ail_trim << " " << msg->rud_trim << " " 
+				      << msg->thr_trim[0] << " " << msg->thr_trim[1] << " " << msg->thr_trim[2] << " " << msg->thr_trim[3] << " " << msg->thr_trim[4] << " " << msg->thr_trim[5] << " " << msg->thr_trim[6] << " " << msg->thr_trim[7] << " "
+				      << msg->yaw_trim_rate << " " 
+				      << msg->adc_pres_raw[0] << " " << msg->adc_pres_raw[1] << " " << msg->adc_pres_raw[2] << " " << msg->adc_pres_raw[3] << " " << msg->adc_pres_raw[4] << " "
+				      << msg->adc_pres_dPSI[0] << " " << msg->adc_pres_dPSI[1] << " " << msg->adc_pres_dPSI[2] << " " << msg->adc_pres_dPSI[3] << " " << msg->adc_pres_dPSI[4] << " "
+				      << msg->p_bar_dPSI << " " << msg->Ca << " " << msg->Cb << " " << msg->Cpt << " " << msg->Cps << " " << msg->Pt_Pa << " " << msg->Ps_Pa << " " << msg->rho << " " 
+				      << msg->state[0] << " " << msg->state[1] << " " << msg->state[2] << " " << msg->state[3] << " " << msg->state[4] << " " << msg->state[5] << " " << msg->state[6] << " " << msg->state[7] << " " << msg->state[8] << " " 
+				      << msg->state_error[0] << " " << msg->state_error[1] << " " << msg->state_error[2] << " " << msg->state_error[3] << " " << msg->state_error[4] << " " << msg->state_error[5] << " " << msg->state_error[6] << " " << msg->state_error[7] << " " << msg->state_error[8] << " " 
+				      << msg->integral_ref[0] << " " << msg->integral_ref[1] << " " << msg->integral_ref[2] << " " << msg->integral[0] << " " << msg->integral[1] << " " << msg->integral[2] << " " 
+				      << msg->input_cmd[0] << " " << msg->input_cmd[1] << " " << msg->input_cmd[2] << " " 
+				      << msg->input_cmd[3] << " " << msg->input_cmd[4] << " " << msg->input_cmd[5] << " " << msg->input_cmd[6] << " " << msg->input_cmd[7] << " " << msg->input_cmd[8] << " " << msg->input_cmd[9] << " " << msg->input_cmd[10]
+				      << msg->true_state[0] << " " << msg->true_state[1] << " " << msg->true_state[2] << " " << msg->true_state[3] << " " << msg->true_state[4] << " " << msg->true_state[5] << " " << msg->true_state[6] << " " << msg->true_state[7] << " " << msg->true_state[8] << " " 
+				      << std::endl ){
+			}else{
+			    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+			    " SCRIBE ERROR: message buffer overflow on autopilot." << std::endl;
+			}
+		#else
+			if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << std::setprecision(6) << " "
+				      << msg->ele_trim << " " << msg->ail_trim << " " << msg->rud_trim << " " 
+				      << msg->thr_trim[0] << " " << msg->thr_trim[1] << " " << msg->thr_trim[2] << " " << msg->thr_trim[3] << " " << msg->thr_trim[4] << " " << msg->thr_trim[5] << " " << msg->thr_trim[6] << " " << msg->thr_trim[7] << " "
+				      << msg->yaw_trim_rate << " " 
+				      << msg->adc_pres_raw[0] << " " << msg->adc_pres_raw[1] << " " << msg->adc_pres_raw[2] << " " << msg->adc_pres_raw[3] << " " << msg->adc_pres_raw[4] << " "
+				      << msg->adc_pres_dPSI[0] << " " << msg->adc_pres_dPSI[1] << " " << msg->adc_pres_dPSI[2] << " " << msg->adc_pres_dPSI[3] << " " << msg->adc_pres_dPSI[4] << " "
+				      << msg->p_bar_dPSI << " " << msg->Ca << " " << msg->Cb << " " << msg->Cpt << " " << msg->Cps << " " << msg->Pt_Pa << " " << msg->Ps_Pa << " " << msg->rho << " " 
+				      << msg->state[0] << " " << msg->state[1] << " " << msg->state[2] << " " << msg->state[3] << " " << msg->state[4] << " " << msg->state[5] << " " << msg->state[6] << " " << msg->state[7] << " " << msg->state[8] << " " 
+				      << msg->state_error[0] << " " << msg->state_error[1] << " " << msg->state_error[2] << " " << msg->state_error[3] << " " << msg->state_error[4] << " " << msg->state_error[5] << " " << msg->state_error[6] << " " << msg->state_error[7] << " " << msg->state_error[8] << " " 
+				      << msg->integral_ref[0] << " " << msg->integral_ref[1] << " " << msg->integral_ref[2] << " " << msg->integral[0] << " " << msg->integral[1] << " " << msg->integral[2] << " " 
+				      << msg->input_cmd[0] << " " << msg->input_cmd[1] << " " << msg->input_cmd[2] << " " 
+				      << msg->input_cmd[3] << " " << msg->input_cmd[4] << " " << msg->input_cmd[5] << " " << msg->input_cmd[6] << " " << msg->input_cmd[7] << " " << msg->input_cmd[8] << " " << msg->input_cmd[9] << " " << msg->input_cmd[10]
+				      << std::endl ){
+			}else{
+			    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
+			    " SCRIBE ERROR: message buffer overflow on autopilot." << std::endl;
+			}
+		#endif
+		can_write = 1;
+		
             }
         }
 
@@ -256,14 +279,27 @@ int main(int argc, char *argv[])
     logfile_autopilot.open(file_autopilot,std::ofstream::out | std::ofstream::app | std::ofstream::binary);
 
     //write headers
-    logfile_autopilot << "gps_time[s] engaged[-]"
-			 " ele_trim[deg] ail_trim[deg] rud_trim[deg] t1_trim[%] t2_trim[%] t3_trim[%] t4_trim[%] t5_trim[%] t6_trim[%] t7_trim[%] t8_trim[%]" 
-			 " yaw_trim_rate[deg/s]"
-			 " p1[ADC] p2[ADC] p3[ADC] p4[ADC] p5[ADC] p1[dPSI] p2[dPSI] p3[dPSI] p4[dPSI] p5[dPSI] p_bar[dPSI] Ca[-] Cb[-] Cpt[-] Cps[-] Pt[Pa] Ps[Pa] rho[kg/m^3]" 
-			 " vel[m/s] aoa[deg] wy[deg/s] pitch[deg] beta[deg] wx[deg/s] wz[deg/s] roll[deg] yaw[deg]"
-			 " vel_error[m/s] aoa_error[deg] wy_error[deg/s] pitch_error[deg] beta_error[deg] wx_error[deg/s] wz_error[deg/s] roll_error[deg] yaw_error[deg]"
-			 " vel_ref[m/s] pitch_ref[deg] yaw_ref[deg] vel_int[m] pitch_int[deg-s] yaw_int[deg-s]" 
-			 " ele_cmd[deg] ail_cmd[deg] rud_cmd[deg] t1_cmd[%] t2_cmd[%] t3_cmd[%] t4_cmd[%] t5_cmd[%] t6_cmd[%] t7_cmd[%] t8_cmd[%]" << std::endl;
+    #ifdef TEST
+	logfile_autopilot << "gps_time[s] engaged[-]"
+				 " ele_trim[deg] ail_trim[deg] rud_trim[deg] t1_trim[%] t2_trim[%] t3_trim[%] t4_trim[%] t5_trim[%] t6_trim[%] t7_trim[%] t8_trim[%]" 
+				 " yaw_trim_rate[deg/s]"
+				 " p1[ADC] p2[ADC] p3[ADC] p4[ADC] p5[ADC] p1[dPSI] p2[dPSI] p3[dPSI] p4[dPSI] p5[dPSI] p_bar[dPSI] Ca[-] Cb[-] Cpt[-] Cps[-] Pt[Pa] Ps[Pa] rho[kg/m^3]" 
+				 " vel[m/s] aoa[deg] wy[deg/s] pitch[deg] beta[deg] wx[deg/s] wz[deg/s] roll[deg] yaw[deg]"
+				 " vel_error[m/s] aoa_error[deg] wy_error[deg/s] pitch_error[deg] beta_error[deg] wx_error[deg/s] wz_error[deg/s] roll_error[deg] yaw_error[deg]"
+				 " vel_ref[m/s] pitch_ref[deg] yaw_ref[deg] vel_int[m] pitch_int[deg-s] yaw_int[deg-s]" 
+				 " ele_cmd[deg] ail_cmd[deg] rud_cmd[deg] t1_cmd[%] t2_cmd[%] t3_cmd[%] t4_cmd[%] t5_cmd[%] t6_cmd[%] t7_cmd[%] t8_cmd[%]"
+				 " true_vel[m/s] true_aoa[deg] true_wy[deg/s] true_pitch[deg] true_beta[deg] true_wx[deg/s] true_wz[deg/s] true_roll[deg] true_yaw[deg]" << std::endl;
+
+    #else
+	logfile_autopilot << "gps_time[s] engaged[-]"
+				 " ele_trim[deg] ail_trim[deg] rud_trim[deg] t1_trim[%] t2_trim[%] t3_trim[%] t4_trim[%] t5_trim[%] t6_trim[%] t7_trim[%] t8_trim[%]" 
+				 " yaw_trim_rate[deg/s]"
+				 " p1[ADC] p2[ADC] p3[ADC] p4[ADC] p5[ADC] p1[dPSI] p2[dPSI] p3[dPSI] p4[dPSI] p5[dPSI] p_bar[dPSI] Ca[-] Cb[-] Cpt[-] Cps[-] Pt[Pa] Ps[Pa] rho[kg/m^3]" 
+				 " vel[m/s] aoa[deg] wy[deg/s] pitch[deg] beta[deg] wx[deg/s] wz[deg/s] roll[deg] yaw[deg]"
+				 " vel_error[m/s] aoa_error[deg] wy_error[deg/s] pitch_error[deg] beta_error[deg] wx_error[deg/s] wz_error[deg/s] roll_error[deg] yaw_error[deg]"
+				 " vel_ref[m/s] pitch_ref[deg] yaw_ref[deg] vel_int[m] pitch_int[deg-s] yaw_int[deg-s]" 
+				 " ele_cmd[deg] ail_cmd[deg] rud_cmd[deg] t1_cmd[%] t2_cmd[%] t3_cmd[%] t4_cmd[%] t5_cmd[%] t6_cmd[%] t7_cmd[%] t8_cmd[%]" << std::endl;
+    #endif
 		     
     logfile_vn200 << "gps_pps[ns] gps_time[s] gps_tracking gps_fix gps_error roll[deg] pitch[deg] yaw[deg] wx[rad/s] wy[rad/s] wz[rad/s]"
                      " lat[deg] lon[deg] alt[m] vn[m/s] ve[m/s] vd[m/s] ax[m/s2] ay[m/s2] az[m/s2]" << std::endl;
