@@ -186,8 +186,8 @@ class Handler
 				      << msg->state_error[0] << " " << msg->state_error[1] << " " << msg->state_error[2] << " " << msg->state_error[3] << " " << msg->state_error[4] << " " << msg->state_error[5] << " " << msg->state_error[6] << " " << msg->state_error[7] << " " << msg->state_error[8] << " " 
 				      << msg->integral_ref[0] << " " << msg->integral_ref[1] << " " << msg->integral_ref[2] << " " << msg->integral[0] << " " << msg->integral[1] << " " << msg->integral[2] << " " 
 				      << msg->input_cmd[0] << " " << msg->input_cmd[1] << " " << msg->input_cmd[2] << " " 
-				      << msg->input_cmd[3] << " " << msg->input_cmd[4] << " " << msg->input_cmd[5] << " " << msg->input_cmd[6] << " " << msg->input_cmd[7] << " " << msg->input_cmd[8] << " " << msg->input_cmd[9] << " " << msg->input_cmd[10]
-				      << msg->true_state[0] << " " << msg->true_state[1] << " " << msg->true_state[2] << " " << msg->true_state[3] << " " << msg->true_state[4] << " " << msg->true_state[5] << " " << msg->true_state[6] << " " << msg->true_state[7] << " " << msg->true_state[8] << " " 
+				      << msg->input_cmd[3] << " " << msg->input_cmd[4] << " " << msg->input_cmd[5] << " " << msg->input_cmd[6] << " " << msg->input_cmd[7] << " " << msg->input_cmd[8] << " " << msg->input_cmd[9] << " " << msg->input_cmd[10] << " " 
+				      << msg->true_state[0] << " " << msg->true_state[1] << " " << msg->true_state[2] << " " << msg->true_state[3] << " " << msg->true_state[4] << " " << msg->true_state[5] << " " << msg->true_state[6] << " " << msg->true_state[7] << " " << msg->true_state[8]
 				      << std::endl ){
 			}else{
 			    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() <<
