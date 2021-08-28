@@ -20,6 +20,7 @@
 #endif
 
 // Message types
+#include "autopilot_t.hpp"
 #include "actuators_t.hpp"
 #include "status_t.hpp"
 #include "adc_data_t.hpp"
@@ -372,23 +373,6 @@ int main(int argc, char *argv[])
 			true_state[i] = trim_state[i];
 			true_state_error[i] = 0.0;
 		}
-		
-		// Sequencing file numbers
-		std::ifstream seqFile ("config_files/sequence.dat", std::ifstream::in);
-		int fileNum;
-		seqFile >> fileNum;
-		seqFile.close();
-		fileNum++;
-
-		// File name
-		int string_length = 22 + (int)(floor(log10((double)fileNum)) + 1.0);
-		char file_ap_test[string_length];
-		sprintf(file_ap_test,"FlightLog_%i_ap_test.dat",fileNum);
-
-		// Create log for simulated state data
-		std::ofstream logfile_ap_test;
-		logfile_ap_test.open(file_ap_test, ofstream::out | ofstream::trunc | ofstream::binary);
-		logfile_ap_test << "gps_time[s] test_num measured_vel[m/s] filtered_vel[m/s] true_vel[m/s] measured_AoA[rad] filtered_AoA[rad] true_AoA[rad] wyy[rad/s] true_wyy[rad] pit[rad] true_pit[rad] measured_bet[rad] filtered_bet[rad] true_bet[rad] wxx[rad/s] true_wxx[rad/s] wzz[rad/s] true_wzz[rad/s] rol[rad] true_rol[rad] yaw[rad] true_yaw[rad] vel_int[m] pit_int[rad*s] yaw_int[rad*s] pit_ref[rad] yaw_ref[rad] ele_trim[rad] ail_trim[rad] rud_trim[rad] thr_trim[-]" << endl;
 
 		// Test parameters
 		int num_tests=5;
@@ -525,14 +509,14 @@ int main(int argc, char *argv[])
 
 	// ******************************************************************************************************** OTHER VARIABLES ******************************************************************************************************** //
 	// Terms used in 5 hole probe to state conversion
-	double adc_pres[5];
-	double p_bar;
-	double coeff_AoA;
-	double coeff_bet;
-	double coeff_pt;
-	double coeff_ps;
-	double total_pressure;
-	double static_pressure;
+	double adc_pres[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double p_bar = 0.0;
+	double coeff_AoA = 0.0;
+	double coeff_bet = 0.0;
+	double coeff_pt = 0.0;
+	double coeff_ps = 0.0;
+	double total_pressure = 0.0;
+	double static_pressure = 0.0;
 	
 	// State variables
 	double measured_state[9];
@@ -564,8 +548,6 @@ int main(int argc, char *argv[])
 	// ******************************************************************************************************** ZCM AND UI ******************************************************************************************************** //
 	// Initialize zcm and message objects
 	zcm::ZCM zcm{ "ipc" };
-	actuators_t acts;
-	memset(&acts, 0, sizeof(acts));
 
 	// Subscribe to incoming channels
 	Handler handlerObject;
@@ -578,6 +560,13 @@ int main(int argc, char *argv[])
 	status_t module_stat;
 	memset(&module_stat, 0, sizeof(module_stat));
 	module_stat.module_status = 1;
+	
+	// For publishing all other data from this module
+	actuators_t acts;
+	memset(&acts, 0, sizeof(acts));
+	autopilot_t autopilot;
+	memset(&autopilot, 0, sizeof(autopilot));
+    
 
 	// Run zcm as a separate thread
 	zcm.start();
@@ -866,29 +855,77 @@ int main(int argc, char *argv[])
 
 		// Timestamp the actuator values
 		acts.time_gps = get_gps_time(&handlerObject);
+		
+		// Gather input trim data
+		autopilot.ele_trim = filtered_input_trim[0] * 57.29577951;  // In deg
+		autopilot.ail_trim = filtered_input_trim[1] * 57.29577951;  // In deg
+		autopilot.rud_trim = filtered_input_trim[2] * 57.29577951;  // In deg
+		for ( int i = 0; i < 8; i++)
+		{
+			autopilot.thr_trim[i] = filtered_input_trim[i] * 100.0;  // In percent
+		}
+		
+		// Gather yaw rate data
+		autopilot.yaw_trim_rate = max_yaw_trim_rate * rc_rud_delta * 57.29577951;  // In deg/s
+		
+		// Gather AP module status
+		autopilot.ap_armed_and_engaged = AP_armed_engaged;
+		
+		// Gather ADC conversion data
+		for ( int i = 0; i < 5; i++)
+		{
+			autopilot.adc_pres_raw[i] = (double)handlerObject.adc.data[i];
+			autopilot.adc_pres_dPSI[i] = adc_pres[i];
+		}
+		autopilot.p_bar_dPSI = p_bar;
+		autopilot.Ca = coeff_AoA;
+		autopilot.Cb = coeff_bet;
+		autopilot.Cpt = coeff_pt;
+		autopilot.Cps = coeff_ps;
+		autopilot.Pt_Pa = total_pressure;
+		autopilot.Ps_Pa = static_pressure;
+		autopilot.rho = rho;
+		
+		// Gather state data
+		for ( int i = 0; i < 9; i++ )
+		{
+			if ( i == 0 )
+			{
+				autopilot.state[i] = filtered_state[i];              // in m/s
+				autopilot.state_error[i] = filtered_state_error[i];  // in m/s
+			}
+			else
+			{
+				autopilot.state[i] = filtered_state[i] * 57.29577951;              // in deg or deg/s
+				autopilot.state_error[i] = filtered_state_error[i] * 57.29577951;  // in deg or deg/s
+			}
+		}
+		autopilot.integral_ref[0] = trim_state[0];  // in m/s
+		autopilot.integral_ref[1] = filtered_state[1] * 57.29577951;  // in deg
+		autopilot.integral_ref[2] = (trim_state[8] - filtered_state[4]) * 57.29577951;  // in deg
+		autopilot.integral[0] = filtered_state_error[9];   // in m
+		autopilot.integral[1] = filtered_state_error[10] * 57.29577951;  // in deg-s
+		autopilot.integral[2] = filtered_state_error[11] * 57.29577951;  // in deg-s
+		
+		// Gather input command
+		for ( int i = 0; i < 11; i ++ )
+		{
+			if ( i == 0 || i == 1 || i == 2 )
+			{
+				autopilot.input_cmd[i] = 57.29578 * input_cmd[i];  // in deg
+			}
+			else
+			{
+				autopilot.input_cmd[i] = 100.0 * input_cmd[i];  // in percent
+			}
+		}
+		
+		// Time stamp data
+		autopilot.time_gps = get_gps_time(&handlerObject);
 
-		// Log simulated data
-		#ifdef TEST
-			logfile_ap_test << acts.time_gps << " " << curr_test_number << " ";
-			logfile_ap_test << measured_state[0] << " " << filtered_state[0] << " " << true_state[0] << " ";
-			logfile_ap_test << measured_state[1] << " " << filtered_state[1] << " " << true_state[1] << " ";
-			logfile_ap_test << filtered_state[2] << " " << true_state[2] << " ";
-			logfile_ap_test << filtered_state[3] << " " << true_state[3] << " ";
-			logfile_ap_test << measured_state[4] << " " << filtered_state[4] << " " << true_state[4] << " ";
-			logfile_ap_test << filtered_state[5] << " " << true_state[5] << " ";
-			logfile_ap_test << filtered_state[6] << " " << true_state[6] << " ";
-			logfile_ap_test << filtered_state[7] << " " << true_state[7] << " ";
-			logfile_ap_test << filtered_state[8] << " " << true_state[8] << " ";
-			logfile_ap_test << filtered_state_error[9]  << " ";
-			logfile_ap_test << filtered_state_error[10] << " ";
-			logfile_ap_test << filtered_state_error[11] << " ";
-			logfile_ap_test << filtered_state[1] << " ";
-			logfile_ap_test << ( trim_state[8] - filtered_state[4] ) << " ";
-			logfile_ap_test << filtered_input_trim[0] << " " << filtered_input_trim[1] << " " << filtered_input_trim[2] << " " << filtered_input_trim[3] << endl;
-		#endif
-
-		// Publish the actuator values
+		// Publish the actuator and sutopilot values
 		zcm.publish("ACTUATORS", &acts);
+		zcm.publish("AUTOPILOT", &autopilot);
 
 		// Sleep for 10 ms to remove CPU stress
 		usleep(10000);				
@@ -899,9 +936,6 @@ int main(int argc, char *argv[])
 	module_stat.module_status = 0;
 	zcm.publish("STATUS4",&module_stat);
 	cout << "autopilot module exiting..." << endl;
-	#ifdef TEST 
-		logfile_ap_test.close();
-	#endif
 
 	// Stop ZCM
 	zcm.stop();

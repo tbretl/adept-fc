@@ -1,0 +1,35 @@
+//
+// Use of this file is governed by the MIT License - see adept_fc/LICENSE_MIT
+//
+// Copyright (c) 2019 Timothy Bretl, Aaron Perry, and Phillip Ansell
+//
+
+struct actuators_t
+{
+    double ele_trim;
+    double ail_trim;
+    double rud_trim;
+    double thr_trim[8];
+    double yaw_trim_rate;
+    bool ap_armed_and_engaged;
+    double adc_pres_raw[5];
+    double adc_pres_dPSI[5];
+    double p_bar_dPSI;
+    double Ca;
+    double Cb;
+    double Cpt;
+    double Cps;
+    double Pt_Pa;
+    double Ps_Pa;
+    double rho;
+    
+    double state[9];
+    double state_error[9];
+    double integral_ref[3];
+    double integral[3];
+    
+    double input_cmd[11];
+    
+    double time_gps;
+    
+}
