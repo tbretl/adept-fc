@@ -950,7 +950,7 @@ int main(int argc, char *argv[])
 			}
 			for (int i = 3; i < 11; i++)
 			{
-				input_delta[i] = sef_thr_delta[i];
+				input_delta[i] = sef_thr_delta[i-3];
 				input_cmd[i] = (rc_thr_delta)*(input_delta[i] + 0.4919) + (1.0-rc_thr_delta)*0.4919;
 			}	
 		}
