@@ -861,11 +861,16 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// Calculate the pilot commanded stick delta
+		// Calculate the pilot commanded yaw delta
 		rc_rud_delta =  2.0 * ((double)handlerObject.rc_in.rc_chan[2] - rc_rud_trim) / (rc_max - rc_min);
 		rc_rud_delta = rc_rud_delta > 1.0 ? 1.0 : rc_rud_delta;
 		rc_rud_delta = rc_rud_delta < -1.0 ? -1.0 : rc_rud_delta;
 		rc_rud_delta = abs(rc_rud_delta) < 0.10 ? 0.0 : rc_rud_delta;
+		
+		// Calculate the pilot commanded throttle delta
+		rc_thr_delta = ((double)handlerObject.rc_in.rc_chan[3] - rc_thr_trim) / (rc_min - rc_thr_trim);
+		rc_thr_delta = rc_thr_delta < 0.0 ? 0.0 : rc_thr_delta;
+		rc_thr_delta = rc_rud_delta > 1.0 ? 1.0 : rc_thr_delta;
 		
 		// Update the yaw trim value based on pilot RC inputs
 		trim_state[8] += (max_yaw_trim_rate * rc_rud_delta) * delta_t;
@@ -922,12 +927,10 @@ int main(int argc, char *argv[])
 				
 				input_cmd[i] = input_delta[i] + filtered_input_trim[i];
 			}
-			
 			for (int i = 3; i < 11; i++)
 			{
 				input_delta[i] = sef_thr_delta[i];
-				
-				input_cmd[i] = input_delta[i] + filtered_input_trim[i];
+				input_cmd[i] = (rc_thr_delta)*(input_delta[i] + 0.4919) + (1.0-rc_thr_delta)*0.4919;
 			}	
 		}
 
