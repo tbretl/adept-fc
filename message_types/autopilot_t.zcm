@@ -34,4 +34,6 @@ struct autopilot_t
     
     double true_state[9];
     
+    int32_t sef_mode;
+    
 }

@@ -531,6 +531,7 @@ int main(int argc, char *argv[])
 	// RC mode settings
 	bool trim_values_set = false;
 	bool AP_armed_engaged = false;
+	bool sef_mode = false;
 	double rc_rud_trim;
 	double rc_rud_delta;
 	double rc_thr_trim;
@@ -900,7 +901,8 @@ int main(int argc, char *argv[])
 		filtered_state_error[8] = yaw_error;
 
 		// Calculate input deltas and input commands
-		if (handlerObject.rc_in.rc_chan[sef_arm_chan]<sef_arm_cutoff)
+		sef_mode = handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff;
+		if (!sef_mode)
 		{
 			for (int i = 0; i < 11; i++)
 			{
@@ -977,6 +979,9 @@ int main(int argc, char *argv[])
 		
 		// Gather AP module status
 		autopilot.ap_armed_and_engaged = AP_armed_engaged ? 1 : 0;
+		
+		// Gather AP module sef status
+		autopilot.sef_mode = sef_mode ? 1 : 0;
 		
 		// Gather ADC conversion data
 		#ifdef TEST

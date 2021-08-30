@@ -175,7 +175,7 @@ class Handler
 		    
                 can_write = 0;
 		#ifdef TEST
-			if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << std::setprecision(6) << " "
+			if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << " " << msg->sef_mode << std::setprecision(6) << " "
 				      << msg->ele_trim << " " << msg->ail_trim << " " << msg->rud_trim << " " 
 				      << msg->thr_trim[0] << " " << msg->thr_trim[1] << " " << msg->thr_trim[2] << " " << msg->thr_trim[3] << " " << msg->thr_trim[4] << " " << msg->thr_trim[5] << " " << msg->thr_trim[6] << " " << msg->thr_trim[7] << " "
 				      << msg->yaw_trim_rate << " " 
@@ -194,7 +194,7 @@ class Handler
 			    " SCRIBE ERROR: message buffer overflow on autopilot." << std::endl;
 			}
 		#else
-			if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << std::setprecision(6) << " "
+			if( log_buffer << std::setprecision(14) << msg->time_gps << " " << std::setprecision(1) << msg->ap_armed_and_engaged << " " << msg->sef_mode << std::setprecision(6) << " "
 				      << msg->ele_trim << " " << msg->ail_trim << " " << msg->rud_trim << " " 
 				      << msg->thr_trim[0] << " " << msg->thr_trim[1] << " " << msg->thr_trim[2] << " " << msg->thr_trim[3] << " " << msg->thr_trim[4] << " " << msg->thr_trim[5] << " " << msg->thr_trim[6] << " " << msg->thr_trim[7] << " "
 				      << msg->yaw_trim_rate << " " 
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
 
     //write headers
     #ifdef TEST
-	logfile_autopilot << "gps_time[s] engaged[-]"
+	logfile_autopilot << "gps_time[s] engaged[-] SEF[-]"
 				 " ele_trim[deg] ail_trim[deg] rud_trim[deg] t1_trim[%] t2_trim[%] t3_trim[%] t4_trim[%] t5_trim[%] t6_trim[%] t7_trim[%] t8_trim[%]" 
 				 " yaw_trim_rate[deg/s]"
 				 " p1[ADC] p2[ADC] p3[ADC] p4[ADC] p5[ADC] p1[dPSI] p2[dPSI] p3[dPSI] p4[dPSI] p5[dPSI] p_bar[dPSI] Ca[-] Cb[-] Cpt[-] Cps[-] Pt[Pa] Ps[Pa] rho[kg/m^3]" 
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 				 " true_vel[m/s] true_aoa[deg] true_wy[deg/s] true_pitch[deg] true_beta[deg] true_wx[deg/s] true_wz[deg/s] true_roll[deg] true_yaw[deg]" << std::endl;
 
     #else
-	logfile_autopilot << "gps_time[s] engaged[-]"
+	logfile_autopilot << "gps_time[s] engaged[-] SEF[-]"
 				 " ele_trim[deg] ail_trim[deg] rud_trim[deg] t1_trim[%] t2_trim[%] t3_trim[%] t4_trim[%] t5_trim[%] t6_trim[%] t7_trim[%] t8_trim[%]" 
 				 " yaw_trim_rate[deg/s]"
 				 " p1[ADC] p2[ADC] p3[ADC] p4[ADC] p5[ADC] p1[dPSI] p2[dPSI] p3[dPSI] p4[dPSI] p5[dPSI] p_bar[dPSI] Ca[-] Cb[-] Cpt[-] Cps[-] Pt[Pa] Ps[Pa] rho[kg/m^3]" 
