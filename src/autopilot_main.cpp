@@ -207,9 +207,15 @@ int main(int argc, char *argv[])
 	#endif
 
 	// ******************************************************************************************************** AUTOPILOT CONFIG DATA ******************************************************************************************************** //
+	// Autopilot type name
+	string ap_type;
+	
+	// Engine that is set to fail
+	string engine_fail_number;
+	
 	// Atmospheric conditions
 	double rho; // kg/m^3
-
+	
 	// Input PWM limits
 	double input_pwm_limits[11][2];  // Ele, ail, rud, thr1-8 PWM
 
@@ -224,9 +230,6 @@ int main(int argc, char *argv[])
 	double state_limits[9][2];  // vel, aoa, wyy,   pit, bet, wxx,   wzz,   rol, yaw
 	                            // m/s, rad, rad/s, rad, rad, rad/s, rad/s, rad, rad
 
-	// Autopilot type name
-	string ap_type;
-
 	// Config loading variables
 	string dump;
 	std::ifstream ap_config_stream;
@@ -234,6 +237,7 @@ int main(int argc, char *argv[])
 	// Load config data
 	ap_config_stream.open("/home/pi/adept-fc/config_files/autopilot_main.config");
 	ap_config_stream >> dump >> ap_type;
+	ap_config_stream >> dump >> engine_fail_number;
 	ap_config_stream >> dump >> rho;
 	ap_config_stream >> dump >> max_yaw_trim_rate;
 	
@@ -340,7 +344,6 @@ int main(int argc, char *argv[])
 	// ******************************************************************************************************** SEF GAIN DATA ******************************************************************************************************** //
 	// SEF controller constants
 	double k_fail[11][12];
-	
 	ap_gains_load_path = "/home/pi/adept-fc/config_files/autopilot_gains/SEF_int.dat";
 	cout << "AP SEF Gains @ " << ap_gains_load_path << endl;
 	gain_stream.open(ap_gains_load_path);
@@ -364,11 +367,33 @@ int main(int argc, char *argv[])
 			cout << endl;
 		#endif
 	}
-	
 	#ifdef TEST
 		cout << endl;
 	#endif
+	gain_stream.close();
+
 	
+	// Failed throttle trims
+	double sef_thr_delta[8];
+	sef_thr_delta_load_path = "/home/pi/adept-fc/config_files/SEF_trims/SEF_" + engine_fail_number + ".dat";
+	cout << "AP SEF Thr Cmds @ " << ap_gains_load_path << endl;
+	gain_stream.open(sef_thr_delta_load_path);
+	if(!gain_stream.good())
+	{
+		std::cout << "WARNING: COULD NOT FIND AP SEF THR CMDS." << endl;
+		return 1;
+	}
+	for (int i = 0; i < 8; i++)
+	{
+		gain_stream >> dump >> sef_thr_delta[i];
+		
+		#ifdef TEST
+			cout << sef_thr_delta[i] << endl;
+		#endif
+	}
+	#ifdef TEST
+		cout << endl;
+	#endif
 	gain_stream.close();
 
 	// ******************************************************************************************************** AUTOPILOT TEST PARAMETERS ******************************************************************************************************** //
@@ -469,6 +494,8 @@ int main(int argc, char *argv[])
 	int ap_arm_cutoff;
 	int ap_engage_chan;
 	int ap_engage_cutoff;
+	int sef_arm_chan;
+	int sef_arm_cutoff;
 
 	// Load rc configuration variables (Ignore the unnecessary ones)
 	rc_config_stream.open("/home/pi/adept-fc/config_files/pwm_out.config");
@@ -484,6 +511,8 @@ int main(int argc, char *argv[])
 	rc_config_stream >> dump >> rc_dump;
 	rc_config_stream >> dump >> ap_engage_chan;
 	rc_config_stream >> dump >> ap_engage_cutoff;
+	rc_config_stream >> dump >> sef_arm_chan;
+	rc_config_stream >> dump >> sef_arm_cutoff;
 	rc_config_stream.close();
 	
 	// Scream into the void if testing
@@ -494,7 +523,9 @@ int main(int argc, char *argv[])
 		cout << ap_arm_chan << endl;
 		cout << ap_arm_cutoff << endl;
 		cout << ap_engage_chan << endl;
-		cout << ap_engage_cutoff << endl << endl;
+		cout << ap_engage_cutoff << endl;
+		cout << sef_arm_chan << endl;
+		cout << sef_arm_cutoff << endl << endl;
 	#endif
 
 	// RC mode settings
@@ -502,6 +533,8 @@ int main(int argc, char *argv[])
 	bool AP_armed_engaged = false;
 	double rc_rud_trim;
 	double rc_rud_delta;
+	double rc_thr_trim;
+	double rc_thr_delta;
 	
 	// Input trim values
 	int rc_to_input_mapping[11] = { 1, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3 };
@@ -628,6 +661,7 @@ int main(int argc, char *argv[])
 			// Set the yaw trim value to current heading
 			trim_state[8] = 0.017453 * handlerObject.vnins.yaw;   // in rad
 			rc_rud_trim = (double)handlerObject.rc_in.rc_chan[2]; // in rc
+			rc_thr_trim = (double)handlerObject.rc_in.rc_chan[3]; // in rc
 			
 			// Reset the integration to prevent windup while AP is disarmed or disengaged
 			for(int i = 9; i < 12; i++)
@@ -657,6 +691,7 @@ int main(int argc, char *argv[])
 			cout<< "***********************************" <<  endl;
 			cout<< "Heading Lock: " << trim_state[8]*180.0/3.14159 << " deg" <<  endl;
 			cout<< "RC Rud Trim: " << rc_min << " - " << rc_rud_trim << " - " << rc_max << endl;
+			cout<< "RC Thr Trim: " << rc_min << " - " << rc_thr_trim << " - " << rc_max << endl;
 
 			// Lock trim values
 			trim_values_set = true;
@@ -860,16 +895,42 @@ int main(int argc, char *argv[])
 		filtered_state_error[8] = yaw_error;
 
 		// Calculate input deltas and input commands
-		for (int i = 0; i < 11; i++)
+		if (handlerObject.rc_in.rc_chan[sef_arm_chan]<sef_arm_cutoff)
 		{
-			input_delta[i] = 0.0;
-			for (int j = 0; j < 12; j++)
+			for (int i = 0; i < 11; i++)
 			{
-				input_delta[i] += -1.0*k[i][j]*filtered_state_error[j];
+				input_delta[i] = 0.0;
+				for (int j = 0; j < 12; j++)
+				{
+					input_delta[i] += -1.0*k[i][j]*filtered_state_error[j];
+				}
+				
+				input_cmd[i] = input_delta[i] + filtered_input_trim[i];
+			}
+		}
+		
+		// Calculate input deltas and input commands IN SEF MODE
+		else
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				input_delta[i] = 0.0;
+				for (int j = 0; j < 12; j++)
+				{
+					input_delta[i] += -1.0*k_fail[i][j]*filtered_state_error[j];
+				}
+				
+				input_cmd[i] = input_delta[i] + filtered_input_trim[i];
 			}
 			
-			input_cmd[i] = input_delta[i] + filtered_input_trim[i];
+			for (int i = 3; i < 11; i++)
+			{
+				input_delta[i] = sef_thr_delta[i];
+				
+				input_cmd[i] = input_delta[i] + filtered_input_trim[i];
+			}	
 		}
+
 
 		// Convert input commands to PWM
 		input_pwm_cmd[0] = eval_1D_poly(ele_PWM_consts, 3, 57.29578 * input_cmd[0]); // in PWM
