@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 	
 	// Failed throttle trims
 	double sef_thr_delta[8];
-	sef_thr_delta_load_path = "/home/pi/adept-fc/config_files/SEF_trims/SEF_" + engine_fail_number + ".dat";
+	string sef_thr_delta_load_path = "/home/pi/adept-fc/config_files/SEF_trims/SEF_" + engine_fail_number + ".dat";
 	cout << "AP SEF Thr Cmds @ " << sef_thr_delta_load_path << endl;
 	gain_stream.open(sef_thr_delta_load_path);
 	if(!gain_stream.good())
