@@ -900,7 +900,7 @@ int main(int argc, char *argv[])
 		filtered_state_error[8] = yaw_error;
 
 		// Single engine failure mode calculation
-		sef_mode = (handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff) && AP_armed_engaged;
+		sef_mode = (handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff) && (handlerObject.rc_in.rc_chan[ap_arm_chan]>=ap_arm_cutoff);
 		if(sef_mode)
 		{
 			if (!sef_msg_thrown)
