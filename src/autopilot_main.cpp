@@ -900,8 +900,14 @@ int main(int argc, char *argv[])
 		}
 		filtered_state_error[8] = yaw_error;
 
-		// Calculate input deltas and input commands
+		// Single engine failure mode calculation
 		sef_mode = handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff;
+		if(sef_mode)
+		{
+			std::cout << "SEF MODE ARMED." << std::endl;
+		}
+
+		// Calculate input deltas and input commands
 		if (!sef_mode)
 		{
 			for (int i = 0; i < 11; i++)
