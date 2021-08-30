@@ -741,19 +741,6 @@ int main(int argc, char *argv[])
 			measured_state[8] = measured_state[8] > 3.1416 ? measured_state[8] - 6.2832 : measured_state[8];
 			measured_state[8] = measured_state[8] < -3.1416 ? measured_state[8] + 6.2832 : measured_state[8];
 			
-			
-			
-			double coeff_AoA_consts[15] = { -0.0016889, -0.067901, -0.0021985, 1.2588e-05, -6.8573e-05, 8.3843e-05, -2.0922e-05, 1.4181e-05, -3.8919e-05, 3.8844e-06, -7.4686e-07, 7.7933e-07, -1.5425e-06, 5.3011e-07, -8.3722e-08 };
-			double coeff_bet_consts[15] = { -0.0045874, 0.0034246, 0.068988, 5.9615e-05, -0.00012652, 4.2608e-05, 1.0995e-06, 5.2217e-05, -1.5044e-05, 1.7282e-05, 2.712e-09, 1.1887e-06, -9.8476e-07, 1.3198e-06, -2.7764e-07 };
-			double back_calculated_coeff_AoA = 0.0;
-			double back_calculated_coeff_bet = 0.0;
-			double back_calculated_coeff_pt = 0.0;
-			double back_calculated_coeff_ps = 0.0;
-			double back_calculated_total_pressure = 0.0;
-			double back_calculated_static_pressure = 0.0;
-			double back_calculated_adc_pres[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-			double back_calculated_adc_raw[5] = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-			
 			// Calculate static and total pressure based on state
 			back_calculated_total_pressure = (0.5 * rho * measured_state[0]*measured_state[0] + 101325.0) * 0.000145038;  // in PSIA
 			back_calculated_static_pressure = 14.69597;  // in PSIA
