@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
 	// Failed throttle trims
 	double sef_thr_delta[8];
 	sef_thr_delta_load_path = "/home/pi/adept-fc/config_files/SEF_trims/SEF_" + engine_fail_number + ".dat";
-	cout << "AP SEF Thr Cmds @ " << ap_gains_load_path << endl;
+	cout << "AP SEF Thr Cmds @ " << sef_thr_delta_load_path << endl;
 	gain_stream.open(sef_thr_delta_load_path);
 	if(!gain_stream.good())
 	{
@@ -532,9 +532,10 @@ int main(int argc, char *argv[])
 	bool trim_values_set = false;
 	bool AP_armed_engaged = false;
 	bool sef_mode = false;
+	bool sef_msg_thrown = false;
 	double rc_rud_trim;
 	double rc_rud_delta;
-	double rc_thr_trim;
+	double rc_thr_trim = 0.0;
 	double rc_thr_delta;
 	
 	// Input trim values
@@ -662,7 +663,6 @@ int main(int argc, char *argv[])
 			// Set the yaw trim value to current heading
 			trim_state[8] = 0.017453 * handlerObject.vnins.yaw;   // in rad
 			rc_rud_trim = (double)handlerObject.rc_in.rc_chan[2]; // in rc
-			rc_thr_trim = (double)handlerObject.rc_in.rc_chan[3]; // in rc
 			
 			// Reset the integration to prevent windup while AP is disarmed or disengaged
 			for(int i = 9; i < 12; i++)
@@ -904,7 +904,16 @@ int main(int argc, char *argv[])
 		sef_mode = handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff;
 		if(sef_mode)
 		{
-			std::cout << "SEF MODE ARMED." << std::endl;
+			if (!sef_msg_thrown)
+			{
+				std::cout << "SEF MODE ARMED." << std::endl;
+				sef_msg_thrown = true;
+			}
+		}
+		else
+		{
+			rc_thr_trim = (double)handlerObject.rc_in.rc_chan[3];
+			sef_msg_thrown = false;
 		}
 
 		// Calculate input deltas and input commands
