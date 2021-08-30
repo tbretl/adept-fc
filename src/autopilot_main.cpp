@@ -692,7 +692,6 @@ int main(int argc, char *argv[])
 			cout<< "***********************************" <<  endl;
 			cout<< "Heading Lock: " << trim_state[8]*180.0/3.14159 << " deg" <<  endl;
 			cout<< "RC Rud Trim: " << rc_min << " - " << rc_rud_trim << " - " << rc_max << endl;
-			cout<< "RC Thr Trim: " << rc_min << " - " << rc_thr_trim << " - " << rc_max << endl;
 
 			// Lock trim values
 			trim_values_set = true;
@@ -901,19 +900,24 @@ int main(int argc, char *argv[])
 		filtered_state_error[8] = yaw_error;
 
 		// Single engine failure mode calculation
-		sef_mode = handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff;
+		sef_mode = (handlerObject.rc_in.rc_chan[sef_arm_chan]>=sef_arm_cutoff) && AP_armed_engaged;
 		if(sef_mode)
 		{
 			if (!sef_msg_thrown)
 			{
-				std::cout << "SEF MODE ARMED." << std::endl;
+				cout << "SEF MODE ARMED." << endl;
+				cout<< "RC Thr Trim: " << rc_min << " - " << rc_thr_trim << " - " << rc_max << endl;
 				sef_msg_thrown = true;
 			}
 		}
 		else
 		{
+			if(sef_msg_thrown)
+			{
+				cout << "SEF MODE DISARMED." << endl;
+				sef_msg_thrown = false;
+			}
 			rc_thr_trim = (double)handlerObject.rc_in.rc_chan[3];
-			sef_msg_thrown = false;
 		}
 
 		// Calculate input deltas and input commands
