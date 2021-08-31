@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
 	}
 	for (int i = 0; i < 8; i++)
 	{
-		gain_stream >> dump >> sef_thr_delta[i];
+		gain_stream >> sef_thr_delta[i];
 		
 		#ifdef TEST
 			cout << sef_thr_delta[i] << endl;
@@ -870,7 +870,7 @@ int main(int argc, char *argv[])
 		// Calculate the pilot commanded throttle delta
 		rc_thr_delta = ((double)handlerObject.rc_in.rc_chan[3] - rc_thr_trim) / (rc_min - rc_thr_trim);
 		rc_thr_delta = rc_thr_delta < 0.0 ? 0.0 : rc_thr_delta;
-		rc_thr_delta = rc_rud_delta > 1.0 ? 1.0 : rc_thr_delta;
+		rc_thr_delta = rc_thr_delta > 1.0 ? 1.0 : rc_thr_delta;
 		
 		// Update the yaw trim value based on pilot RC inputs
 		trim_state[8] += (max_yaw_trim_rate * rc_rud_delta) * delta_t;
@@ -908,10 +908,6 @@ int main(int argc, char *argv[])
 				cout << "SEF MODE ARMED." << endl;
 				cout<< "RC Thr Trim: " << rc_min << " - " << rc_thr_trim << " - " << rc_max << endl;
 				sef_msg_thrown = true;
-			}
-			else
-			{
-				cout << "SEF: " << 100.0 * rc_thr_delta << "%\r";
 			}
 		}
 		else
@@ -954,8 +950,8 @@ int main(int argc, char *argv[])
 			}
 			for (int i = 3; i < 11; i++)
 			{
-				input_delta[i] = sef_thr_delta[i-3];
-				input_cmd[i] = (rc_thr_delta)*(input_delta[i] + 0.4919) + (1.0-rc_thr_delta)*0.4919;
+				input_cmd[i] = (rc_thr_delta)*(sef_thr_delta[i-3] + 0.4919) + (1.0-rc_thr_delta)*0.4919;
+				input_delta[i] = input_cmd[i] - 0.4919;	
 			}	
 		}
 
