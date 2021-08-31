@@ -909,6 +909,10 @@ int main(int argc, char *argv[])
 				cout<< "RC Thr Trim: " << rc_min << " - " << rc_thr_trim << " - " << rc_max << endl;
 				sef_msg_thrown = true;
 			}
+			else
+			{
+				cout << "SEF: " << 100.0 * rc_thr_delta << "%\r";
+			}
 		}
 		else
 		{
