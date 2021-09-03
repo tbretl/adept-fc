@@ -990,7 +990,7 @@ int main(int argc, char *argv[])
 		autopilot.rud_trim = filtered_input_trim[2] * 57.29577951;  // In deg
 		for ( int i = 0; i < 8; i++)
 		{
-			autopilot.thr_trim[i] = filtered_input_trim[i] * 100.0;  // In percent
+			autopilot.thr_trim[i] = filtered_input_trim[i+3] * 100.0;  // In percent
 		}
 		
 		// Gather yaw rate data
